@@ -1,0 +1,13 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+/**
+ * Browser key with Maps JavaScript API + Places API enabled.
+ *
+ * Setup:
+ * 1. Copy this file to google_maps_api_key.local.php (same folder).
+ * 2. Return your key string below.
+ * 3. google_maps_api_key.local.php is listed in .gitignore — do not commit it.
+ *
+ * On XAMPP, prefer project root .env (copy from .env.example) so PHP sees the key.
+ */
+return '';

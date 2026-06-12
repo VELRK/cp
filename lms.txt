@@ -1,0 +1,6 @@
+# Dream Villa Makers
+site: https://www.dreamvillamakers.com/
+canonical_host: www.dreamvillamakers.com
+sitemap: https://www.dreamvillamakers.com/sitemap.xml
+robots: https://www.dreamvillamakers.com/robots.txt
+contact: https://www.dreamvillamakers.com/contact

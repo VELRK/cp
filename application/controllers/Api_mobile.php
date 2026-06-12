@@ -1,0 +1,1141 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Api_mobile extends CI_Controller {
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->load->helper(array('url', 'form', 'nb'));
+        $this->load->database();
+        $this->load->library('form_validation');
+        $this->load->model(array('Banner_model', 'Housing_news_model', 'Feedback_model', 'Live_update_model', 'Contact_model', 'Enquiry_model', 'Nb_property_model', 'Nb_user_model', 'Nb_amenity_model'));
+        $this->output->set_content_type('application/json');
+        $this->_cors();
+    }
+
+    private function _cors()
+    {
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+        header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+        if (strtoupper((string) $this->input->server('REQUEST_METHOD')) === 'OPTIONS') {
+            $this->output->set_output('');
+            exit;
+        }
+    }
+
+    private function _json($payload, $code = 200)
+    {
+        $this->output->set_status_header($code);
+        $this->output->set_output(json_encode($payload));
+    }
+
+    private function _asset_url_or_null($path)
+    {
+        if ($path === null) {
+            return null;
+        }
+        $path = trim((string) $path);
+        if ($path === '') {
+            return null;
+        }
+        if (preg_match('#^https?://#i', $path)) {
+            return $path;
+        }
+        return base_url($path);
+    }
+
+    private function _input_json_or_post()
+    {
+        $contentType = (string) $this->input->server('CONTENT_TYPE');
+        if (stripos($contentType, 'application/json') !== false) {
+            $raw = file_get_contents('php://input');
+            $json = json_decode($raw, true);
+            return is_array($json) ? $json : array();
+        }
+        return array_merge($this->input->post(), $this->input->get());
+    }
+
+    private function _normalize_multi_images($value)
+    {
+        if ($value === null) {
+            return null;
+        }
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                $value = $decoded;
+            }
+        }
+        if (!is_array($value)) {
+            return null;
+        }
+        $out = array();
+        foreach ($value as $item) {
+            $item = trim((string) $item);
+            if ($item !== '') {
+                $out[] = $item;
+            }
+        }
+        return !empty($out) ? array_values(array_unique($out)) : null;
+    }
+
+    private function _format_housing_news($row)
+    {
+        $rawImages = isset($row->multiImages) ? $row->multiImages : null;
+        $images = $this->_normalize_multi_images($rawImages) ?: array();
+        $imageUrls = array();
+        foreach ($images as $img) {
+            $url = $this->_asset_url_or_null($img);
+            if ($url !== null) {
+                $imageUrls[] = $url;
+            }
+        }
+        $createdAt = isset($row->createdAt) ? (string) $row->createdAt : '';
+        $publishedAt = null;
+        if ($createdAt !== '') {
+            $ts = strtotime($createdAt);
+            $publishedAt = $ts ? date(DATE_ATOM, $ts) : $createdAt;
+        }
+        return array(
+            'id' => isset($row->id) ? (int) $row->id : 0,
+            'title' => isset($row->title) ? (string) $row->title : '',
+            'subtitle' => isset($row->subtitle) && $row->subtitle !== null ? (string) $row->subtitle : '',
+            'description' => isset($row->description) && $row->description !== null ? (string) $row->description : '',
+            'authorName' => isset($row->authorName) && $row->authorName !== null ? (string) $row->authorName : '',
+            'category' => isset($row->category) ? (string) $row->category : 'market',
+            'slug' => isset($row->title) ? url_title((string) $row->title, '-', true) : '',
+            'multiImages' => $imageUrls,
+            'publishedAt' => $publishedAt,
+            'createdAt' => $createdAt !== '' ? $createdAt : null,
+        );
+    }
+
+    public function banners()
+    {
+        $params = $this->_input_json_or_post();
+        $status = isset($params['status']) ? trim((string) $params['status']) : null;
+        $limit = isset($params['limit']) && trim((string) $params['limit']) !== '' ? (int) $params['limit'] : null;
+        $offset = isset($params['offset']) && trim((string) $params['offset']) !== '' ? (int) $params['offset'] : 0;
+        $rows = $this->Banner_model->get_all($status, $limit, $offset);
+        
+        $out = array();
+        foreach ($rows as $row) {
+            $formatted = (array) $row;
+            if (isset($formatted['image'])) {
+                $formatted['image'] = $this->_asset_url_or_null($formatted['image']);
+            }
+            $out[] = $formatted;
+        }
+
+        if (method_exists($this->Banner_model, 'count_all')) {
+            $count = $this->Banner_model->count_all($status);
+        } else {
+            $count = count($rows);
+        }
+        $this->_json(array('success' => true, 'data' => $out, 'count' => $count));
+    }
+
+    public function banners_create()
+    {
+        if ($this->input->method() !== 'post') {
+            $this->_json(array('success' => false, 'message' => 'POST only'), 405);
+            return;
+        }
+
+        $input = $this->_input_json_or_post();
+        $image = trim((string) ($input['image'] ?? ''));
+        $status = trim((string) ($input['status'] ?? 'inactive'));
+
+        if ($image === '') {
+            $this->_json(array('success' => false, 'message' => 'image is required'), 422);
+            return;
+        }
+
+        $data = array(
+            'image' => $this->security->xss_clean($image),
+            'status' => $status !== '' ? $status : 'inactive',
+        );
+
+        $id = $this->Banner_model->create($data);
+        if ($id <= 0) {
+            $this->_json(array('success' => false, 'message' => 'Could not create banner'), 500);
+            return;
+        }
+
+        $this->_json(array('success' => true, 'message' => 'Banner created', 'id' => $id));
+    }
+
+    public function banners_update($id = 0)
+    {
+        $id = (int) $id;
+        if ($id <= 0) {
+            $this->_json(array('success' => false, 'message' => 'Invalid banner ID'), 400);
+            return;
+        }
+        if ($this->input->method() !== 'post') {
+            $this->_json(array('success' => false, 'message' => 'POST only'), 405);
+            return;
+        }
+
+        $banner = $this->Banner_model->get_by_id($id);
+        if (!$banner) {
+            $this->_json(array('success' => false, 'message' => 'Banner not found'), 404);
+            return;
+        }
+
+        $input = $this->_input_json_or_post();
+        $update_data = array();
+        if (isset($input['image'])) {
+            $update_data['image'] = $this->security->xss_clean(trim((string) $input['image']));
+        }
+        if (isset($input['status'])) {
+            $update_data['status'] = trim((string) $input['status']) ?: 'inactive';
+        }
+
+        if (empty($update_data)) {
+            $this->_json(array('success' => false, 'message' => 'Nothing to update'), 422);
+            return;
+        }
+
+        $this->Banner_model->update($id, $update_data);
+        $this->_json(array('success' => true, 'message' => 'Banner updated', 'id' => $id));
+    }
+
+    public function feedback()
+    {
+        if ($this->input->method() !== 'post') {
+            $this->_json(array('success' => false, 'message' => 'POST only'), 405);
+            return;
+        }
+
+        $input = $this->_input_json_or_post();
+        $name = trim((string) ($input['name'] ?? ''));
+        $email = trim((string) ($input['email'] ?? ''));
+        $message = trim((string) ($input['message'] ?? ''));
+        $phone = trim((string) ($input['phone'] ?? ''));
+        $userId = trim((string) ($input['userId'] ?? $input['user_id'] ?? ''));
+
+        if ($name === '' || $email === '' || $message === '') {
+            $this->_json(array('success' => false, 'message' => 'name, email and message are required'), 422);
+            return;
+        }
+
+        $data = array(
+            'title' => $this->security->xss_clean($name . ' (' . $email . ')'),
+            'description' => $this->security->xss_clean($message . ( $phone ? "\nPhone: " . $phone : '' )),
+            'createdAt' => date('Y-m-d H:i:s'),
+        );
+        if ($userId !== '') {
+            $data['userId'] = $userId;
+        }
+
+        $id = $this->Feedback_model->create($data);
+        if ($id <= 0) {
+            $this->_json(array('success' => false, 'message' => 'Could not save feedback'), 500);
+            return;
+        }
+
+        $this->_json(array('success' => true, 'message' => 'Feedback submitted', 'id' => $id));
+    }
+
+    public function contact()
+    {
+        if ($this->input->method() !== 'post') {
+            $this->_json(array('success' => false, 'message' => 'POST only'), 405);
+            return;
+        }
+
+        $input = $this->_input_json_or_post();
+        $name = trim((string) ($input['name'] ?? ''));
+        $email = trim((string) ($input['email'] ?? ''));
+        $phone = trim((string) ($input['phone'] ?? ''));
+        $subject = trim((string) ($input['subject'] ?? ''));
+        $message = trim((string) ($input['message'] ?? ''));
+
+        if ($name === '' || $email === '' || $message === '') {
+            $this->_json(array('success' => false, 'message' => 'name, email and message are required'), 422);
+            return;
+        }
+
+        $data = array(
+            'title' => $this->security->xss_clean('Contact: ' . $subject . ' - ' . $name . ' (' . $email . ')'),
+            'description' => $this->security->xss_clean($message . ( $phone ? "\nPhone: " . $phone : '' )),
+            'createdAt' => date('Y-m-d H:i:s'),
+        );
+
+        $id = $this->Feedback_model->create($data);
+        if ($id <= 0) {
+            $this->_json(array('success' => false, 'message' => 'Could not save contact request'), 500);
+            return;
+        }
+
+        $this->_json(array('success' => true, 'message' => 'Contact request submitted', 'id' => $id));
+    }
+
+    public function enquiry()
+    {
+        if ($this->input->method() !== 'post') {
+            $this->_json(array('success' => false, 'message' => 'POST only'), 405);
+            return;
+        }
+
+        $input      = $this->_input_json_or_post();
+        $email      = trim((string) ($input['email']      ?? ''));
+        $phone      = trim((string) ($input['phone']      ?? ''));
+        $propertyId = (int) ($input['propertyId'] ?? $input['property_id'] ?? 0);
+        $userId     = (int) ($input['userId']     ?? $input['user_id']     ?? 0);
+        $message    = trim((string) ($input['message']    ?? ''));
+        $name       = trim((string) ($input['name']       ?? ''));
+
+        $using_nb = $this->Enquiry_model->using_nb_enquiries();
+
+        if ($using_nb) {
+            // nb_enquiries: userId + propertyId + message + email required; no name column
+            if ($userId <= 0) {
+                $this->_json(array('success' => false, 'message' => 'userId is required'), 422);
+                return;
+            }
+            if ($propertyId <= 0 || $message === '' || $email === '') {
+                $this->_json(array('success' => false, 'message' => 'propertyId, email and message are required'), 422);
+                return;
+            }
+        } else {
+            if ($name === '' || $email === '' || $propertyId <= 0) {
+                $this->_json(array('success' => false, 'message' => 'name, email and propertyId are required'), 422);
+                return;
+            }
+        }
+
+        $data = array(
+            'name'        => $this->security->xss_clean($name),
+            'email'       => $this->security->xss_clean($email),
+            'phone'       => $this->security->xss_clean($phone),
+            'property_id' => $propertyId,
+            'user_id'     => $userId > 0 ? $userId : null,
+            'message'     => $this->security->xss_clean($message),
+            'status'      => 'new',
+            'created_at'  => date('Y-m-d H:i:s'),
+        );
+
+        $id = $this->Enquiry_model->create($data);
+        if (!$id) {
+            $this->_json(array('success' => false, 'message' => 'Could not save enquiry'), 500);
+            return;
+        }
+
+        $this->_json(array('success' => true, 'message' => 'Enquiry submitted', 'id' => $id));
+    }
+
+    public function enquiries_by_user($userId = null)
+    {
+        $userId = (int) $userId;
+        if ($userId <= 0) {
+            $this->_json(array('success' => false, 'message' => 'Invalid user ID'), 400);
+            return;
+        }
+        $rows = $this->Enquiry_model->get_by_userid($userId);
+
+        $out = array();
+        foreach ($rows as $row) {
+            $item = (array) $row;
+            // Format property thumbnail from images JSON
+            if (!empty($item['property_images'])) {
+                $imgs = json_decode($item['property_images'], true);
+                $item['property_thumbnail'] = (!empty($imgs) && is_array($imgs))
+                    ? $this->_asset_url_or_null($imgs[0])
+                    : null;
+            } else {
+                $item['property_thumbnail'] = null;
+            }
+            unset($item['property_images']);
+            $out[] = $item;
+        }
+
+        $this->_json(array('success' => true, 'data' => $out, 'total' => count($out)));
+    }
+
+    public function enquiries_by_customer($customerId = null)
+    {
+        $customerId = (int) $customerId;
+        if ($customerId <= 0) {
+            $this->_json(array('success' => false, 'message' => 'Invalid customer ID'), 400);
+            return;
+        }
+        $rows = $this->Enquiry_model->get_by_customer_id($customerId);
+        $this->_json(array('success' => true, 'data' => $rows));
+    }
+
+    public function housing_news()
+    {
+        $params = $this->_input_json_or_post();
+        $category = isset($params['category']) ? trim((string) $params['category']) : null;
+        if ($category === '') { $category = null; }
+        $limit = isset($params['limit']) && trim((string) $params['limit']) !== '' ? (int) $params['limit'] : null;
+        $offset = isset($params['offset']) && trim((string) $params['offset']) !== '' ? (int) $params['offset'] : 0;
+        
+        $rows = $this->Housing_news_model->get_all($category, $limit, $offset);
+        $count = $this->Housing_news_model->count_all($category);
+        
+        $out = array();
+        foreach ($rows as $row) {
+            $out[] = $this->_format_housing_news($row);
+        }
+        
+        $this->_json(array(
+            'success' => true, 
+            'housingNews' => $out, 
+            'total' => (int) $count,
+            'limit' => $limit,
+            'offset' => $offset
+        ));
+    }
+
+    public function housing_news_create()
+    {
+        if ($this->input->method() !== 'post') {
+            $this->_json(array('success' => false, 'message' => 'POST only'), 405);
+            return;
+        }
+
+        $input = $this->_input_json_or_post();
+        $title = trim((string) ($input['title'] ?? ''));
+        $subtitle = trim((string) ($input['subtitle'] ?? ''));
+        $description = trim((string) ($input['description'] ?? ''));
+        $authorName = trim((string) ($input['authorName'] ?? ''));
+        $category = trim((string) ($input['category'] ?? 'market'));
+        $allowed = array('market', 'tips', 'legal');
+        if ($title === '') {
+            $this->_json(array('success' => false, 'message' => 'title is required'), 422);
+            return;
+        }
+        if (!in_array($category, $allowed, true)) {
+            $category = 'market';
+        }
+
+        $data = array(
+            'title' => $title,
+            'subtitle' => $subtitle !== '' ? $subtitle : null,
+            'description' => $description !== '' ? $description : null,
+            'authorName' => $authorName !== '' ? $authorName : null,
+            'category' => $category,
+            'multiImages' => $this->_normalize_multi_images($input['multiImages']),
+        );
+
+        if ($data['multiImages'] !== null) {
+            $data['multiImages'] = json_encode($data['multiImages']);
+        }
+
+        $id = $this->Housing_news_model->create($data);
+        if ($id <= 0) {
+            $this->_json(array('success' => false, 'message' => 'Could not create housing news'), 500);
+            return;
+        }
+
+        $this->_json(array('success' => true, 'message' => 'Housing news created', 'id' => $id));
+    }
+
+    public function housing_news_update($id = 0)
+    {
+        $id = (int) $id;
+        if ($id <= 0) {
+            $this->_json(array('success' => false, 'message' => 'Invalid housing news ID'), 400);
+            return;
+        }
+        if ($this->input->method() !== 'post') {
+            $this->_json(array('success' => false, 'message' => 'POST only'), 405);
+            return;
+        }
+
+        $item = $this->Housing_news_model->get_by_id($id);
+        if (!$item) {
+            $this->_json(array('success' => false, 'message' => 'Housing news not found'), 404);
+            return;
+        }
+
+        $input = $this->_input_json_or_post();
+        $update_data = array();
+        if (isset($input['title'])) {
+            $title = trim((string) $input['title']);
+            if ($title === '') {
+                $this->_json(array('success' => false, 'message' => 'title is required'), 422);
+                return;
+            }
+            $update_data['title'] = $title;
+        }
+        if (isset($input['subtitle'])) {
+            $update_data['subtitle'] = trim((string) $input['subtitle']) ?: null;
+        }
+        if (isset($input['description'])) {
+            $update_data['description'] = trim((string) $input['description']) ?: null;
+        }
+        if (isset($input['authorName'])) {
+            $update_data['authorName'] = trim((string) $input['authorName']) ?: null;
+        }
+        if (isset($input['category'])) {
+            $category = trim((string) $input['category']);
+            $allowed = array('market', 'tips', 'legal');
+            $update_data['category'] = in_array($category, $allowed, true) ? $category : 'market';
+        }
+        if (array_key_exists('multiImages', $input)) {
+            $normalized = $this->_normalize_multi_images($input['multiImages']);
+            $update_data['multiImages'] = $normalized !== null ? json_encode($normalized) : null;
+        }
+
+        if (empty($update_data)) {
+            $this->_json(array('success' => false, 'message' => 'Nothing to update'), 422);
+            return;
+        }
+
+        $this->Housing_news_model->update($id, $update_data);
+        $this->_json(array('success' => true, 'message' => 'Housing news updated', 'id' => $id));
+    }
+
+    public function housing_news_item($id = null)
+    {
+        $id = (int) $id;
+        if ($id <= 0) {
+            $this->_json(array('success' => false, 'message' => 'Invalid housing news ID'), 400);
+            return;
+        }
+
+        $row = $this->Housing_news_model->get_by_id($id);
+        if (!$row) {
+            $this->_json(array('success' => false, 'message' => 'Housing news not found'), 404);
+            return;
+        }
+
+        $this->_json(array('success' => true, 'data' => $this->_format_housing_news($row)));
+    }
+
+    // ============================================
+    // Live Updates API
+    // ============================================
+
+    private function _format_live_update($row)
+    {
+        $out = (array) $row;
+        if (isset($out['image'])) {
+            $out['image'] = $this->_asset_url_or_null($out['image']);
+        }
+        return $out;
+    }
+
+    public function live_updates()
+    {
+        $params = $this->_input_json_or_post();
+        $limit = isset($params['limit']) ? (int) $params['limit'] : null;
+        $offset = isset($params['offset']) ? (int) $params['offset'] : 0;
+        $upcoming = !empty($params['upcoming']);
+        $status = isset($params['status']) ? trim((string) $params['status']) : null;
+        
+        $rows = $this->Live_update_model->get_list(null, $limit, $offset, $upcoming, $status);
+        $total = $this->Live_update_model->count_for_list(null, $upcoming, $status);
+        
+        $out = array();
+        foreach ($rows as $row) {
+            $out[] = $this->_format_live_update($row);
+        }
+
+        $this->_json(array(
+            'success' => true,
+            'data' => $out,
+            'total' => $total,
+            'limit' => $limit,
+            'offset' => $offset
+        ));
+    }
+
+    public function live_update($id = null)
+    {
+        $id = (int) $id;
+        if ($id <= 0) {
+            $this->_json(array('success' => false, 'message' => 'Invalid ID'), 400);
+            return;
+        }
+        $row = $this->Live_update_model->get_by_id($id);
+        if (!$row) {
+            $this->_json(array('success' => false, 'message' => 'Live update not found'), 404);
+            return;
+        }
+        $this->_json(array('success' => true, 'data' => $this->_format_live_update($row)));
+    }
+
+    public function live_updates_for_user($userId = null)
+    {
+        if ($userId === null || $userId === '') {
+            $this->_json(array('success' => false, 'message' => 'userId is required'), 400);
+            return;
+        }
+        // Support both GET query params and POST/JSON body
+        $get    = $this->input->get();
+        $params = $this->_input_json_or_post();
+        $merged = array_merge((array) $get, (array) $params);
+        $limit  = isset($merged['limit'])  && trim((string) $merged['limit'])  !== '' ? (int) $merged['limit']  : null;
+        $offset = isset($merged['offset']) && trim((string) $merged['offset']) !== '' ? (int) $merged['offset'] : 0;
+
+        $rows  = $this->Live_update_model->get_all_by_user($userId, $limit, $offset);
+        $total = $this->Live_update_model->count_all_for_user($userId);
+
+        $out = array();
+        foreach ($rows as $row) {
+            $out[] = $this->_format_live_update($row);
+        }
+
+        $this->_json(array(
+            'success' => true,
+            'data'    => $out,
+            'total'   => $total,
+            'limit'   => $limit,
+            'offset'  => $offset,
+        ));
+    }
+
+    public function live_update_remove($id = null)
+    {
+        $id = (int) $id;
+        if ($id <= 0) {
+            $this->_json(array('success' => false, 'message' => 'Invalid ID'), 400);
+            return;
+        }
+        if ($this->input->method() !== 'post' && $this->input->method() !== 'delete') {
+            $this->_json(array('success' => false, 'message' => 'POST or DELETE only'), 405);
+            return;
+        }
+        $row = $this->Live_update_model->get_by_id($id);
+        if (!$row) {
+            $this->_json(array('success' => false, 'message' => 'Live update not found'), 404);
+            return;
+        }
+        $this->Live_update_model->delete($id);
+        $this->_json(array('success' => true, 'message' => 'Live update deleted'));
+    }
+
+    public function live_update_create()
+    {
+        if ($this->input->method() !== 'post') {
+            $this->_json(array('success' => false, 'message' => 'POST only'), 405);
+            return;
+        }
+        $input = $this->_input_json_or_post();
+        $title = trim((string) ($input['title'] ?? ''));
+        if ($title === '') {
+            $this->_json(array('success' => false, 'message' => 'title is required'), 422);
+            return;
+        }
+        
+        $data = array(
+            'title' => $this->security->xss_clean($title),
+            'platform' => trim((string) ($input['platform'] ?? 'app')),
+            'url' => trim((string) ($input['url'] ?? '')),
+            'description' => $this->security->xss_clean(trim((string) ($input['description'] ?? ''))),
+            'image' => trim((string) ($input['image'] ?? '')),
+            'liveTime' => trim((string) ($input['liveTime'] ?? date('Y-m-d H:i:s'))),
+            'status' => trim((string) ($input['status'] ?? 'upcoming')),
+            'createdAt' => date('Y-m-d H:i:s'),
+        );
+        
+        if ($this->Live_update_model->has_user_column()) {
+            $data['userId'] = trim((string) ($input['userId'] ?? ''));
+        }
+        
+        $id = $this->Live_update_model->create($data);
+        if ($id <= 0) {
+            $this->_json(array('success' => false, 'message' => 'Could not create live update'), 500);
+            return;
+        }
+        $this->_json(array('success' => true, 'message' => 'Live update created', 'id' => $id));
+    }
+
+    public function live_update_save($id = null)
+    {
+        $id = (int) $id;
+        if ($id <= 0) {
+            $this->_json(array('success' => false, 'message' => 'Invalid ID'), 400);
+            return;
+        }
+        if ($this->input->method() !== 'post' && $this->input->method() !== 'put') {
+            $this->_json(array('success' => false, 'message' => 'POST or PUT only'), 405);
+            return;
+        }
+        
+        $row = $this->Live_update_model->get_by_id($id);
+        if (!$row) {
+            $this->_json(array('success' => false, 'message' => 'Live update not found'), 404);
+            return;
+        }
+        
+        $input = $this->_input_json_or_post();
+        $update = array();
+        foreach (array('title', 'platform', 'url', 'description', 'image', 'liveTime', 'status', 'userId') as $f) {
+            if (isset($input[$f])) {
+                if ($f === 'title' || $f === 'description') {
+                    $update[$f] = $this->security->xss_clean(trim((string) $input[$f]));
+                } elseif ($f === 'userId') {
+                    if ($this->Live_update_model->has_user_column()) {
+                        $update[$f] = trim((string) $input[$f]);
+                    }
+                } else {
+                    $update[$f] = trim((string) $input[$f]);
+                }
+            }
+        }
+        
+        if (empty($update)) {
+            $this->_json(array('success' => false, 'message' => 'Nothing to update'), 422);
+            return;
+        }
+        
+        $this->Live_update_model->update($id, $update);
+        $this->_json(array('success' => true, 'message' => 'Live update updated', 'id' => $id));
+    }
+
+    // ============================================
+    // Properties Core API (nb_properties table)
+    // ============================================
+
+    private function _format_property_core($row)
+    {
+        $out = (array) $row;
+        foreach (array('images', 'amenities', 'nearby') as $f) {
+            if (isset($out[$f]) && is_string($out[$f]) && $out[$f] !== '') {
+                $decoded = json_decode($out[$f], true);
+                $out[$f] = is_array($decoded) ? $decoded : array();
+            } elseif (!isset($out[$f])) {
+                $out[$f] = array();
+            }
+        }
+        if (!empty($out['images']) && is_array($out['images'])) {
+            $urls = array();
+            foreach ($out['images'] as $img) {
+                $url = $this->_asset_url_or_null($img);
+                if ($url !== null) { $urls[] = $url; }
+            }
+            $out['images'] = $urls;
+        }
+        if (!empty($out['location_image'])) {
+            $out['location_image'] = $this->_asset_url_or_null($out['location_image']);
+        }
+        return $out;
+    }
+
+    public function properties_core()
+    {
+        $params = $this->_input_json_or_post();
+
+        $filters = array();
+        foreach (array('listing_type', 'property_type', 'sort') as $f) {
+            if (isset($params[$f]) && trim((string) $params[$f]) !== '') {
+                $filters[$f] = trim((string) $params[$f]);
+            }
+        }
+        foreach (array('city_id', 'bedrooms') as $f) {
+            if (isset($params[$f]) && trim((string) $params[$f]) !== '') {
+                $filters[$f] = (int) $params[$f];
+            }
+        }
+        foreach (array('min_price', 'max_price') as $f) {
+            if (isset($params[$f]) && trim((string) $params[$f]) !== '') {
+                $filters[$f] = (float) $params[$f];
+            }
+        }
+        foreach (array('locality_q', 'lat', 'lng', 'radius_km') as $f) {
+            if (isset($params[$f]) && trim((string) $params[$f]) !== '') {
+                $filters[$f] = trim((string) $params[$f]);
+            }
+        }
+        // userId / user_id / owner_id all map to owner_id
+        $uid = $params['userId'] ?? $params['user_id'] ?? $params['owner_id'] ?? null;
+        if ($uid !== null && trim((string) $uid) !== '') {
+            $filters['owner_id'] = (int) $uid;
+        }
+        if (!empty($params['is_featured'])) {
+            $filters['is_featured'] = 1;
+        }
+
+        $limit  = isset($params['limit'])  && trim((string) $params['limit'])  !== '' ? (int) $params['limit']  : 20;
+        $offset = isset($params['offset']) && trim((string) $params['offset']) !== '' ? (int) $params['offset'] : 0;
+
+        $rows  = $this->Nb_property_model->search($filters, $limit, $offset);
+        $total = $this->Nb_property_model->count_search($filters);
+
+        $out = array();
+        foreach ($rows as $row) {
+            $out[] = $this->_format_property_core($row);
+        }
+
+        $this->_json(array(
+            'success' => true,
+            'data'    => $out,
+            'total'   => (int) $total,
+            'limit'   => $limit,
+            'offset'  => $offset,
+        ));
+    }
+
+    public function property_core($id = null)
+    {
+        $id = (int) $id;
+        if ($id <= 0) {
+            $this->_json(array('success' => false, 'message' => 'Invalid property ID'), 400);
+            return;
+        }
+        $row = $this->Nb_property_model->get_by_id($id);
+        if (!$row) {
+            $this->_json(array('success' => false, 'message' => 'Property not found'), 404);
+            return;
+        }
+        $this->_json(array('success' => true, 'data' => $this->_format_property_core($row)));
+    }
+
+    public function properties_create()
+    {
+        return $this->_property_save_internal();
+    }
+
+    public function property_update($id = 0)
+    {
+        return $this->_property_save_internal((int) $id);
+    }
+
+    public function property_delete($id = 0)
+    {
+        $id = (int) $id;
+        if ($id <= 0) {
+            return $this->_json(array('success' => false, 'message' => 'Invalid ID'), 400);
+        }
+        if ($this->input->method() !== 'post' && $this->input->method() !== 'delete') {
+            return $this->_json(array('success' => false, 'message' => 'POST or DELETE only'), 405);
+        }
+
+        $row = $this->Nb_property_model->get_by_id($id);
+        if (!$row) {
+            return $this->_json(array('success' => false, 'message' => 'Property not found'), 404);
+        }
+
+        // Check ownership if not admin
+        $u = $this->session->userdata('nb_user');
+        $session_uid = (int) $this->session->userdata('nb_user_id');
+        $is_admin = $u && isset($u['role']) && $u['role'] === 'admin' && isset($u['status']) && $u['status'] === 'approved';
+
+        if (!$is_admin && (int) $row->owner_id !== $session_uid) {
+             return $this->_json(array('success' => false, 'message' => 'Forbidden'), 403);
+        }
+
+        $this->Nb_property_model->delete($id);
+        $this->_json(array('success' => true, 'message' => 'Property deleted'));
+    }
+
+    private function _property_save_internal($id = 0)
+    {
+        $this->load->library('Nb_api_token');
+        $this->nb_api_token->try_attach_session();
+
+        if ($this->input->method() !== 'post') {
+            return $this->_json(array('success' => false, 'message' => 'POST only'), 405);
+        }
+
+        $input = $this->_input_json_or_post();
+        $u = $this->session->userdata('nb_user');
+        $session_uid = (int) $this->session->userdata('nb_user_id');
+        $is_admin = $u && isset($u['role']) && $u['role'] === 'admin' && isset($u['status']) && $u['status'] === 'approved';
+
+        $owner_id = null;
+        $post_owner = (int) ($input['owner_id'] ?? $input['userId'] ?? $input['user_id'] ?? 0);
+
+        if ($session_uid > 0) {
+            $owner_id = $session_uid;
+        } elseif ($post_owner > 0) {
+            if (!$this->_valid_owner_for_property($post_owner)) {
+                return $this->_json(array('success' => false, 'message' => 'Invalid owner account'), 400);
+            }
+            $owner_id = $post_owner;
+        } else {
+            return $this->_json(array('success' => false, 'message' => 'Login required or owner_id is required'), 401);
+        }
+
+        $existing = null;
+        if ($id > 0) {
+            $existing = $this->Nb_property_model->get_by_id($id);
+            if (!$existing) {
+                return $this->_json(array('success' => false, 'message' => 'Property not found'), 404);
+            }
+            if (!$is_admin && (int) $existing->owner_id !== $owner_id) {
+                return $this->_json(array('success' => false, 'message' => 'Forbidden'), 403);
+            }
+        }
+
+        // Populate $_POST for form_validation
+        if (stripos((string) $this->input->server('CONTENT_TYPE'), 'application/json') !== false) {
+            $_POST = array_merge($_POST, $input);
+        }
+
+        $this->form_validation->set_rules('title', 'Title', 'required|trim|max_length[300]');
+        $this->form_validation->set_rules('property_type', 'Type', 'required|trim');
+        $this->form_validation->set_rules('listing_type', 'Listing', 'required|in_list[rent,sale]');
+        $this->form_validation->set_rules('price', 'Price', 'required|numeric');
+        $this->form_validation->set_rules('address', 'Address', 'required|trim');
+        $this->form_validation->set_rules('locality', 'Locality', 'trim|max_length[200]');
+        $this->form_validation->set_rules('city_id', 'City', 'required|integer');
+
+        if (!$this->form_validation->run()) {
+            return $this->_json(array('success' => false, 'message' => validation_errors(' ', " \n")));
+        }
+
+        $amenities = isset($input['amenities']) ? $input['amenities'] : array();
+        if (!is_array($amenities)) { $amenities = array(); }
+        
+        $row = array(
+            'title'            => $this->security->xss_clean($input['title'] ?? ''),
+            'description'      => $input['description'] ?? '',
+            'property_type'    => $input['property_type'] ?? '',
+            'listing_type'     => $input['listing_type'] ?? '',
+            'price'            => (float) ($input['price'] ?? 0),
+            'bedrooms'         => isset($input['bedrooms']) && $input['bedrooms'] !== '' ? (int) $input['bedrooms'] : null,
+            'bathrooms'        => isset($input['bathrooms']) && $input['bathrooms'] !== '' ? (int) $input['bathrooms'] : null,
+            'area_sqft'        => isset($input['area_sqft']) && $input['area_sqft'] !== '' ? (int) $input['area_sqft'] : null,
+            'address'          => $input['address'] ?? '',
+            'locality'         => $this->security->xss_clean($input['locality'] ?? ''),
+            'city_id'          => (int) ($input['city_id'] ?? 0),
+            'location'         => $this->security->xss_clean($input['location'] ?? ''),
+            'is_price_negotiable' => !empty($input['is_price_negotiable']) ? 1 : 0,
+            'rate_per_sqft'       => $this->_parse_optional_decimal($input['rate_per_sqft'] ?? null),
+            'available_from'      => $this->_parse_date_field($input['available_from'] ?? null),
+            'plot_length_ft'      => $this->_parse_optional_decimal($input['plot_length_ft'] ?? null),
+            'plot_width_ft'       => $this->_parse_optional_decimal($input['plot_width_ft'] ?? null),
+            'has_boundary_wall'   => $this->_parse_boundary_wall($input['has_boundary_wall'] ?? null),
+            'amenities'           => json_encode($amenities),
+        );
+
+        if ($this->db->field_exists('nearby', 'nb_properties')) {
+            $row['nearby'] = $this->_nearby_json_from_input($input);
+        }
+        if ($this->db->field_exists('video_url', 'nb_properties')) {
+            $v = nb_sanitize_video_url($input['video_url'] ?? $input['video'] ?? '');
+            $row['video_url'] = $v;
+        }
+
+        if (!empty($_FILES['location_image']['name'])) {
+            $config = array(
+                'upload_path'   => FCPATH . 'assets/uploads/nb_properties/',
+                'allowed_types' => 'jpg|jpeg|png|webp',
+                'max_size'      => 5120,
+                'encrypt_name'  => true,
+            );
+            $this->load->library('upload', $config);
+            $this->upload->initialize($config);
+            if ($this->upload->do_upload('location_image')) {
+                $upd_data = $this->upload->data();
+                $row['location_image'] = 'assets/uploads/nb_properties/' . $upd_data['file_name'];
+                if ($existing && !empty($existing->location_image) && file_exists(FCPATH . $existing->location_image)) {
+                    @unlink(FCPATH . $existing->location_image);
+                }
+            }
+        }
+
+        if ($is_admin) {
+            $row['owner_id'] = $owner_id;
+            if ($this->db->field_exists('is_active', 'nb_properties')) {
+                $row['is_active'] = !empty($input['is_active']) ? 1 : 0;
+            }
+            if ($this->db->field_exists('is_featured', 'nb_properties')) {
+                $row['is_featured'] = !empty($input['is_featured']) ? 1 : 0;
+            }
+            if ($this->db->field_exists('is_latest', 'nb_properties')) {
+                $row['is_latest'] = !empty($input['is_latest']) ? 1 : 0;
+            }
+        } else {
+            $row['owner_id'] = $owner_id;
+            if ($this->db->field_exists('is_active', 'nb_properties')) {
+                if ($id < 1) { $row['is_active'] = 1; }
+            }
+        }
+
+        if ($this->db->field_exists('slug', 'nb_properties')) {
+            if ($id > 0) {
+                if ($this->Nb_property_model->slug_is_empty($existing->slug) || strcmp($existing->title, $row['title']) !== 0) {
+                    $row['slug'] = $this->Nb_property_model->unique_slug($row['title'], $id);
+                }
+            } else {
+                $row['slug'] = $this->Nb_property_model->unique_slug($row['title'], null);
+            }
+        }
+
+        $new_paths = $this->_upload_property_images($id > 0 ? $id : null);
+        $existing_paths = $input['existing_paths'] ?? array();
+        if (!is_array($existing_paths)) { $existing_paths = array(); }
+        $remove = $input['remove_existing'] ?? array();
+        if (!is_array($remove)) { $remove = array(); }
+        
+        $kept = array();
+        foreach ($existing_paths as $ep) {
+            $ep = trim((string) $ep);
+            if ($ep !== '' && !in_array($ep, $remove, true)) { $kept[] = $ep; }
+        }
+        $all_images = array_merge($kept, $new_paths);
+        if (count($all_images) > 10) { $all_images = array_slice($all_images, 0, 10); }
+        $cover_index = (int) ($input['cover_index'] ?? 0);
+        $all_images = nb_reorder_cover($all_images, $cover_index);
+
+        if ($id < 1 || ($input['image_action'] ?? '') === 'replace' || !empty($new_paths) || !empty($remove)) {
+            $row['images'] = json_encode($all_images);
+        }
+
+        if ($id > 0) {
+            $this->Nb_property_model->update($id, $row);
+            $new_id = $id;
+        } else {
+            $new_id = $this->Nb_property_model->create($row);
+        }
+
+        $saved = $this->Nb_property_model->get_by_id((int) $new_id);
+        $payload = array('success' => true, 'property_id' => (int) $new_id);
+        if ($saved) {
+            $payload['property'] = $this->_property_response_payload($saved);
+        }
+        return $this->_json($payload);
+    }
+
+    private function _valid_owner_for_property($user_id)
+    {
+        $row = $this->Nb_user_model->get_by_id($user_id);
+        return (bool) $row;
+    }
+
+    private function _upload_property_images($existing_id)
+    {
+        if (empty($_FILES['images']['name']) || !is_array($_FILES['images']['name'])) {
+            return array();
+        }
+        $paths = array();
+        $count = min(count($_FILES['images']['name']), 10);
+        $upload_path = FCPATH . 'assets/uploads/nb_properties/';
+        if (!is_dir($upload_path)) { mkdir($upload_path, 0755, true); }
+        $this->load->library('upload');
+        for ($i = 0; $i < $count; $i++) {
+            if (empty($_FILES['images']['name'][$i])) { continue; }
+            $_FILES['userfile'] = array(
+                'name'     => $_FILES['images']['name'][$i],
+                'type'     => $_FILES['images']['type'][$i],
+                'tmp_name' => $_FILES['images']['tmp_name'][$i],
+                'error'    => $_FILES['images']['error'][$i],
+                'size'     => $_FILES['images']['size'][$i],
+            );
+            $config = array(
+                'upload_path'   => $upload_path,
+                'allowed_types' => 'jpg|jpeg|png|webp',
+                'max_size'      => 5120,
+                'encrypt_name'  => true,
+            );
+            $this->upload->initialize($config);
+            if ($this->upload->do_upload('userfile')) {
+                $data = $this->upload->data();
+                $paths[] = 'assets/uploads/nb_properties/' . $data['file_name'];
+            }
+        }
+        return $paths;
+    }
+
+    private function _property_response_payload($row)
+    {
+        $out = (array) $row;
+        foreach (array('images', 'amenities', 'nearby') as $f) {
+            if (isset($out[$f]) && is_string($out[$f]) && $out[$f] !== '') {
+                $decoded = json_decode($out[$f], true);
+                if (is_array($decoded)) { $out[$f] = $decoded; }
+            }
+        }
+        if (isset($out['location_image']) && !empty($out['location_image'])) {
+            $li = $out['location_image'];
+            $out['location_image_url'] = preg_match('#^https?://#i', $li) ? $li : base_url($li);
+        }
+        if (isset($out['images']) && is_array($out['images'])) {
+            $out['image_urls'] = array();
+            foreach ($out['images'] as $img) {
+                $out['image_urls'][] = preg_match('#^https?://#i', $img) ? $img : base_url($img);
+            }
+        }
+        // Owner contact fields (joined from nb_users)
+        $out['owner_name']  = isset($out['owner_name'])  ? (string) $out['owner_name']  : '';
+        $out['owner_phone'] = isset($out['owner_phone']) ? (string) $out['owner_phone'] : '';
+        // Tag flags
+        $out['tags_best_rate_localities']  = !empty($out['tags_best_rate_localities'])  ? 1 : 0;
+        $out['tags_high_growth_localities'] = !empty($out['tags_high_growth_localities']) ? 1 : 0;
+        return $out;
+    }
+
+    private function _parse_latitude($v) {
+        if (!is_numeric($v)) return null;
+        $f = (float) $v;
+        return ($f < -90 || $f > 90) ? null : round($f, 8);
+    }
+
+    private function _parse_longitude($v) {
+        if (!is_numeric($v)) return null;
+        $f = (float) $v;
+        return ($f < -180 || $f > 180) ? null : round($f, 8);
+    }
+
+    private function _parse_google_place_id($v) {
+        $v = trim((string) $v);
+        return ($v === '' || strlen($v) > 255) ? null : $v;
+    }
+
+    private function _parse_optional_decimal($v) {
+        return is_numeric($v) ? round((float) $v, 2) : null;
+    }
+
+    private function _parse_date_field($v) {
+        $t = strtotime((string) $v);
+        return $t ? date('Y-m-d', $t) : null;
+    }
+
+    private function _parse_boundary_wall($v) {
+        return ($v === '0' || $v === '1') ? (int) $v : null;
+    }
+
+    private function _nearby_json_from_input($input)
+    {
+        $nearby = $input['nearby'] ?? null;
+        if (is_array($nearby)) { return json_encode($nearby); }
+        return '[]';
+    }
+
+    // ============================================
+    // Account
+    // ============================================
+
+    public function delete_account()
+    {
+        if ($this->input->method() !== 'post') {
+            return $this->_json(array('success' => false, 'message' => 'POST only'), 405);
+        }
+        $input = $this->_input_json_or_post();
+        $uid = $input['userId'] ?? $input['user_id'] ?? null;
+        if (!$uid || (int) $uid <= 0) {
+            return $this->_json(array('success' => false, 'message' => 'userId is required'), 400);
+        }
+        $id = (int) $uid;
+        $this->db->where('id', $id)->delete('nb_users');
+        $this->_json(array('success' => true, 'message' => 'Account deleted successfully.'));
+    }
+
+    // ============================================
+    // Legal pages (rendered HTML for mobile WebView)
+    // ============================================
+
+    public function privacy_policy()
+    {
+        $this->output->set_content_type('text/html');
+        $data = array('page_title' => 'Privacy Policy', 'legal_view' => 'privacy');
+        $this->load->view('legal/mobile_layout', $data);
+    }
+
+    public function terms()
+    {
+        $this->output->set_content_type('text/html');
+        $data = array('page_title' => 'Terms & Conditions', 'legal_view' => 'terms');
+        $this->load->view('legal/mobile_layout', $data);
+    }
+}

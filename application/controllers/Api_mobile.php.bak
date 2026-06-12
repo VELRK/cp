@@ -1,0 +1,118 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+class Api_mobile extends CI_Controller {
+
+    public function __construct()
+    {
+        parent::__construct();
+        ->load->helper(array('url', 'form'));
+        ->load->database();
+        ->load->library('form_validation');
+        ->load->model(array('Banner_model', 'Housing_news_model', 'Feedback_model'));
+        ->output->set_content_type('application/json');
+        ->_cors();
+    }
+
+    private function _cors()
+    {
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+        header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+        if (strtoupper((string) ->input->server('REQUEST_METHOD')) === 'OPTIONS') {
+            ->output->set_output('');
+            exit;
+        }
+    }
+
+    private function _json(,  = 200)
+    {
+        ->output->set_status_header();
+        ->output->set_output(json_encode());
+    }
+
+    private function _input_json_or_post()
+    {
+         = (string) ->input->server('CONTENT_TYPE');
+        if (stripos(, 'application/json') !== false) {
+             = file_get_contents('php://input');
+             = json_decode(, true);
+            return is_array() ?  : array();
+        }
+        return array_merge(->input->post(), ->input->get());
+    }
+
+    public function banners()
+    {
+         = ->_input_json_or_post();
+         = isset(['status']) ? trim((string) ['status']) : null;
+         = isset(['limit']) && trim((string) ['limit']) !== '' ? (int) ['limit'] : null;
+         = isset(['offset']) && trim((string) ['offset']) !== '' ? (int) ['offset'] : 0;
+         = ->Banner_model->get_all(, , );
+         = ->Banner_model->count_all();
+        ->_json(array('success' => true, 'data' => , 'count' => ));
+    }
+
+    public function feedback()
+    {
+        if (->input->method() !== 'post') {
+            ->_json(array('success' => false, 'message' => 'POST only'), 405);
+            return;
+        }
+
+         = ->_input_json_or_post();
+         = trim((string) (['name'] ?? ''));
+         = trim((string) (['email'] ?? ''));
+         = trim((string) (['message'] ?? ''));
+         = trim((string) (['phone'] ?? ''));
+
+        if ( === '' ||  === '' ||  === '') {
+            ->_json(array('success' => false, 'message' => 'name, email and message are required'), 422);
+            return;
+        }
+
+         = array(
+            'name' => ->security->xss_clean(),
+            'email' => ->security->xss_clean(),
+            'phone' => ->security->xss_clean(),
+            'message' => ->security->xss_clean(),
+            'createdAt' => date('Y-m-d H:i:s'),
+        );
+
+         = ->Feedback_model->create();
+        if ( <= 0) {
+            ->_json(array('success' => false, 'message' => 'Could not save feedback'), 500);
+            return;
+        }
+
+        ->_json(array('success' => true, 'message' => 'Feedback submitted', 'id' => ));
+    }
+
+    public function housing_news()
+    {
+         = ->_input_json_or_post();
+         = isset(['category']) ? trim((string) ['category']) : null;
+         = isset(['limit']) && trim((string) ['limit']) !== '' ? (int) ['limit'] : null;
+         = isset(['offset']) && trim((string) ['offset']) !== '' ? (int) ['offset'] : 0;
+         = ->Housing_news_model->get_all(, , );
+         = ->Housing_news_model->count_all();
+        ->_json(array('success' => true, 'data' => , 'count' => ));
+    }
+
+    public function housing_news_item( = null)
+    {
+         = (int) ;
+        if ( <= 0) {
+            ->_json(array('success' => false, 'message' => 'Invalid housing news ID'), 400);
+            return;
+        }
+
+         = ->Housing_news_model->get_by_id();
+        if (!) {
+            ->_json(array('success' => false, 'message' => 'Housing news not found'), 404);
+            return;
+        }
+
+        ->_json(array('success' => true, 'data' => ));
+    }
+}

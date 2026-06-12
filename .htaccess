@@ -1,0 +1,10 @@
+RewriteEngine On
+
+# Keep this subfolder-agnostic: no RewriteBase required.
+# Works in /property (local) and /property_list (production) when this .htaccess
+# sits in the app root folder next to index.php.
+
+# CodeIgniter URL rewriting
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php/$1 [L]

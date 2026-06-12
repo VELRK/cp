@@ -1,0 +1,48 @@
+
+> dvm-property-portal@1.0.0 build
+> next build
+
+   ▲ Next.js 15.5.19
+   - Environments: .env
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 1556ms
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/18) ...
+   Generating static pages (4/18) 
+   Generating static pages (8/18) 
+   Generating static pages (13/18) 
+ ✓ Generating static pages (18/18)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ○ /                                    5.45 kB         111 kB
+├ ○ /_not-found                            998 B         103 kB
+├ ○ /about                               2.62 kB         108 kB
+├ ƒ /api/auth/login                        145 B         103 kB
+├ ƒ /api/auth/register                     145 B         103 kB
+├ ƒ /api/banners                           145 B         103 kB
+├ ƒ /api/blogs                             145 B         103 kB
+├ ƒ /api/cities                            145 B         103 kB
+├ ƒ /api/contact                           145 B         103 kB
+├ ƒ /api/enquiry                           145 B         103 kB
+├ ƒ /api/properties                        145 B         103 kB
+├ ƒ /api/properties/[id]                   145 B         103 kB
+├ ○ /blog                                1.63 kB         107 kB
+├ ƒ /blog/post/[slug]                    2.11 kB         108 kB
+├ ○ /contact                             3.99 kB         110 kB
+├ ○ /login                               1.52 kB         107 kB
+├ ○ /our-projects                        5.95 kB         112 kB
+├ ƒ /property-detail/[slug]              5.95 kB         112 kB
+└ ○ /register                            2.03 kB         108 kB
++ First Load JS shared by all             102 kB
+  ├ chunks/255-98a0bdaa30757bda.js       46.3 kB
+  ├ chunks/4bd1b696-c023c6e3521b1417.js  54.2 kB
+  └ other shared chunks (total)          1.94 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

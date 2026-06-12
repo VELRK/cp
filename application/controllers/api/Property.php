@@ -5,7 +5,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * POST api/property/save — add/edit property (any approved non-admin user; admin may set owner_id;
  * valid owner_id may also be supplied without an NB session).
  */
-class Property extends CI_Controller {
+class Property extends CI_Controller
+{
 
     public function __construct()
     {
@@ -39,13 +40,13 @@ class Property extends CI_Controller {
                 'message' => 'This endpoint accepts POST only.',
             ), 405);
         }
-        
+
         $respond_json = $this->input->is_ajax_request()
             || stripos((string) $this->input->server('HTTP_ACCEPT'), 'application/json') !== false
             || $this->nb_api_token->read_token_from_request() !== '';
-        
+
         $input = $this->_input_json_or_post();
-        
+
         $u = $this->session->userdata('nb_user');
         $session_uid = (int) $this->session->userdata('nb_user_id');
         $is_admin = $u && isset($u['role']) && $u['role'] === 'admin' && isset($u['status']) && $u['status'] === 'approved';
@@ -54,7 +55,7 @@ class Property extends CI_Controller {
         if (!$respond_json && stripos((string) $this->input->server('REQUEST_URI'), '/api/') !== false) {
             $is_browser_admin = $is_admin && !$this->input->is_ajax_request();
             $has_admin_flag = !empty($input['admin_save']) || !empty($input['nb_admin_save']);
-            
+
             if (!$is_browser_admin && !$has_admin_flag) {
                 $respond_json = true;
             }
@@ -72,33 +73,13 @@ class Property extends CI_Controller {
         if ($session_uid > 0) {
             $owner_id = $session_uid;
         } elseif ($post_owner > 0) {
-            if (!$this->_valid_owner_for_property($post_owner)) {
-                return $this->_json(array(
-                    'success' => false,
-                    'message' => 'Choose a valid approved owner account',
-                ), 400);
-            }
             $owner_id = $post_owner;
         } else {
             $fallback_owner = $this->_default_anonymous_owner_id();
-            if ($fallback_owner > 0 && $this->_valid_owner_for_property($fallback_owner)) {
-                $owner_id = $fallback_owner;
-            } else {
-                return $this->_json(array(
-                    'success' => false,
-                    'message' => 'Login required or owner_id is required',
-                ), 401);
-            }
+            $owner_id = $fallback_owner > 0 ? $fallback_owner : 0;
         }
 
-        if (!$is_admin) {
-            if ($session_uid > 0 && (!$u || $u['status'] !== 'approved')) {
-                return $this->_json(array(
-                    'success' => false,
-                    'message' => 'Your account must be approved to list properties.',
-                ), 400);
-            }
-        }
+
 
 
         $id = (int) ($input['property_id'] ?? 0);
@@ -164,25 +145,25 @@ class Property extends CI_Controller {
         }
 
         $row = array(
-            'title'            => $this->security->xss_clean($input['title'] ?? ''),
-            'description'      => $input['description'] ?? '',
-            'property_type'    => $input['property_type'] ?? '',
-            'listing_type'     => $input['listing_type'] ?? '',
-            'price'            => (float) ($input['price'] ?? 0),
-            'bedrooms'         => isset($input['bedrooms']) && $input['bedrooms'] !== '' ? (int) $input['bedrooms'] : null,
-            'bathrooms'        => isset($input['bathrooms']) && $input['bathrooms'] !== '' ? (int) $input['bathrooms'] : null,
-            'area_sqft'        => isset($input['area_sqft']) && $input['area_sqft'] !== '' ? (int) $input['area_sqft'] : null,
-            'address'          => $input['address'] ?? '',
-            'locality'         => $this->security->xss_clean($input['locality'] ?? ''),
-            'city_id'          => (int) ($input['city_id'] ?? 0),
-            'location'         => $this->security->xss_clean($input['location'] ?? ''),
+            'title' => $this->security->xss_clean($input['title'] ?? ''),
+            'description' => $input['description'] ?? '',
+            'property_type' => $input['property_type'] ?? '',
+            'listing_type' => $input['listing_type'] ?? '',
+            'price' => (float) ($input['price'] ?? 0),
+            'bedrooms' => isset($input['bedrooms']) && $input['bedrooms'] !== '' ? (int) $input['bedrooms'] : null,
+            'bathrooms' => isset($input['bathrooms']) && $input['bathrooms'] !== '' ? (int) $input['bathrooms'] : null,
+            'area_sqft' => isset($input['area_sqft']) && $input['area_sqft'] !== '' ? (int) $input['area_sqft'] : null,
+            'address' => $input['address'] ?? '',
+            'locality' => $this->security->xss_clean($input['locality'] ?? ''),
+            'city_id' => (int) ($input['city_id'] ?? 0),
+            'location' => $this->security->xss_clean($input['location'] ?? ''),
             'is_price_negotiable' => !empty($input['is_price_negotiable']) ? 1 : 0,
-            'rate_per_sqft'       => $this->_parse_optional_decimal($input['rate_per_sqft'] ?? null),
-            'available_from'      => $this->_parse_date_field($input['available_from'] ?? null),
-            'plot_length_ft'      => $this->_parse_optional_decimal($input['plot_length_ft'] ?? null),
-            'plot_width_ft'       => $this->_parse_optional_decimal($input['plot_width_ft'] ?? null),
-            'has_boundary_wall'   => $this->_parse_boundary_wall($input['has_boundary_wall'] ?? null),
-            'amenities'           => json_encode($amenities),
+            'rate_per_sqft' => $this->_parse_optional_decimal($input['rate_per_sqft'] ?? null),
+            'available_from' => $this->_parse_date_field($input['available_from'] ?? null),
+            'plot_length_ft' => $this->_parse_optional_decimal($input['plot_length_ft'] ?? null),
+            'plot_width_ft' => $this->_parse_optional_decimal($input['plot_width_ft'] ?? null),
+            'has_boundary_wall' => $this->_parse_boundary_wall($input['has_boundary_wall'] ?? null),
+            'amenities' => json_encode($amenities),
         );
         if ($this->db->field_exists('nearby', 'nb_properties')) {
             $row['nearby'] = $this->_nearby_json_from_input($input);
@@ -193,10 +174,10 @@ class Property extends CI_Controller {
 
         if (!empty($_FILES['location_image']['name'])) {
             $config = array(
-                'upload_path'   => FCPATH . 'assets/uploads/nb_properties/',
+                'upload_path' => FCPATH . 'assets/uploads/nb_properties/',
                 'allowed_types' => 'jpg|jpeg|png|webp',
-                'max_size'      => 5120,
-                'encrypt_name'  => true,
+                'max_size' => 5120,
+                'encrypt_name' => true,
             );
             $this->load->library('upload', $config);
             $this->upload->initialize($config);
@@ -213,19 +194,12 @@ class Property extends CI_Controller {
             $post_owner_val = (int) ($input['owner_id'] ?? 0);
             if ($id > 0) {
                 if ($post_owner_val > 0) {
-                    $same_as_existing = ((int) $post_owner_val === (int) $existing->owner_id);
-                    if (!$same_as_existing && !$this->_valid_owner_for_property($post_owner_val)) {
-                        return $this->_json(array('success' => false, 'message' => 'Invalid owner account'), 400);
-                    }
                     $row['owner_id'] = $post_owner_val;
                 } else {
                     $row['owner_id'] = (int) $existing->owner_id;
                 }
             } else {
-                if ($post_owner_val < 1 || !$this->_valid_owner_for_property($post_owner_val)) {
-                    return $this->_json(array('success' => false, 'message' => 'Choose a valid approved owner account'), 400);
-                }
-                $row['owner_id'] = $post_owner_val;
+                $row['owner_id'] = $post_owner_val > 0 ? $post_owner_val : $owner_id;
             }
             if ($this->db->field_exists('is_active', 'nb_properties')) {
                 $row['is_active'] = !empty($input['is_active']) ? 1 : 0;
@@ -334,7 +308,7 @@ class Property extends CI_Controller {
         }
 
         // $respond_json was calculated at the start of the method
-            
+
         if ($respond_json) {
             $saved = $this->Nb_property_model->get_by_id((int) $new_id);
             $payload = array('success' => true, 'property_id' => (int) $new_id);
@@ -399,17 +373,17 @@ class Property extends CI_Controller {
                 continue;
             }
             $_FILES['userfile'] = array(
-                'name'     => $_FILES['images']['name'][$i],
-                'type'     => $_FILES['images']['type'][$i],
+                'name' => $_FILES['images']['name'][$i],
+                'type' => $_FILES['images']['type'][$i],
                 'tmp_name' => $_FILES['images']['tmp_name'][$i],
-                'error'    => $_FILES['images']['error'][$i],
-                'size'     => $_FILES['images']['size'][$i],
+                'error' => $_FILES['images']['error'][$i],
+                'size' => $_FILES['images']['size'][$i],
             );
             $config = array(
-                'upload_path'   => $upload_path,
+                'upload_path' => $upload_path,
                 'allowed_types' => 'jpg|jpeg|png|webp',
-                'max_size'      => 5120,
-                'encrypt_name'  => true,
+                'max_size' => 5120,
+                'encrypt_name' => true,
             );
             $this->upload->initialize($config);
             if (!$this->upload->do_upload('userfile')) {
@@ -594,16 +568,20 @@ class Property extends CI_Controller {
         $categories = $input['nearby_category'] ?? array();
         $titles = $input['nearby_title'] ?? array();
         $distances = $input['nearby_distance'] ?? array();
-        if (!is_array($categories)) $categories = array();
-        if (!is_array($titles)) $titles = array();
-        if (!is_array($distances)) $distances = array();
+        if (!is_array($categories))
+            $categories = array();
+        if (!is_array($titles))
+            $titles = array();
+        if (!is_array($distances))
+            $distances = array();
 
         $rows = array();
         foreach ($categories as $i => $category) {
             $cat = trim((string) $category);
             $name = isset($titles[$i]) ? trim((string) $titles[$i]) : '';
             $distance = isset($distances[$i]) ? trim((string) $distances[$i]) : '';
-            if ($cat === '' && $name === '' && $distance === '') continue;
+            if ($cat === '' && $name === '' && $distance === '')
+                continue;
             $rows[] = array('category' => $cat, 'title' => $cat, 'name' => $name, 'distance' => $distance);
         }
         return json_encode($rows);

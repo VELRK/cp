@@ -11,11 +11,8 @@ export default function AddPropertyPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
+  // We do not force redirect immediately so users can see the Step 0 landing page.
+  // Gating is handled inline inside the PropertyForm or after user logs in.
 
   if (loading) {
     return (
@@ -27,66 +24,7 @@ export default function AddPropertyPage() {
     );
   }
 
-  if (!user) {
-    return null;
-  }
 
-  const isOwner = user.role === 'owner';
-  const isApproved = user.status === 'approved';
-
-  // If user is not an approved owner, show warning page
-  if (!isOwner || !isApproved) {
-    return (
-      <div className="container py-5 mt-5">
-        <div className="row justify-content-center">
-          <div className="col-md-8 col-lg-6">
-            <div className="card border-0 shadow-lg text-center p-5 rounded-4 bg-white" style={{ border: '1px solid rgba(0,0,0,0.05)' }}>
-              {!isOwner ? (
-                <div className="mb-4">
-                  <div className="mx-auto rounded-circle d-flex align-items-center justify-content-center bg-danger-subtle text-danger animate-pulse" style={{ width: '70px', height: '70px' }}>
-                    <ShieldAlert size={36} />
-                  </div>
-                  <h2 className="h4 fw-bold text-dark mt-4 mb-3">Owner Account Required</h2>
-                  <p className="text-muted small px-3">
-                    You are currently logged in with a <strong className="text-danger text-capitalize">{user.role}</strong> account. Only accounts registered as an Owner can post property ads.
-                  </p>
-                  <p className="text-muted small px-3 mb-4">
-                    Please log out and sign in using your Owner credentials, or reach out to support to change your account type.
-                  </p>
-                </div>
-              ) : (
-                <div className="mb-4">
-                  <div className="mx-auto rounded-circle d-flex align-items-center justify-content-center bg-warning-subtle text-warning" style={{ width: '70px', height: '70px' }}>
-                    <Clock size={36} />
-                  </div>
-                  <h2 className="h4 fw-bold text-dark mt-4 mb-3">Approval Pending</h2>
-                  <p className="text-muted small px-3">
-                    Your Owner account status is currently <strong className="text-warning text-capitalize">{user.status}</strong>.
-                  </p>
-                  <p className="text-muted small px-3 mb-4">
-                    To maintain quality listings in Coimbatore, our moderation team verifies all owner accounts. We appreciate your patience; you can list properties immediately once approved.
-                  </p>
-                </div>
-              )}
-
-              <div className="d-flex flex-column gap-2">
-                <Link href="/" className="btn btn-danger text-dark fw-bold rounded-pill py-2.5">
-                  Go to Homepage
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => router.push(user.role === 'owner' ? '/owner/dashboard' : '/tenant/dashboard')}
-                  className="btn btn-link text-decoration-none text-secondary small fw-semibold"
-                >
-                  Go to Dashboard
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="container py-5 mt-5">

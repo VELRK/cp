@@ -732,11 +732,11 @@ export default function Home() {
             </div>
 
             {/* Continue Browsing Quick Links */}
-            <div className="mb-5 fade-in-up">
+            {/* <div className="mb-5 fade-in-up">
               <span className="text-secondary small d-block mb-2 fw-semibold">Continue browsing...</span>
               <div className="d-flex gap-2 flex-wrap">
                 <Link href="/search?city_id=1" className="btn btn-white bg-white border btn-sm shadow-sm rounded-pill py-2 px-3 d-flex align-items-center gap-2">
-                  <span className="bg-primary-soft text-primary p-1 rounded-circle d-flex"><MapPin size={12} /></span>
+                  <span className="bg-primary-soft nb-text-brand p-1 rounded-circle d-flex"><MapPin size={12} /></span>
                   <span className="fw-semibold text-dark small">Buy in Coimbatore</span>
                 </Link>
                 <button onClick={() => alert('Search and select other major cities in Tamil Nadu')} className="btn btn-white bg-white border btn-sm shadow-sm rounded-pill py-2 px-3 d-flex align-items-center gap-2">
@@ -744,7 +744,7 @@ export default function Home() {
                   <span className="fw-semibold text-secondary small">Explore New City</span>
                 </button>
               </div>
-            </div>
+            </div> */}
 
             {/* Recommended Properties Horizontal Slider */}
             <div className="mb-5 fade-in-up">
@@ -753,7 +753,7 @@ export default function Home() {
                   <h2 className="h4 fw-bold text-dark m-0">Recommended Properties</h2>
                   <p className="text-muted small m-0">Curated premium properties in Coimbatore</p>
                 </div>
-                <Link href="/search" className="btn btn-link text-decoration-none text-danger small p-0 d-flex align-items-center gap-1 fw-bold">
+                <Link href="/search" className="btn btn-link text-decoration-none nb-text-brand small p-0 d-flex align-items-center gap-1 fw-bold">
                   <span>See All</span>
                   <ChevronRight size={16} />
                 </Link>
@@ -761,7 +761,7 @@ export default function Home() {
 
               {loadingFeatured ? (
                 <div className="text-center py-5 bg-white border rounded-4 shadow-sm">
-                  <div className="spinner-border text-primary" role="status">
+                  <div className="spinner-border nb-text-brand" role="status">
                     <span className="visually-hidden">Loading properties...</span>
                   </div>
                 </div>
@@ -869,6 +869,104 @@ export default function Home() {
               )}
             </div>
 
+            {/* Newly Launched Projects Section */}
+            <div className="mb-5 fade-in-up">
+              <div className="p-4 rounded-4" style={{ backgroundColor: '#f0f7fb' }}>
+                <div className="d-flex align-items-center mb-4">
+                  <div className="me-3">
+                    <img src="https://img.icons8.com/color/48/city-buildings.png" alt="Buildings" width="36" height="36" />
+                  </div>
+                  <div>
+                    <h2 className="h4 fw-bold text-dark m-0 d-flex align-items-center gap-2">
+                      Newly launched projects
+                    </h2>
+                    <p className="text-muted small m-0">Less upfront payment</p>
+                  </div>
+                </div>
+
+                <div className="nb-scroll-wrapper">
+                  <button className="nb-scroll-arrow nb-scroll-arrow-left" aria-label="Scroll left"><ChevronLeft size={24} /></button>
+                  <button className="nb-scroll-arrow nb-scroll-arrow-right" aria-label="Scroll right"><ChevronRight size={24} /></button>
+                  <div className="nb-horizontal-scroll pb-2" style={{ paddingLeft: '5px' }}>
+                    {featured.slice(0, 5).map((proj, i) => {
+                      const imgUrl = proj.thumbnail_url || (proj.image_urls && proj.image_urls.length > 0 ? proj.image_urls[0] : 'https://placehold.co/400x300?text=No+Image');
+                      return (
+                        <Link key={`new-launch-${proj.id}`} href={`/property-detail/${proj.slug}`} className="text-decoration-none d-block flex-shrink-0" style={{ marginRight: '1rem' }}>
+                          <div className="card border-0 shadow-sm rounded-4 bg-white position-relative" style={{ width: '420px' }}>
+
+                            {/* Top Tag */}
+                            <div className="position-absolute" style={{ top: '15px', left: '-5px', zIndex: 2 }}>
+                              <div className="text-dark fw-bold px-3 py-1 text-uppercase" style={{ backgroundColor: '#ffe6a7', fontSize: '0.7rem', clipPath: 'polygon(0 0, 100% 0, 90% 50%, 100% 100%, 0 100%)', boxShadow: '2px 2px 5px rgba(0,0,0,0.1)', letterSpacing: '0.5px' }}>
+                                NEW {i % 2 === 0 ? 'ARRIVAL' : 'LAUNCH'}
+                              </div>
+                              {/* Fold effect corner */}
+                              <div style={{ width: '5px', height: '6px', backgroundColor: '#d1a000', position: 'absolute', bottom: '-6px', left: '0', clipPath: 'polygon(100% 0, 100% 100%, 0 0)' }}></div>
+                            </div>
+
+                            <div className="p-3 pt-5 pb-3 d-flex gap-3 align-items-start position-relative z-1">
+                              {/* Circular Image & RERA badge */}
+                              <div className="position-relative flex-shrink-0 mt-2 ms-2">
+                                <div className="rounded-circle overflow-hidden shadow-sm" style={{ width: '70px', height: '70px', border: '1px solid #eaeaea' }}>
+                                  <img src={imgUrl} alt={proj.title} className="w-100 h-100 object-fit-cover" />
+                                </div>
+                                <div className="position-absolute text-white fw-bold px-2 py-0.5 rounded text-uppercase text-center" style={{ backgroundColor: '#003366', bottom: '-8px', left: '50%', transform: 'translateX(-50%)', fontSize: '0.55rem', border: '2px solid white', whiteSpace: 'nowrap' }}>
+                                  <span className="text-info d-inline-block me-1" style={{ fontSize: '0.65rem' }}>✓</span> RERA
+                                </div>
+                              </div>
+
+                              {/* Project Info */}
+                              <div className="flex-grow-1 overflow-hidden pt-1">
+                                <h3 className="h6 fw-bold text-dark mb-1 text-truncate w-100">{proj.title}</h3>
+                                <p className="text-muted small mb-2 text-truncate w-100">{proj.locality || proj.city_name}</p>
+                                <div className="d-flex align-items-center gap-1 mb-2 text-truncate w-100">
+                                  <span className="fw-bold text-dark" style={{ fontSize: '0.9rem' }}>{formatPrice(proj.price)} {proj.price > 100000 ? '- ' + formatPrice(proj.price * 1.5) : ''}</span>
+                                  <span className="text-muted" style={{ fontSize: '0.8rem' }}>|</span>
+                                  <span className="text-muted text-truncate" style={{ fontSize: '0.8rem' }}>{proj.bedrooms ? `${proj.bedrooms}, ` : ''}{proj.bedrooms ? proj.bedrooms + 1 : 3} BHK {getPropertyTypeLabel(proj.property_type)}</span>
+                                </div>
+                                <p className="m-0 fw-semibold text-truncate w-100" style={{ fontSize: '0.75rem', color: '#059669' }}>
+                                  {8.3 + i * 0.4}% price increase in last 3 months in {proj.locality || proj.city_name}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Dotted Divider */}
+                            <div className="position-relative w-100">
+                              <div style={{ borderTop: '1px dashed #d1d5db', margin: '0 15px' }}></div>
+                              <div className="position-absolute" style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#f0f7fb', left: '-8px', top: '-8px' }}></div>
+                              <div className="position-absolute" style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#f0f7fb', right: '-8px', top: '-8px' }}></div>
+                            </div>
+
+                            {/* Footer */}
+                            <div className="p-3 bg-white rounded-bottom-4 d-flex justify-content-between align-items-center">
+                              <div className="d-flex align-items-center gap-2">
+                                <span className="nb-text-brand" style={{ transform: 'rotate(-45deg)' }}>
+                                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.41l9 9c.36.36.86.58 1.41.58s1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41s-.23-1.06-.59-1.41zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z" /></svg>
+                                </span>
+                                <div className="text-secondary" style={{ fontSize: '0.75rem', lineHeight: '1.3' }}>
+                                  Get preferred options<br />
+                                  <strong className="text-dark">@zero brokerage</strong>
+                                </div>
+                              </div>
+                              <button className="btn btn-primary btn-sm fw-bold px-3 py-1.5" style={{ backgroundColor: '#1877f2', border: 'none', borderRadius: '6px' }} onClick={(e) => e.preventDefault()}>
+                                View Number
+                              </button>
+                            </div>
+
+                          </div>
+                        </Link>
+                      );
+                    })}
+                    {featured.length === 0 && !loadingFeatured && (
+                      <div className="text-muted small py-3">No newly launched projects found.</div>
+                    )}
+                    {loadingFeatured && (
+                      <div className="text-muted small py-3">Loading projects...</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Recommended Projects section */}
             <div className="mb-5 fade-in-up">
               <div className="d-flex justify-content-between align-items-end mb-3">
@@ -876,7 +974,7 @@ export default function Home() {
                   <h2 className="h4 fw-bold text-dark m-0">Recommended Projects</h2>
                   <p className="text-muted small m-0">The most searched premium projects in Coimbatore</p>
                 </div>
-                <button onClick={() => router.push('/search?sort=featured')} className="btn btn-link text-decoration-none text-danger small p-0 d-flex align-items-center gap-1 fw-bold">
+                <button onClick={() => router.push('/search?sort=featured')} className="btn btn-link text-decoration-none nb-text-brand small p-0 d-flex align-items-center gap-1 fw-bold">
                   <span>See All</span>
                   <ChevronRight size={16} />
                 </button>
@@ -886,54 +984,44 @@ export default function Home() {
                 <button className="nb-scroll-arrow nb-scroll-arrow-left" aria-label="Scroll left"><ChevronLeft size={24} /></button>
                 <button className="nb-scroll-arrow nb-scroll-arrow-right" aria-label="Scroll right"><ChevronRight size={24} /></button>
                 <div className="nb-horizontal-scroll">
-                  {[
-                    {
-                      title: 'Trident Tranquility',
-                      desc: '3 BHK Apartment | 3, 4 BHK Villa',
-                      loc: 'Avinashi Road, Coimbatore',
-                      price: '₹ 93 L - 1.98 Cr',
-                      img: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=400&q=80',
-                      completion: 'Possession from Jun 2026'
-                    },
-                    {
-                      title: 'Ravimurugaa Sai Gardenia',
-                      desc: '2, 3 BHK Apartment | 4 BHK Villa',
-                      loc: 'Avinashi Road, Coimbatore',
-                      price: '₹ 1.44 - 5.03 Cr',
-                      img: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&q=80',
-                      completion: 'Ready To Move'
-                    },
-                    {
-                      title: 'Sreevatsa Viswa',
-                      desc: '2 BHK Apartment',
-                      loc: 'Vilangurichi, Coimbatore',
-                      price: '₹ 1.2 - 1.4 Cr',
-                      img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&q=80',
-                      completion: 'Ready To Move'
-                    }
-                  ].map((proj, i) => (
-                    <div key={i} className="card border-0 shadow-sm rounded-4 overflow-hidden flex-shrink-0 nb-insight-card-hover" style={{ width: '260px' }}>
-                      <div className="position-relative" style={{ height: '140px' }}>
-                        <img src={proj.img} alt={proj.title} className="w-100 h-100 object-fit-cover" />
-                        <span className="position-absolute top-0 start-0 m-2 badge bg-success text-white text-uppercase" style={{ fontSize: '0.65rem' }}>
-                          ✓ RERA
-                        </span>
-                        <div className="position-absolute bottom-0 start-0 m-2 px-2 py-0.5 rounded text-white bg-dark bg-opacity-75 small" style={{ fontSize: '0.75rem' }}>
-                          {proj.completion}
+                  {featured.slice(0, 5).map((proj, i) => {
+                    const imgUrl = proj.thumbnail_url || (proj.image_urls && proj.image_urls.length > 0 ? proj.image_urls[0] : 'https://placehold.co/400x300?text=No+Image');
+                    return (
+                      <Link key={proj.id} href={`/property-detail/${proj.slug}`} className="text-decoration-none d-block flex-shrink-0">
+                        <div className="card border-0 shadow-sm rounded-4 overflow-hidden flex-shrink-0 nb-insight-card-hover" style={{ width: '260px' }}>
+                          <div className="position-relative" style={{ height: '140px' }}>
+                            <img src={imgUrl} alt={proj.title} className="w-100 h-100 object-fit-cover" />
+                            <span className="position-absolute top-0 start-0 m-2 badge bg-success text-white text-uppercase" style={{ fontSize: '0.65rem' }}>
+                              ✓ RERA
+                            </span>
+                            <div className="position-absolute bottom-0 start-0 m-2 px-2 py-0.5 rounded text-white bg-dark bg-opacity-75 small" style={{ fontSize: '0.75rem' }}>
+                              Ready To Move
+                            </div>
+                          </div>
+                          <div className="p-3 bg-white d-flex flex-column justify-content-between" style={{ height: '120px' }}>
+                            <div>
+                              <h3 className="h6 fw-bold text-dark m-0 text-truncate">{proj.title}</h3>
+                              <p className="text-secondary m-0 text-truncate" style={{ fontSize: '0.75rem' }}>
+                                {proj.bedrooms ? `${proj.bedrooms} BHK ` : ''}{getPropertyTypeLabel(proj.property_type)}
+                              </p>
+                              <p className="text-muted m-0 text-truncate" style={{ fontSize: '0.7rem' }}>
+                                <MapPin size={10} className="d-inline me-1" />{proj.locality || proj.city_name}
+                              </p>
+                            </div>
+                            <div className="fw-bold nb-text-brand pt-2 border-top" style={{ fontSize: '0.85rem' }}>
+                              {formatPrice(proj.price)}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <div className="p-3 bg-white d-flex flex-column justify-content-between" style={{ height: '120px' }}>
-                        <div>
-                          <h3 className="h6 fw-bold text-dark m-0 text-truncate">{proj.title}</h3>
-                          <p className="text-secondary m-0 text-truncate" style={{ fontSize: '0.75rem' }}>{proj.desc}</p>
-                          <p className="text-muted m-0 text-truncate" style={{ fontSize: '0.7rem' }}><MapPin size={10} className="d-inline me-1" />{proj.loc}</p>
-                        </div>
-                        <div className="fw-bold text-primary pt-2 border-top" style={{ fontSize: '0.85rem' }}>
-                          {proj.price}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                      </Link>
+                    );
+                  })}
+                  {featured.length === 0 && !loadingFeatured && (
+                    <div className="text-muted small py-3">No premium properties found.</div>
+                  )}
+                  {loadingFeatured && (
+                    <div className="text-muted small py-3">Loading properties...</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -962,7 +1050,7 @@ export default function Home() {
                           <div className="nb-handpicked-body bg-white text-dark">
                             <h3 className="h6 fw-bold mb-1 text-truncate">{proj.title}</h3>
                             <p className="text-muted small mb-2 text-truncate">{proj.property_type.replace('_', ' ')}, {proj.locality || proj.city_name}</p>
-                            <div className="fw-bold text-primary mb-0" style={{ fontSize: '0.9rem' }}>
+                            <div className="fw-bold nb-text-brand mb-0" style={{ fontSize: '0.9rem' }}>
                               ₹{proj.price.toLocaleString('en-IN')}
                             </div>
                           </div>
@@ -980,6 +1068,66 @@ export default function Home() {
               </div>
             </div>
 
+
+
+            {/* Magic Loans Auto Scroll Banner */}
+            <div className="mb-5 fade-in-up">
+              <div className="nb-magic-loans-banner">
+                <div className="nb-magic-loans-content">
+                  <div className="nb-magic-loans-logo">
+                    Coimbatore Properties<span> Loans</span>
+                  </div>
+                  <h2 className="nb-magic-loans-title">Compare Home Loan Offers from 40+ Banks</h2>
+                  <div className="nb-magic-loans-features">
+                    <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Rates starting from <span className="highlight">7.1%</span></span>
+                    <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> <span className="highlight">0%*</span> Processing Fee</span>
+                  </div>
+
+                  <div className="nb-magic-loans-partners-label">Our Banking Partners</div>
+                  <div className="nb-magic-loans-banks-wrapper">
+                    <div className="nb-magic-loans-banks-track">
+                      {[1, 2].map((loop) => (
+                        <div key={loop} style={{ display: 'flex', gap: '1rem' }}>
+                          <div className="nb-magic-loans-bank-card">
+                            <h4 className="fw-bold text-dark mb-1" style={{ fontSize: '0.95rem' }}>HDFC Bank</h4>
+                            <p>Starts at 7.25%</p>
+                          </div>
+                          <div className="nb-magic-loans-bank-card">
+                            <h4 className="fw-bold text-dark mb-1" style={{ fontSize: '0.95rem' }}>Bajaj Finserv</h4>
+                            <p>Starts at 7.15%</p>
+                          </div>
+                          <div className="nb-magic-loans-bank-card">
+                            <h4 className="fw-bold text-dark mb-1" style={{ fontSize: '0.95rem' }}>LIC HFL</h4>
+                            <p>Starts at 7.8%</p>
+                          </div>
+                          <div className="nb-magic-loans-bank-card">
+                            <h4 className="fw-bold text-dark mb-1" style={{ fontSize: '0.95rem' }}>SBI</h4>
+                            <p>Starts at 7.25%</p>
+                          </div>
+                          <div className="nb-magic-loans-bank-card">
+                            <h4 className="fw-bold text-dark mb-1" style={{ fontSize: '0.95rem' }}>Canara Bank</h4>
+                            <p>Starts at 7.15%</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="nb-magic-loans-actions">
+                    <button className="nb-magic-loans-btn-outline">
+                      Explore Bank Offers <ArrowRight size={16} className="ms-1" />
+                    </button>
+                    <button className="nb-magic-loans-btn-filled">
+                      Check Your Eligibility
+                    </button>
+                  </div>
+                </div>
+
+                <div className="nb-magic-loans-image-wrapper">
+                  <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" style={{ mixBlendMode: 'multiply', opacity: 0.9, borderRadius: '50%' }} alt="Home Loan Hand" />
+                </div>
+              </div>
+            </div>
             {/* Recommended Insights & Real Estate Trends */}
             <div className="mb-5 fade-in-up">
               <div className="d-flex justify-content-between align-items-center mb-3">
@@ -997,7 +1145,7 @@ export default function Home() {
                     <Link key={city.id} href={`/search?city_id=${city.id}`} className="text-decoration-none d-block flex-shrink-0">
                       <div className="card border-0 shadow-sm p-3 rounded-4 h-100 nb-insight-card-hover d-flex flex-column" style={{ width: '200px', background: ['#fff9db', '#eef2ff', '#ebfbee', '#e3fafc', '#fff0f6'][i % 5] }}>
                         <div className="mb-3">
-                          <MapPin className="text-primary" size={22} />
+                          <MapPin className="nb-text-brand" size={22} />
                         </div>
                         <div className="mt-auto">
                           <h3 className="h6 fw-bold text-dark mb-1 text-truncate">{city.name}</h3>
@@ -1027,7 +1175,7 @@ export default function Home() {
 
               {loadingFeatured ? (
                 <div className="text-center py-5 bg-white border rounded-4 shadow-sm">
-                  <div className="spinner-border text-primary" role="status">
+                  <div className="spinner-border nb-text-brand" role="status">
                     <span className="visually-hidden">Loading properties...</span>
                   </div>
                 </div>
@@ -1098,17 +1246,17 @@ export default function Home() {
                                 <div className="nb-classic-card-stats mb-3 pb-3 border-bottom d-flex gap-3">
                                   {p.bedrooms !== null && (
                                     <span className="nb-classic-card-stat-item fs-6">
-                                      <Bed size={16} className="me-1 text-primary" /> {p.bedrooms} BHK
+                                      <Bed size={16} className="me-1 nb-text-brand" /> {p.bedrooms} BHK
                                     </span>
                                   )}
                                   {p.bathrooms !== null && (
                                     <span className="nb-classic-card-stat-item fs-6">
-                                      <Bath size={16} className="me-1 text-primary" /> {p.bathrooms} Bath
+                                      <Bath size={16} className="me-1 nb-text-brand" /> {p.bathrooms} Bath
                                     </span>
                                   )}
                                   {p.area_sqft !== null && (
                                     <span className="nb-classic-card-stat-item fs-6">
-                                      <Grid size={16} className="me-1 text-primary" /> {p.area_sqft} sqft
+                                      <Grid size={16} className="me-1 nb-text-brand" /> {p.area_sqft} sqft
                                     </span>
                                   )}
                                 </div>
@@ -1136,6 +1284,38 @@ export default function Home() {
                 </div>
               )}
             </div>
+            {/* Why Choose Section */}
+            <div className="mb-5 fade-in-up pt-5 bg-white text-center rounded-4 shadow-sm border border-light" style={{ paddingBottom: '3rem' }}>
+              <p className="text-muted text-uppercase fw-bold mb-2" style={{ fontSize: '0.75rem', letterSpacing: '1px' }}>BENEFITS OF COIMBATORE PROPERTIES</p>
+              <h2 className="h2 fw-bold text-dark mb-5" style={{ color: '#0b2c56' }}>Why choose Coimbatore Properties</h2>
+
+              <div className="row g-4 mx-auto text-start px-4 px-md-5" style={{ maxWidth: '1000px' }}>
+                <div className="col-md-4">
+                  <div className="mb-3 d-inline-block rounded-circle" style={{ padding: '12px', backgroundColor: '#f0f7fb' }}>
+                    <img src="https://img.icons8.com/color/48/skyscrapers.png" alt="Properties" width="28" height="28" />
+                  </div>
+                  <h3 className="h6 fw-bold mb-2 text-dark"><span className="text-primary me-1">01.</span> Over 10,000+ properties</h3>
+                  <p className="text-muted small" style={{ lineHeight: '1.6' }}>100+ new properties are added every day from verified sellers and builders.</p>
+                </div>
+
+                <div className="col-md-4">
+                  <div className="mb-3 d-inline-block rounded-circle" style={{ padding: '12px', backgroundColor: '#fdf8ec' }}>
+                    <img src="https://img.icons8.com/color/48/approval--v1.png" alt="Verification" width="28" height="28" />
+                  </div>
+                  <h3 className="h6 fw-bold mb-2 text-dark"><span className="text-primary me-1">02.</span> Verification by our team</h3>
+                  <p className="text-muted small" style={{ lineHeight: '1.6' }}>Photos / Videos and other details are verified on location by our experts.</p>
+                </div>
+
+                <div className="col-md-4">
+                  <div className="mb-3 d-inline-block rounded-circle" style={{ padding: '12px', backgroundColor: '#f3f4f6' }}>
+                    <img src="https://img.icons8.com/color/48/conference-call.png" alt="Users" width="28" height="28" />
+                  </div>
+                  <h3 className="h6 fw-bold mb-2 text-dark"><span className="text-primary me-1">03.</span> Large user base</h3>
+                  <p className="text-muted small" style={{ lineHeight: '1.6' }}>High active user count and user engagement to find and close deals fast.</p>
+                </div>
+              </div>
+            </div>
+
 
             {/* Promo Banner and Blogs Section */}
             <div className="nb-promo-section mb-5 fade-in-up">
@@ -1311,13 +1491,18 @@ export default function Home() {
                 </div>
 
                 {user ? (
-                  <Link href={getDashboardPath()} className="btn btn-primary w-100 py-2 rounded-3 small fw-bold">
+                  <Link
+                    href={getDashboardPath()}
+                    className="btn w-100 py-2 rounded-3 small fw-bold text-white"
+                    style={{ backgroundColor: 'var(--nb-primary)', borderColor: 'var(--nb-primary)' }}
+                  >
                     Go to Dashboard
                   </Link>
                 ) : (
                   <button
                     type="button"
-                    className="btn btn-primary w-100 py-2 rounded-3 small fw-bold"
+                    className="btn w-100 py-2 rounded-3 small fw-bold text-white"
+                    style={{ backgroundColor: 'var(--nb-primary)', borderColor: 'var(--nb-primary)' }}
                     onClick={() => setAuthModalOpen('login')}
                   >
                     Login to Save Activities
@@ -1353,11 +1538,11 @@ export default function Home() {
                   >
                     Post Property, It's FREE
                   </button>
-                  <img
+                  {/* <img
                     src="https://img.icons8.com/color/96/property-agent.png"
                     alt="Seller banner illustration"
                     style={{ width: '48px', height: '48px', objectFit: 'contain' }}
-                  />
+                  /> */}
                 </div>
               </div>
 

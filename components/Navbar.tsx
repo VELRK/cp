@@ -72,17 +72,52 @@ const Navbar: React.FC = () => {
           </ul>
           <div className="d-flex gap-2 align-items-center flex-wrap">
             {user ? (
-              <>
-                <span className="small text-muted me-2 d-flex align-items-center gap-1">
-                  <User size={14} />
-                  <strong>{user.name}</strong>
-                  <span className="badge rounded-pill nb-role-pill ms-1">{user.role}</span>
-                </span>
-                <button className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" onClick={logout}>
-                  <LogOut size={14} />
-                  <span>Logout</span>
+              <div className="dropdown">
+                <button
+                  className="btn btn-sm btn-light border-0 d-flex align-items-center gap-2 dropdown-toggle rounded-pill px-3 py-1.5"
+                  type="button"
+                  id="userDropdown"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                >
+                  <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style={{ width: '24px', height: '24px' }}>
+                    <User size={14} />
+                  </div>
+                  <span className="fw-semibold text-dark">{user.name}</span>
                 </button>
-              </>
+                <ul className="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="userDropdown" style={{ minWidth: '240px', borderRadius: '12px', marginTop: '10px' }}>
+                  <li className="px-3 py-2 mb-1">
+                    <div className="fw-bold text-dark fs-6">{user.name}</div>
+                  </li>
+
+                  <li>
+                    <Link href="/owner/property/add" className="dropdown-item d-flex justify-content-between align-items-center py-2 fw-semibold text-primary">
+                      <span>Post Property</span>
+                      <span className="badge bg-success rounded-1">FREE</span>
+                    </Link>
+                  </li>
+
+                  {user.role === 'owner' && (
+                    <>
+                      <li><h6 className="dropdown-header text-dark fw-bold mt-2">Owner Plans <span className="text-danger ms-1" style={{ fontSize: '8px', verticalAlign: 'middle' }}>●</span></h6></li>
+                      <li><Link href="/owner/dashboard" className="dropdown-item py-2">Manage Listings</Link></li>
+                      <li><Link href="/owner/enquiries" className="dropdown-item py-2">View Responses</Link></li>
+                    </>
+                  )}
+
+                  <li><Link href="/user/profile" className="dropdown-item py-2">Manage Profile</Link></li>
+                  <li><Link href="/user/settings" className="dropdown-item py-2">Change Password</Link></li>
+                  <li><button className="dropdown-item py-2 text-dark" onClick={logout}>Logout</button></li>
+
+                  <li><hr className="dropdown-divider my-2" /></li>
+
+                  <li><h6 className="dropdown-header text-dark fw-bold">My Activity</h6></li>
+                  <li><Link href="/search" className="dropdown-item py-2">Recent Searches</Link></li>
+                  <li><Link href="/tenant/enquiries" className="dropdown-item py-2">Contacted properties</Link></li>
+                  <li><Link href="/user/wishlist" className="dropdown-item py-2">Shortlisted properties</Link></li>
+                  <li><Link href="/user/viewed" className="dropdown-item py-2">Viewed properties</Link></li>
+                </ul>
+              </div>
             ) : (
               <>
                 <button

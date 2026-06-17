@@ -92,9 +92,9 @@ $pt = isset($page_title) ? $page_title : 'Admin';
         </a>
       </nav>
       <div class="nb-admin-sidebar-foot">
-        <a class="nb-admin-nav-link" href="<?php echo site_url(''); ?>">
+        <!-- <a class="nb-admin-nav-link" href="<?php echo site_url(''); ?>">
           <i class="bi bi-box-arrow-up-right"></i> View public site
-        </a>
+        </a> -->
         <a class="nb-admin-nav-link" href="<?php echo site_url('logout'); ?>">
           <i class="bi bi-box-arrow-right"></i> Log out
         </a>
@@ -197,9 +197,11 @@ $pt = isset($page_title) ? $page_title : 'Admin';
         ?>
         <?php if (!empty($nb_flash_ok)): ?>
           <div class="alert alert-success border-0 shadow-sm mb-4 rounded-3 py-3 px-4">
-            <?php echo html_escape($nb_flash_ok); ?></div>
+            <?php echo html_escape($nb_flash_ok); ?>
+          </div>
         <?php endif; ?>
         <?php if (!empty($nb_flash_err)): ?>
           <div class="alert alert-danger border-0 shadow-sm mb-4 rounded-3 py-3 px-4">
-            <?php echo html_escape($nb_flash_err); ?></div>
+            <?php echo html_escape($nb_flash_err); ?>
+          </div>
         <?php endif; ?>

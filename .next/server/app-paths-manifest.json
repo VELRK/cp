@@ -1,11 +1,9 @@
 {
-  "/api/properties/[id]/route": "app/api/properties/[id]/route.js",
   "/api/feedback/route": "app/api/feedback/route.js",
-  "/property-detail/[slug]/page": "app/property-detail/[slug]/page.js",
   "/page": "app/page.js",
-  "/blog/page": "app/blog/page.js",
-  "/owner/property/add/page": "app/owner/property/add/page.js",
-  "/about/page": "app/about/page.js",
+  "/search/page": "app/search/page.js",
+  "/property-detail/[slug]/page": "app/property-detail/[slug]/page.js",
   "/user/live-updates/page": "app/user/live-updates/page.js",
-  "/user/feedback/page": "app/user/feedback/page.js"
+  "/user/feedback/page": "app/user/feedback/page.js",
+  "/owner/property/add/page": "app/owner/property/add/page.js"
 }

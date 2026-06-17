@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import api from '../lib/api';
 import { useAuth } from '../components/AuthContext';
+import ResearchTools from '../components/ResearchTools';
+import LiveUpdateModal from '../components/LiveUpdateModal';
 import {
   Search,
   MapPin,
@@ -27,7 +29,8 @@ import {
   Clock,
   Compass,
   Sliders,
-  ChevronDown
+  ChevronDown,
+  X
 } from 'lucide-react';
 
 interface City {
@@ -98,6 +101,9 @@ export default function Home() {
 
   // Wishlist states
   const [wishlistedIds, setWishlistedIds] = useState<number[]>([]);
+
+  // Live Update Modal
+  const [showLiveUpdateModal, setShowLiveUpdateModal] = useState(false);
 
   // Fetch Cities and Blogs once on mount
   useEffect(() => {
@@ -534,6 +540,17 @@ export default function Home() {
                   }}
                 >
                   Plots/Land
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  className="nb-search-tab-premium-btn text-danger fw-bold"
+                  onClick={() => {
+                    router.push('/user/live-updates');
+                  }}
+                >
+                  <span className="me-1" style={{ fontSize: '10px' }}>🔴</span> Live Updates
                 </button>
               </li>
             </ul>
@@ -1128,6 +1145,53 @@ export default function Home() {
                 </div>
               </div>
             </div>
+
+            {/* Custom Banners Added for Verified and Rating */}
+            <div className="mb-5 fade-in-up">
+              <div className="d-flex flex-column gap-4">
+                {/* Banner 1: Verified Properties */}
+                <div
+                  className="d-flex align-items-center justify-content-between p-4 rounded-4"
+                  style={{ backgroundColor: '#f0faf3', border: 'none', cursor: 'pointer' }}
+                  onClick={() => router.push('/search?verified=true')}
+                >
+                  <div className="d-flex align-items-center gap-4">
+                    {/* Verified Icon SVG Graphic */}
+                    <div className="position-relative d-flex align-items-center justify-content-center" style={{ width: '80px', height: '60px' }}>
+                      {/* Back cards */}
+                      <div className="position-absolute bg-white shadow-sm rounded" style={{ width: '50px', height: '50px', transform: 'rotate(-15deg)', left: '0', top: '5px' }}></div>
+                      <div className="position-absolute bg-white shadow-sm rounded" style={{ width: '50px', height: '50px', transform: 'rotate(15deg)', right: '0', top: '5px' }}></div>
+                      {/* Front card */}
+                      <div className="position-relative bg-white shadow rounded d-flex flex-column align-items-center justify-content-center" style={{ width: '56px', height: '56px', zIndex: 2 }}>
+                        <div style={{ backgroundColor: '#ffedb3', width: '100%', height: '30px', borderTopLeftRadius: '0.25rem', borderTopRightRadius: '0.25rem', position: 'absolute', top: 0 }}></div>
+                        <div style={{ backgroundColor: '#1877f2', width: '20px', height: '24px', position: 'relative', marginTop: '6px' }}>
+                          <div style={{ position: 'absolute', top: '-10px', left: 0, width: 0, height: 0, borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderBottom: '10px solid #1877f2' }}></div>
+                        </div>
+                      </div>
+                      {/* Green Verified Check Badge */}
+                      <div className="position-absolute" style={{ top: '-5px', right: '5px', zIndex: 3 }}>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="#10b981" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 2L14.8 4.6L18.5 4.1L19.5 7.7L22.6 9.5L21.2 13.1L22.6 16.7L19.5 18.5L18.5 22.1L14.8 21.6L12 24L9.2 21.6L5.5 22.1L4.5 18.5L1.4 16.7L2.8 13.1L1.4 9.5L4.5 7.7L5.5 4.1L9.2 4.6L12 2Z" fill="#10b981" />
+                          <path d="M10.5 16.5L6.5 12.5L8 11L10.5 13.5L16 8L17.5 9.5L10.5 16.5Z" fill="white" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div>
+                      <h3 className="h5 fw-bold mb-1" style={{ color: '#0f172a' }}>View properties verified by Coimbatore Properties</h3>
+                      <p className="m-0 text-secondary" style={{ fontSize: '0.9rem' }}>Verified on site for genuineness. Check out real photos of the property</p>
+                    </div>
+                  </div>
+                  <div className="d-flex align-items-center justify-content-center rounded-circle" style={{ width: '40px', height: '40px', backgroundColor: '#d3eee0', color: '#042f2e' }}>
+                    <ArrowRight size={20} />
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Classic Property Research Tools Carousel & Calculators */}
+            <ResearchTools />
+
             {/* Recommended Insights & Real Estate Trends */}
             <div className="mb-5 fade-in-up">
               <div className="d-flex justify-content-between align-items-center mb-3">
@@ -1491,13 +1555,22 @@ export default function Home() {
                 </div>
 
                 {user ? (
-                  <Link
-                    href={getDashboardPath()}
-                    className="btn w-100 py-2 rounded-3 small fw-bold text-white"
-                    style={{ backgroundColor: 'var(--nb-primary)', borderColor: 'var(--nb-primary)' }}
-                  >
-                    Go to Dashboard
-                  </Link>
+                  <>
+                    <Link
+                      href={getDashboardPath()}
+                      className="btn w-100 py-2 rounded-3 small fw-bold text-white mb-2"
+                      style={{ backgroundColor: 'var(--nb-primary)', borderColor: 'var(--nb-primary)' }}
+                    >
+                      Go to Dashboard
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setShowLiveUpdateModal(true)}
+                      className="btn w-100 py-2 rounded-3 small fw-bold text-danger border border-danger bg-white"
+                    >
+                      <span className="me-1" style={{ fontSize: '10px' }}>🔴</span> Manage Live Updates
+                    </button>
+                  </>
                 ) : (
                   <button
                     type="button"
@@ -1550,6 +1623,9 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Add Live Update Modal */}
+      <LiveUpdateModal show={showLiveUpdateModal} onClose={() => setShowLiveUpdateModal(false)} />
     </div>
   );
 }

@@ -16,20 +16,45 @@
       "static/chunks/main-app.js",
       "static/chunks/app/search/page.js"
     ],
-    "/property-detail/[slug]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/property-detail/[slug]/page.js"
-    ],
-    "/api/properties/[id]/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/properties/[id]/route.js"
-    ],
     "/user/live-updates/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/user/live-updates/page.js"
+    ],
+    "/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/login/page.js"
+    ],
+    "/tenant/enquiries/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/tenant/enquiries/page.js"
+    ],
+    "/api/tenant/enquiries/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/tenant/enquiries/route.js"
+    ],
+    "/owner/dashboard/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/owner/dashboard/page.js"
+    ],
+    "/api/owner/dashboard/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/owner/dashboard/route.js"
+    ],
+    "/owner/enquiries/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/owner/enquiries/page.js"
+    ],
+    "/api/owner/enquiries/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/owner/enquiries/route.js"
     ],
     "/user/feedback/page": [
       "static/chunks/webpack.js",

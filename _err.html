@@ -2,8 +2,9 @@
   <div class="container">
     <div class="row justify-content-center text-center mb-4 mb-lg-5">
       <div class="col-xl-9">
-        <h1 class="nb-hero-title mb-3">Find your perfect home.<br><span class="text-white-50">Zero Brokerage.</span></h1>
-        <p class="nb-hero-sub mb-0">Search from thousands of verified owner-listed properties — no middlemen, no hidden fees.</p>
+        <h1 class="nb-hero-title mb-3">Find your home.<br><span class="text-white-50">Zero Brokerage.</span></h1>
+        <p class="nb-hero-sub mb-0">Search from thousands of verified owner-listed properties — no middlemen, no hidden
+          fees.</p>
       </div>
     </div>
     <div class="row justify-content-center">
@@ -12,7 +13,8 @@
           <form action="http://localhost:8080/property/search" method="get" class="row g-3 g-md-4 align-items-end">
             <div class="col-12">
               <div class="btn-group nb-tabs-buy-rent" role="group" aria-label="Buy or Rent">
-                <input type="radio" class="btn-check" name="listing_type" id="lt-sale" value="sale" checked autocomplete="off">
+                <input type="radio" class="btn-check" name="listing_type" id="lt-sale" value="sale" checked
+                  autocomplete="off">
                 <label class="btn btn-outline-danger px-4" for="lt-sale">Buy</label>
                 <input type="radio" class="btn-check" name="listing_type" id="lt-rent" value="rent" autocomplete="off">
                 <label class="btn btn-outline-danger px-4" for="lt-rent">Rent</label>
@@ -26,7 +28,8 @@
             </div>
             <div class="col-md-4">
               <label class="form-label">Location</label>
-              <input type="text" class="form-control" name="q" id="location-search" placeholder="Search locality, landmark or society" autocomplete="off">
+              <input type="text" class="form-control" name="q" id="location-search"
+                placeholder="Search locality, landmark or society" autocomplete="off">
               <input type="hidden" id="input-latitude" value="">
               <input type="hidden" id="input-longitude" value="">
               <input type="hidden" id="input-locality" value="">
@@ -48,43 +51,43 @@
           </form>
         </div>
         <div class="row row-cols-2 row-cols-sm-3 row-cols-lg-6 g-2 g-lg-3 nb-type-grid justify-content-center">
-                    <div class="col">
+          <div class="col">
             <a class="nb-type-card" href="http://localhost:8080/property/search?property_type=apartment">
               <i class="bi bi-building"></i>
               <span>Apartment</span>
             </a>
           </div>
-                    <div class="col">
+          <div class="col">
             <a class="nb-type-card" href="http://localhost:8080/property/search?property_type=house">
               <i class="bi bi-house"></i>
               <span>House</span>
             </a>
           </div>
-                    <div class="col">
+          <div class="col">
             <a class="nb-type-card" href="http://localhost:8080/property/search?property_type=villa">
               <i class="bi bi-tree"></i>
               <span>Villa</span>
             </a>
           </div>
-                    <div class="col">
+          <div class="col">
             <a class="nb-type-card" href="http://localhost:8080/property/search?property_type=commercial">
               <i class="bi bi-shop"></i>
               <span>Commercial</span>
             </a>
           </div>
-                    <div class="col">
+          <div class="col">
             <a class="nb-type-card" href="http://localhost:8080/property/search?property_type=plot">
               <i class="bi bi-grid-3x3"></i>
               <span>Plot</span>
             </a>
           </div>
-                    <div class="col">
+          <div class="col">
             <a class="nb-type-card" href="http://localhost:8080/property/search">
               <i class="bi bi-grid"></i>
               <span>All</span>
             </a>
           </div>
-                  </div>
+        </div>
       </div>
     </div>
   </div>
@@ -97,52 +100,53 @@
         <h2 class="nb-section-title mb-1">Featured properties</h2>
         <p class="nb-section-muted mb-0">Hand-picked listings you can trust</p>
       </div>
-      <a href="http://localhost:8080/property/search" class="btn btn-outline-danger rounded-pill px-4">View all properties</a>
+      <a href="http://localhost:8080/property/search" class="btn btn-outline-danger rounded-pill px-4">View all
+        properties</a>
     </div>
     <div class="row g-4">
-              
-<div style="border:1px solid #990000;padding-left:20px;margin:0 0 10px 0;">
 
-<h4>An uncaught Exception was encountered</h4>
+      <div style="border:1px solid #990000;padding-left:20px;margin:0 0 10px 0;">
 
-<p>Type: Error</p>
-<p>Message: Call to undefined function nb_property_url()</p>
-<p>Filename: C:\xampp\htdocs\property\application\views\nobroker\_property_card.php</p>
-<p>Line Number: 12</p>
+        <h4>An uncaught Exception was encountered</h4>
+
+        <p>Type: Error</p>
+        <p>Message: Call to undefined function nb_property_url()</p>
+        <p>Filename: C:\xampp\htdocs\property\application\views\nobroker\_property_card.php</p>
+        <p>Line Number: 12</p>
 
 
-	<p>Backtrace:</p>
-	
-		
-	
-		
-	
-		
-			<p style="margin-left:10px">
-			File: C:\xampp\htdocs\property\application\views\nobroker\home\index.php<br />
-			Line: 88<br />
-			Function: view			</p>
-		
-	
-		
-	
-		
-	
-		
-			<p style="margin-left:10px">
-			File: C:\xampp\htdocs\property\application\controllers\Nb_home.php<br />
-			Line: 26<br />
-			Function: view			</p>
-		
-	
-		
-	
-		
-			<p style="margin-left:10px">
-			File: C:\xampp\htdocs\property\index.php<br />
-			Line: 220<br />
-			Function: require_once			</p>
-		
-	
+        <p>Backtrace:</p>
 
-</div>
+
+
+
+
+
+        <p style="margin-left:10px">
+          File: C:\xampp\htdocs\property\application\views\nobroker\home\index.php<br />
+          Line: 88<br />
+          Function: view </p>
+
+
+
+
+
+
+
+        <p style="margin-left:10px">
+          File: C:\xampp\htdocs\property\application\controllers\Nb_home.php<br />
+          Line: 26<br />
+          Function: view </p>
+
+
+
+
+
+        <p style="margin-left:10px">
+          File: C:\xampp\htdocs\property\index.php<br />
+          Line: 220<br />
+          Function: require_once </p>
+
+
+
+      </div>

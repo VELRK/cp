@@ -24,7 +24,7 @@ const AuthModals: React.FC = () => {
   const [regPhone, setRegPhone] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regPasswordConfirm, setRegPasswordConfirm] = useState('');
-  const [regRole, setRegRole] = useState<'customer' | 'agent'>('customer');
+  const [regRole, setRegRole] = useState<'owner' | 'buyer' | 'agent'>('buyer');
   const [regCityId, setRegCityId] = useState('');
   const [regAadharNo, setRegAadharNo] = useState('');
   const [regAadharFile, setRegAadharFile] = useState<File | null>(null);
@@ -138,7 +138,7 @@ const AuthModals: React.FC = () => {
         <div className="modal-content border-0 shadow-lg">
           <div className="modal-header border-bottom-0 pb-0 d-flex justify-content-between align-items-center p-3">
             <h2 className="modal-title h5 fw-bold text-primary" style={{ color: 'var(--nb-primary)' }}>
-              {isAuthModalOpen === 'login' ? 'Login' : 'Create Customer / Agent Account'}
+              {isAuthModalOpen === 'login' ? 'Login' : 'Create an Account'}
             </h2>
             <button
               type="button"
@@ -293,14 +293,15 @@ const AuthModals: React.FC = () => {
 
                 <div className="mb-2 row g-2">
                   <div className="col-6">
-                    <label className="form-label small fw-semibold mb-1">I want to</label>
+                    <label className="form-label small fw-semibold mb-1">I am a</label>
                     <select
                       className="form-select form-select-sm"
                       value={regRole}
-                      onChange={(e) => setRegRole(e.target.value as 'customer' | 'agent')}
+                      onChange={(e) => setRegRole(e.target.value as 'owner' | 'buyer' | 'agent')}
                     >
-                      <option value="customer">Rent / Buy properties</option>
-                      <option value="agent">Post my property</option>
+                      <option value="buyer">Buyer / Tenant</option>
+                      <option value="owner">Owner</option>
+                      <option value="agent">Agent / Broker</option>
                     </select>
                   </div>
                   <div className="col-6">
@@ -319,29 +320,33 @@ const AuthModals: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="mb-2">
-                  <label className="form-label small fw-semibold mb-1">Aadhaar Card Number (12 digits)</label>
-                  <input
-                    type="text"
-                    className="form-control form-control-sm"
-                    placeholder="12 digit Aadhaar"
-                    maxLength={12}
-                    value={regAadharNo}
-                    onChange={(e) => setRegAadharNo(e.target.value.replace(/\D/g, ''))}
-                  />
-                </div>
-
-                <div className="mb-2 row g-2">
-                  <div className="col-6">
-                    <label className="form-label small fw-semibold mb-1">Aadhaar File</label>
+                {regRole !== 'buyer' && (
+                  <div className="mb-2">
+                    <label className="form-label small fw-semibold mb-1">Aadhaar Card Number (12 digits)</label>
                     <input
-                      type="file"
+                      type="text"
                       className="form-control form-control-sm"
-                      accept="image/*"
-                      onChange={(e) => setRegAadharFile(e.target.files ? e.target.files[0] : null)}
+                      placeholder="12 digit Aadhaar"
+                      maxLength={12}
+                      value={regAadharNo}
+                      onChange={(e) => setRegAadharNo(e.target.value.replace(/\D/g, ''))}
                     />
                   </div>
-                  <div className="col-6">
+                )}
+
+                <div className="mb-2 row g-2">
+                  {regRole !== 'buyer' && (
+                    <div className="col-6">
+                      <label className="form-label small fw-semibold mb-1">Aadhaar File</label>
+                      <input
+                        type="file"
+                        className="form-control form-control-sm"
+                        accept="image/*"
+                        onChange={(e) => setRegAadharFile(e.target.files ? e.target.files[0] : null)}
+                      />
+                    </div>
+                  )}
+                  <div className={regRole !== 'buyer' ? "col-6" : "col-12"}>
                     <label className="form-label small fw-semibold mb-1">Profile Photo</label>
                     <input
                       type="file"

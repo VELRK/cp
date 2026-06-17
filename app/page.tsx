@@ -88,6 +88,10 @@ export default function Home() {
   const [cities, setCities] = useState<City[]>([]);
   const [featured, setFeatured] = useState<Property[]>([]);
   const [loadingFeatured, setLoadingFeatured] = useState(true);
+
+  // Dynamic City Name
+  const activeCity = cities.find((c) => c.id.toString() === cityId);
+  const cityName = activeCity ? activeCity.name : 'Coimbatore';
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
 
@@ -542,17 +546,19 @@ export default function Home() {
                   Plots/Land
                 </button>
               </li>
-              <li>
-                <button
-                  type="button"
-                  className="nb-search-tab-premium-btn text-danger fw-bold"
-                  onClick={() => {
-                    router.push('/user/live-updates');
-                  }}
-                >
-                  <span className="me-1" style={{ fontSize: '10px' }}>🔴</span> Live Updates
-                </button>
-              </li>
+              {user?.role === 'owner' && (
+                <li>
+                  <button
+                    type="button"
+                    className="nb-search-tab-premium-btn text-danger fw-bold"
+                    onClick={() => {
+                      router.push('/user/live-updates');
+                    }}
+                  >
+                    <span className="me-1" style={{ fontSize: '10px' }}>🔴</span> Live Updates
+                  </button>
+                </li>
+              )}
             </ul>
             <Link href={user ? '/owner/property/add' : '#'} onClick={(e) => {
               if (!user) {
@@ -723,30 +729,8 @@ export default function Home() {
           {/* Left Main Content Column */}
           <div className="col-lg-9">
 
-            {/* Quick Circular Category Pills */}
-            <div className="mb-5 fade-in-up">
-              <h2 className="h4 fw-bold text-dark mb-3">Explore Properties by Category</h2>
-              <div className="nb-quick-cat-strip">
-                {[
-                  { name: 'Residential Apartments', count: '1,400+ Properties', bg: 'rgba(238, 242, 255, 0.7)', iconBg: '#eef2ff', iconColor: '#4f46e5', query: 'apartment', icon: <Layers size={22} /> },
-                  { name: 'Independent Houses & Villas', count: '4,000+ Properties', bg: 'rgba(236, 253, 245, 0.7)', iconBg: '#ecfdf5', iconColor: '#10b981', query: 'villa', icon: <Compass size={22} /> },
-                  { name: 'Residential Plots & Land', count: '6,900+ Properties', bg: 'rgba(255, 240, 246, 0.7)', iconBg: '#fff0f6', iconColor: '#db2777', query: 'plot', icon: <MapPin size={22} /> },
-                  { name: 'Commercial Shops & Space', count: '800+ Properties', bg: 'rgba(254, 243, 199, 0.7)', iconBg: '#fef3c7', iconColor: '#d97706', query: 'commercial', icon: <BookOpen size={22} /> }
-                ].map((cat, i) => (
-                  <Link
-                    key={i}
-                    href={`/search?property_type=${cat.query}`}
-                    className="nb-quick-cat-card-new"
-                  >
-                    <div className="nb-quick-cat-icon-wrap" style={{ background: cat.iconBg, color: cat.iconColor }}>
-                      {cat.icon}
-                    </div>
-                    <div className="nb-quick-cat-title">{cat.name}</div>
-                    <div className="nb-quick-cat-count">{cat.count}</div>
-                  </Link>
-                ))}
-              </div>
-            </div>
+            {/* Explore Properties by Category - Classic UI Slider */}
+
 
             {/* Continue Browsing Quick Links */}
             {/* <div className="mb-5 fade-in-up">
@@ -762,13 +746,12 @@ export default function Home() {
                 </button>
               </div>
             </div> */}
-
             {/* Recommended Properties Horizontal Slider */}
             <div className="mb-5 fade-in-up">
               <div className="d-flex justify-content-between align-items-end mb-3">
                 <div>
                   <h2 className="h4 fw-bold text-dark m-0">Recommended Properties</h2>
-                  <p className="text-muted small m-0">Curated premium properties in Coimbatore</p>
+                  <p className="text-muted small m-0">Curated premium properties in {cityName}</p>
                 </div>
                 <Link href="/search" className="btn btn-link text-decoration-none nb-text-brand small p-0 d-flex align-items-center gap-1 fw-bold">
                   <span>See All</span>
@@ -989,7 +972,7 @@ export default function Home() {
               <div className="d-flex justify-content-between align-items-end mb-3">
                 <div>
                   <h2 className="h4 fw-bold text-dark m-0">Recommended Projects</h2>
-                  <p className="text-muted small m-0">The most searched premium projects in Coimbatore</p>
+                  <p className="text-muted small m-0">The most searched premium projects in {cityName}</p>
                 </div>
                 <button onClick={() => router.push('/search?sort=featured')} className="btn btn-link text-decoration-none nb-text-brand small p-0 d-flex align-items-center gap-1 fw-bold">
                   <span>See All</span>
@@ -1042,7 +1025,101 @@ export default function Home() {
                 </div>
               </div>
             </div>
+            <div className="mb-5 fade-in-up">
+              <div className="mb-3">
+                <h2 className="h4 fw-bold text-dark m-0" style={{ fontSize: '1.75rem', fontFamily: 'var(--font-heading)' }}>
+                  Apartments, Villas and more
+                </h2>
+                <p className="text-secondary small m-0" style={{ fontSize: '1rem', fontWeight: 500 }}>
+                  in {cityName}
+                </p>
+              </div>
 
+              <div className="nb-scroll-wrapper">
+                <button className="nb-scroll-arrow nb-scroll-arrow-left" aria-label="Scroll left">
+                  <ChevronLeft size={24} />
+                </button>
+                <button className="nb-scroll-arrow nb-scroll-arrow-right" aria-label="Scroll right">
+                  <ChevronRight size={24} />
+                </button>
+                <div className="nb-horizontal-scroll">
+                  {[
+                    {
+                      name: 'Residential Land',
+                      count: '7,000+ Properties',
+                      bgClass: 'nb-bg-peach',
+                      query: 'plot',
+                      imgUrl: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=600&q=80'
+                    },
+                    {
+                      name: 'Independent House/ Villa',
+                      count: '4,000+ Properties',
+                      bgClass: 'nb-bg-blue',
+                      query: 'villa',
+                      imgUrl: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=600&q=80'
+                    },
+                    {
+                      name: 'Residential Apartment',
+                      count: '1,300+ Properties',
+                      bgClass: 'nb-bg-green',
+                      query: 'apartment',
+                      imgUrl: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&q=80'
+                    },
+                    {
+                      name: 'Builder Floor',
+                      count: '130+ Properties',
+                      bgClass: 'nb-bg-peach',
+                      query: 'house',
+                      imgUrl: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&q=80'
+                    },
+                    {
+                      name: 'Farm House',
+                      count: '20+ Properties',
+                      bgClass: 'nb-bg-blue',
+                      query: 'villa',
+                      imgUrl: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&q=80'
+                    },
+                    {
+                      name: '1 RK/ Studio Apartment',
+                      count: '4 Properties',
+                      bgClass: 'nb-bg-green',
+                      query: 'apartment',
+                      imgUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=600&q=80'
+                    },
+                    {
+                      name: 'Serviced Apartments',
+                      count: '3 Properties',
+                      bgClass: 'nb-bg-peach',
+                      query: 'commercial',
+                      imgUrl: 'https://images.unsplash.com/photo-1554995207-c18c203602cb?w=600&q=80'
+                    }
+                  ].map((cat, i) => (
+                    <Link
+                      key={i}
+                      href={`/search?property_type=${cat.query}&city_id=${cityId}`}
+                      className={`nb-classic-cat-card ${cat.bgClass} position-relative`}
+                    >
+                      <div className="nb-classic-cat-card-text">
+                        <h3 className="nb-classic-cat-card-title">
+                          <span>{cat.name}</span>
+                          <span className="nb-classic-cat-card-arrow">
+                            <ArrowRight size={18} />
+                          </span>
+                        </h3>
+                        <div className="nb-classic-cat-card-count">{cat.count}</div>
+                      </div>
+                      <div className="nb-classic-cat-card-img-wrap">
+                        <img
+                          src={cat.imgUrl}
+                          alt={cat.name}
+                          className="nb-classic-cat-card-img"
+                        />
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
             {/* Handpicked Projects Section */}
             <div className="mb-5 fade-in-up">
               <h2 className="h4 fw-bold text-dark mb-3">Handpicked Premium Projects</h2>
@@ -1595,7 +1672,7 @@ export default function Home() {
                   Sell or rent faster at the right price!
                 </h3>
                 <p className="text-secondary mb-3" style={{ fontSize: '0.75rem', lineHeight: '1.4' }}>
-                  List your property now for free and reach thousands of genuine tenants/buyers in Coimbatore.
+                  List your property now for free and reach thousands of genuine tenants/buyers in {cityName}.
                 </p>
                 <div className="d-flex justify-content-between align-items-center">
                   <button

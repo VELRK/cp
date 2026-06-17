@@ -1053,10 +1053,12 @@ body,
 
 .nb-horizontal-scroll {
   display: flex;
-  gap: 1rem;
+  gap: 1.25rem;
   overflow-x: auto;
   scroll-behavior: smooth;
-  padding-bottom: 0.5rem;
+  padding-top: 0.5rem;
+  padding-bottom: 1.5rem;
+  margin-bottom: -1rem;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   /* Firefox */
@@ -3680,4 +3682,102 @@ body,
 .nb-calc-btn-action:hover {
   background: #6d28d9;
   box-shadow: 0 6px 16px rgba(109, 40, 217, 0.35);
+}
+
+/* ==========================================================================
+   Classic Category Horizontal Card Slider
+   ========================================================================== */
+.nb-classic-cat-card {
+  width: 280px;
+  height: 380px;
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  margin-right: 1.5rem;
+  box-shadow: 0 8px 24px rgba(12, 35, 64, 0.02);
+  transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s ease, border-color 0.4s ease;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  text-decoration: none !important;
+  cursor: pointer;
+}
+
+.nb-classic-cat-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 45px rgba(12, 35, 64, 0.08);
+  border-color: rgba(11, 44, 86, 0.08);
+}
+
+.nb-classic-cat-card-text {
+  padding: 2.25rem 2rem 1rem 2rem;
+  position: relative;
+}
+
+.nb-classic-cat-card-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #1a2f4c; /* Deep classic navy */
+  line-height: 1.25;
+  margin-bottom: 0.4rem;
+  letter-spacing: -0.02em;
+  font-family: var(--font-heading), system-ui, sans-serif;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.nb-classic-cat-card-arrow {
+  color: #1a2f4c;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  display: inline-flex;
+  margin-top: 4px;
+}
+
+.nb-classic-cat-card:hover .nb-classic-cat-card-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.nb-classic-cat-card-count {
+  font-size: 0.95rem;
+  color: #8c9ba5; /* Premium soft gray-blue */
+  font-weight: 600;
+}
+
+.nb-classic-cat-card-img-wrap {
+  height: 52%;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  /* Arch dome clip path: curves up in the center and down at the corners */
+  clip-path: ellipse(110% 100% at 50% 100%);
+  -webkit-clip-path: ellipse(110% 100% at 50% 100%);
+}
+
+.nb-classic-cat-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.nb-classic-cat-card:hover .nb-classic-cat-card-img {
+  transform: scale(1.06);
+}
+
+/* Luxury Soft Pastel Gradient Variants */
+.nb-bg-peach {
+  background: linear-gradient(180deg, #fffcf5 0%, #fff3db 100%);
+}
+
+.nb-bg-blue {
+  background: linear-gradient(180deg, #f3f8ff 0%, #e3efff 100%);
+}
+
+.nb-bg-green {
+  background: linear-gradient(180deg, #f2fcf7 0%, #daf2e4 100%);
 }

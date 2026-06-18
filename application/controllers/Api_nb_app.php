@@ -2,12 +2,13 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /**
- * Dream Villa Makers mobile JSON API (nb_* tables).
+ * Coimbatore Properties mobile JSON API (nb_* tables).
  *
  * Auth: send Authorization: Bearer <token> or X-Api-Token (from login/register).
  * Property save & enquiry use the same tokens on existing endpoints (api/property/save, api/enquiry/send).
  */
-class Api_nb_app extends CI_Controller {
+class Api_nb_app extends CI_Controller
+{
 
     public function __construct()
     {
@@ -75,7 +76,7 @@ class Api_nb_app extends CI_Controller {
         $row['api_role'] = $apiRole;
         $row['api_user_type'] = $apiRole;
         $row['is_verified'] = isset($row['is_verified']) ? (int) $row['is_verified'] : 0;
-        
+
         if (isset($row['profile_pic'])) {
             $row['profile_pic'] = $this->_asset_url_or_null($row['profile_pic']);
         }
@@ -221,12 +222,12 @@ class Api_nb_app extends CI_Controller {
 
         $this->load->library('upload');
         $config = array(
-            'upload_path'   => $targetDir,
+            'upload_path' => $targetDir,
             'allowed_types' => 'jpg|jpeg|png|webp|pdf',
-            'max_size'      => 5120, // 5 MB
+            'max_size' => 5120, // 5 MB
             'file_ext_tolower' => true,
             'remove_spaces' => true,
-            'encrypt_name'  => true,
+            'encrypt_name' => true,
         );
         $this->upload->initialize($config);
         if (!$this->upload->do_upload('image')) {
@@ -235,10 +236,10 @@ class Api_nb_app extends CI_Controller {
         $u = $this->upload->data();
         $relPath = 'uploads/' . $folder . '/' . $u['file_name'];
         $this->_json(array(
-            'success'   => true,
-            'kind'      => $kind,
+            'success' => true,
+            'kind' => $kind,
             'file_path' => $relPath,
-            'file_url'  => base_url($relPath),
+            'file_url' => base_url($relPath),
         ));
     }
 
@@ -400,13 +401,13 @@ class Api_nb_app extends CI_Controller {
             $city_id = null;
         }
         $insert = array(
-            'name'     => trim(strip_tags($name)),
-            'email'    => $email,
-            'phone'    => trim(preg_replace('/[^\d\+\-\s]/', '', $phone)),
+            'name' => trim(strip_tags($name)),
+            'email' => $email,
+            'phone' => trim(preg_replace('/[^\d\+\-\s]/', '', $phone)),
             'password' => password_hash($password, PASSWORD_BCRYPT),
-            'role'     => $role,
-            'status'   => 'approved',
-            'city_id'  => $city_id,
+            'role' => $role,
+            'status' => 'approved',
+            'city_id' => $city_id,
             'user_type' => $user_type,
         );
         if ($this->db->field_exists('aadhar_no', 'nb_users')) {
@@ -431,7 +432,7 @@ class Api_nb_app extends CI_Controller {
         }
         $this->_json(array(
             'success' => true,
-            'user'    => $this->_user_public($user),
+            'user' => $this->_user_public($user),
         ));
     }
 
@@ -463,8 +464,8 @@ class Api_nb_app extends CI_Controller {
         }
         $this->_json(array(
             'success' => true,
-            'token'   => $token,
-            'user'    => $this->_user_public($user),
+            'token' => $token,
+            'user' => $this->_user_public($user),
         ));
     }
 
@@ -479,7 +480,7 @@ class Api_nb_app extends CI_Controller {
     {
         $this->load->library('nb_api_token');
         $token = $this->nb_api_token->read_token_from_request();
-        
+
         $u = null;
         if ($token !== '') {
             $u = $this->Nb_user_model->get_by_api_token($token);
@@ -677,12 +678,12 @@ class Api_nb_app extends CI_Controller {
             }
             $this->load->library('upload');
             $this->upload->initialize(array(
-                'upload_path'      => $targetDir,
-                'allowed_types'    => 'jpg|jpeg|png|webp',
-                'max_size'         => 5120,
+                'upload_path' => $targetDir,
+                'allowed_types' => 'jpg|jpeg|png|webp',
+                'max_size' => 5120,
                 'file_ext_tolower' => true,
-                'remove_spaces'    => true,
-                'encrypt_name'     => true,
+                'remove_spaces' => true,
+                'encrypt_name' => true,
             ));
             if (!$this->upload->do_upload($profileInputField)) {
                 return $this->_json(array('success' => false, 'message' => $profileInputField . ' upload failed: ' . strip_tags($this->upload->display_errors('', ''))), 400);
@@ -746,12 +747,12 @@ class Api_nb_app extends CI_Controller {
             }
             $this->load->library('upload');
             $this->upload->initialize(array(
-                'upload_path'      => $targetDir,
-                'allowed_types'    => 'jpg|jpeg|png|webp|pdf',
-                'max_size'         => 5120,
+                'upload_path' => $targetDir,
+                'allowed_types' => 'jpg|jpeg|png|webp|pdf',
+                'max_size' => 5120,
                 'file_ext_tolower' => true,
-                'remove_spaces'    => true,
-                'encrypt_name'     => true,
+                'remove_spaces' => true,
+                'encrypt_name' => true,
             ));
             if (!$this->upload->do_upload('aadhar_file')) {
                 return $this->_json(array('success' => false, 'message' => 'aadhar_file upload failed: ' . strip_tags($this->upload->display_errors('', ''))), 400);
@@ -843,7 +844,7 @@ class Api_nb_app extends CI_Controller {
                 return $this->_json(array('success' => false, 'message' => 'title must be under 300 characters'), 400);
             }
             $update['title'] = $title;
-            $update['slug']  = $this->Nb_property_model->unique_slug($title, $property_id);
+            $update['slug'] = $this->Nb_property_model->unique_slug($title, $property_id);
         }
 
         // --- description ---
@@ -966,7 +967,7 @@ class Api_nb_app extends CI_Controller {
             $nearby = is_array($input['nearby']) ? $input['nearby'] : array();
             $clean = array();
             foreach ($nearby as $item) {
-                $cat  = trim((string) ($item['category'] ?? ''));
+                $cat = trim((string) ($item['category'] ?? ''));
                 $name = trim((string) ($item['name'] ?? $item['title'] ?? ''));
                 $dist = trim((string) ($item['distance'] ?? ''));
                 if ($cat !== '' || $name !== '' || $dist !== '') {
@@ -979,13 +980,14 @@ class Api_nb_app extends CI_Controller {
         // --- location_image: multipart file OR base64 ---
         $uploadDir = FCPATH . 'assets/uploads/nb_properties/';
         if (!empty($_FILES['location_image']['name'])) {
-            if (!is_dir($uploadDir)) @mkdir($uploadDir, 0755, true);
+            if (!is_dir($uploadDir))
+                @mkdir($uploadDir, 0755, true);
             $this->load->library('upload');
             $this->upload->initialize(array(
-                'upload_path'   => $uploadDir,
+                'upload_path' => $uploadDir,
                 'allowed_types' => 'jpg|jpeg|png|webp',
-                'max_size'      => 5120,
-                'encrypt_name'  => true,
+                'max_size' => 5120,
+                'encrypt_name' => true,
             ));
             if (!$this->upload->do_upload('location_image')) {
                 return $this->_json(array('success' => false, 'message' => 'location_image upload failed: ' . strip_tags($this->upload->display_errors('', ''))), 400);
@@ -996,7 +998,8 @@ class Api_nb_app extends CI_Controller {
             }
             $update['location_image'] = 'assets/uploads/nb_properties/' . $uData['file_name'];
         } elseif (isset($input['location_image']) && $this->_looks_like_base64_payload($input['location_image'])) {
-            if (!is_dir($uploadDir)) @mkdir($uploadDir, 0755, true);
+            if (!is_dir($uploadDir))
+                @mkdir($uploadDir, 0755, true);
             $saved = $this->_save_base64_upload_property($input['location_image']);
             if (!$saved['ok']) {
                 return $this->_json(array('success' => false, 'message' => 'location_image upload failed: ' . $saved['error']), 400);
@@ -1010,32 +1013,36 @@ class Api_nb_app extends CI_Controller {
         // --- gallery images: multipart files OR base64 array ---
         $new_paths = array();
         if (!empty($_FILES['images']['name']) && is_array($_FILES['images']['name'])) {
-            if (!is_dir($uploadDir)) @mkdir($uploadDir, 0755, true);
+            if (!is_dir($uploadDir))
+                @mkdir($uploadDir, 0755, true);
             $this->load->library('upload');
             $count = min(count($_FILES['images']['name']), 10);
             for ($i = 0; $i < $count; $i++) {
-                if (empty($_FILES['images']['name'][$i])) continue;
+                if (empty($_FILES['images']['name'][$i]))
+                    continue;
                 $_FILES['userfile'] = array(
-                    'name'     => $_FILES['images']['name'][$i],
-                    'type'     => $_FILES['images']['type'][$i],
+                    'name' => $_FILES['images']['name'][$i],
+                    'type' => $_FILES['images']['type'][$i],
                     'tmp_name' => $_FILES['images']['tmp_name'][$i],
-                    'error'    => $_FILES['images']['error'][$i],
-                    'size'     => $_FILES['images']['size'][$i],
+                    'error' => $_FILES['images']['error'][$i],
+                    'size' => $_FILES['images']['size'][$i],
                 );
                 $this->upload->initialize(array(
-                    'upload_path'   => $uploadDir,
+                    'upload_path' => $uploadDir,
                     'allowed_types' => 'jpg|jpeg|png|webp',
-                    'max_size'      => 5120,
-                    'encrypt_name'  => true,
+                    'max_size' => 5120,
+                    'encrypt_name' => true,
                 ));
                 if ($this->upload->do_upload('userfile')) {
                     $new_paths[] = 'assets/uploads/nb_properties/' . $this->upload->data()['file_name'];
                 }
             }
         } elseif (isset($input['images']) && is_array($input['images'])) {
-            if (!is_dir($uploadDir)) @mkdir($uploadDir, 0755, true);
+            if (!is_dir($uploadDir))
+                @mkdir($uploadDir, 0755, true);
             foreach (array_slice($input['images'], 0, 10) as $imgItem) {
-                if (!is_string($imgItem)) continue;
+                if (!is_string($imgItem))
+                    continue;
                 if ($this->_looks_like_base64_payload($imgItem)) {
                     $saved = $this->_save_base64_upload_property($imgItem);
                     if ($saved['ok']) {
@@ -1063,7 +1070,7 @@ class Api_nb_app extends CI_Controller {
 
             $all_images = array_slice(array_merge($kept, $new_paths), 0, 10);
             $cover_index = (int) ($input['cover_index'] ?? 0);
-            $all_images  = nb_reorder_cover($all_images, $cover_index);
+            $all_images = nb_reorder_cover($all_images, $cover_index);
             $update['images'] = json_encode($all_images);
 
         }
@@ -1076,13 +1083,13 @@ class Api_nb_app extends CI_Controller {
         $this->Nb_property_model->update($property_id, $update);
 
         $saved = $this->Nb_property_model->get_by_id($property_id);
-        $out   = $this->_format_property_card($saved);
+        $out = $this->_format_property_card($saved);
 
         $this->_json(array(
-            'success'     => true,
-            'message'     => 'Property updated successfully',
+            'success' => true,
+            'message' => 'Property updated successfully',
             'property_id' => $property_id,
-            'property'    => $out,
+            'property' => $out,
         ));
     }
 
@@ -1107,8 +1114,8 @@ class Api_nb_app extends CI_Controller {
                 $rawBase64 = $m[2];
                 $map = array(
                     'image/jpeg' => 'jpg',
-                    'image/jpg'  => 'jpg',
-                    'image/png'  => 'png',
+                    'image/jpg' => 'jpg',
+                    'image/png' => 'png',
                     'image/webp' => 'webp',
                 );
                 if (isset($map[$mime])) {
@@ -1141,17 +1148,17 @@ class Api_nb_app extends CI_Controller {
         $get = $this->input->get();
         $radius_km = isset($get['radius_km']) && $get['radius_km'] !== '' ? max(1, min(100, (float) $get['radius_km'])) : 15;
         return array(
-            'city_id'        => isset($get['city_id']) ? $get['city_id'] : null,
-            'property_type'  => isset($get['property_type']) ? $get['property_type'] : null,
-            'listing_type'   => isset($get['listing_type']) ? $get['listing_type'] : null,
-            'min_price'      => isset($get['min_price']) ? $get['min_price'] : null,
-            'max_price'      => isset($get['max_price']) ? $get['max_price'] : null,
-            'bedrooms'       => isset($get['bedrooms']) ? $get['bedrooms'] : null,
-            'locality_q'     => isset($get['q']) ? trim((string) $get['q']) : null,
-            'sort'           => isset($get['sort']) ? $get['sort'] : 'new',
-            'lat'            => isset($get['lat']) ? $get['lat'] : null,
-            'lng'            => isset($get['lng']) ? $get['lng'] : null,
-            'radius_km'      => $radius_km,
+            'city_id' => isset($get['city_id']) ? $get['city_id'] : null,
+            'property_type' => isset($get['property_type']) ? $get['property_type'] : null,
+            'listing_type' => isset($get['listing_type']) ? $get['listing_type'] : null,
+            'min_price' => isset($get['min_price']) ? $get['min_price'] : null,
+            'max_price' => isset($get['max_price']) ? $get['max_price'] : null,
+            'bedrooms' => isset($get['bedrooms']) ? $get['bedrooms'] : null,
+            'locality_q' => isset($get['q']) ? trim((string) $get['q']) : null,
+            'sort' => isset($get['sort']) ? $get['sort'] : 'new',
+            'lat' => isset($get['lat']) ? $get['lat'] : null,
+            'lng' => isset($get['lng']) ? $get['lng'] : null,
+            'radius_km' => $radius_km,
         );
     }
 
@@ -1206,10 +1213,10 @@ class Api_nb_app extends CI_Controller {
         }
         $this->_json(array(
             'success' => true,
-            'total'   => $total,
-            'page'    => $page,
-            'limit'   => $limit,
-            'items'   => $items,
+            'total' => $total,
+            'page' => $page,
+            'limit' => $limit,
+            'items' => $items,
         ));
     }
 
@@ -1223,8 +1230,8 @@ class Api_nb_app extends CI_Controller {
         $out = array();
         foreach ($rows as $r) {
             $out[] = array(
-                'id'    => (int) $r->id,
-                'name'  => $r->name,
+                'id' => (int) $r->id,
+                'name' => $r->name,
                 'state' => $r->state,
                 'image' => $this->_asset_url_or_null(isset($r->image) ? $r->image : null),
             );
@@ -1314,45 +1321,45 @@ class Api_nb_app extends CI_Controller {
         }
 
         $row = array(
-            'id'                   => (int) $p->id,
-            'owner_id'             => isset($p->owner_id) ? (int) $p->owner_id : null,
-            'title'                => isset($p->title) ? $p->title : '',
-            'slug'                 => isset($p->slug) ? $p->slug : '',
-            'description'          => isset($p->description) ? $p->description : null,
-            'property_type'        => isset($p->property_type) ? $p->property_type : '',
-            'listing_type'         => isset($p->listing_type) ? $p->listing_type : '',
-            'price'                => isset($p->price) ? (float) $p->price : 0.0,
-            'bedrooms'             => isset($p->bedrooms) && $p->bedrooms !== null && $p->bedrooms !== '' ? (int) $p->bedrooms : null,
-            'bathrooms'            => isset($p->bathrooms) && $p->bathrooms !== null && $p->bathrooms !== '' ? (int) $p->bathrooms : null,
-            'area_sqft'            => isset($p->area_sqft) && $p->area_sqft !== null && $p->area_sqft !== '' ? (int) $p->area_sqft : null,
-            'address'              => isset($p->address) ? $p->address : '',
-            'locality'             => isset($p->locality) ? $p->locality : '',
-            'city_id'              => isset($p->city_id) ? (int) $p->city_id : null,
-            'latitude'             => isset($p->latitude) && $p->latitude !== null && $p->latitude !== '' ? (float) $p->latitude : null,
-            'longitude'            => isset($p->longitude) && $p->longitude !== null && $p->longitude !== '' ? (float) $p->longitude : null,
-            'google_place_id'      => isset($p->google_place_id) && $p->google_place_id !== '' ? $p->google_place_id : null,
-            'is_price_negotiable'  => isset($p->is_price_negotiable) ? (int) (bool) $p->is_price_negotiable : 0,
-            'rate_per_sqft'        => isset($p->rate_per_sqft) && $p->rate_per_sqft !== null && $p->rate_per_sqft !== '' ? (float) $p->rate_per_sqft : null,
-            'available_from'       => isset($p->available_from) && $p->available_from !== null && $p->available_from !== '' ? substr((string) $p->available_from, 0, 10) : null,
-            'plot_length_ft'       => isset($p->plot_length_ft) && $p->plot_length_ft !== null && $p->plot_length_ft !== '' ? (float) $p->plot_length_ft : null,
-            'plot_width_ft'        => isset($p->plot_width_ft) && $p->plot_width_ft !== null && $p->plot_width_ft !== '' ? (float) $p->plot_width_ft : null,
-            'has_boundary_wall'    => isset($p->has_boundary_wall) && $p->has_boundary_wall !== null && $p->has_boundary_wall !== '' ? (int) $p->has_boundary_wall : null,
-            'amenities'            => $this->_decode_amenities_array($p),
-            'images'               => $images_rel,
-            'video_url'            => $video_url,
-            'is_active'            => isset($p->is_active) ? (int) (bool) $p->is_active : 0,
-            'is_featured'          => isset($p->is_featured) ? (int) (bool) $p->is_featured : 0,
-            'views'                => isset($p->views) ? (int) $p->views : 0,
-            'created_at'           => isset($p->created_at) ? (string) $p->created_at : null,
-            'updated_at'           => isset($p->updated_at) ? (string) $p->updated_at : null,
-            'city_name'            => isset($p->city_name) ? $p->city_name : '',
-            'owner_name'           => isset($p->owner_name) ? $p->owner_name : '',
-            'owner_phone'          => isset($p->owner_phone) ? $p->owner_phone : null,
-            'property_type_label'  => nb_property_type_label(isset($p->property_type) ? $p->property_type : ''),
-            'price_formatted'      => nb_format_listing_price(isset($p->price) ? $p->price : 0, isset($p->listing_type) ? $p->listing_type : 'sale'),
-            'thumbnail_url'        => $thumb,
-            'image_urls'           => $image_urls,
-            'url'                  => nb_property_url($p),
+            'id' => (int) $p->id,
+            'owner_id' => isset($p->owner_id) ? (int) $p->owner_id : null,
+            'title' => isset($p->title) ? $p->title : '',
+            'slug' => isset($p->slug) ? $p->slug : '',
+            'description' => isset($p->description) ? $p->description : null,
+            'property_type' => isset($p->property_type) ? $p->property_type : '',
+            'listing_type' => isset($p->listing_type) ? $p->listing_type : '',
+            'price' => isset($p->price) ? (float) $p->price : 0.0,
+            'bedrooms' => isset($p->bedrooms) && $p->bedrooms !== null && $p->bedrooms !== '' ? (int) $p->bedrooms : null,
+            'bathrooms' => isset($p->bathrooms) && $p->bathrooms !== null && $p->bathrooms !== '' ? (int) $p->bathrooms : null,
+            'area_sqft' => isset($p->area_sqft) && $p->area_sqft !== null && $p->area_sqft !== '' ? (int) $p->area_sqft : null,
+            'address' => isset($p->address) ? $p->address : '',
+            'locality' => isset($p->locality) ? $p->locality : '',
+            'city_id' => isset($p->city_id) ? (int) $p->city_id : null,
+            'latitude' => isset($p->latitude) && $p->latitude !== null && $p->latitude !== '' ? (float) $p->latitude : null,
+            'longitude' => isset($p->longitude) && $p->longitude !== null && $p->longitude !== '' ? (float) $p->longitude : null,
+            'google_place_id' => isset($p->google_place_id) && $p->google_place_id !== '' ? $p->google_place_id : null,
+            'is_price_negotiable' => isset($p->is_price_negotiable) ? (int) (bool) $p->is_price_negotiable : 0,
+            'rate_per_sqft' => isset($p->rate_per_sqft) && $p->rate_per_sqft !== null && $p->rate_per_sqft !== '' ? (float) $p->rate_per_sqft : null,
+            'available_from' => isset($p->available_from) && $p->available_from !== null && $p->available_from !== '' ? substr((string) $p->available_from, 0, 10) : null,
+            'plot_length_ft' => isset($p->plot_length_ft) && $p->plot_length_ft !== null && $p->plot_length_ft !== '' ? (float) $p->plot_length_ft : null,
+            'plot_width_ft' => isset($p->plot_width_ft) && $p->plot_width_ft !== null && $p->plot_width_ft !== '' ? (float) $p->plot_width_ft : null,
+            'has_boundary_wall' => isset($p->has_boundary_wall) && $p->has_boundary_wall !== null && $p->has_boundary_wall !== '' ? (int) $p->has_boundary_wall : null,
+            'amenities' => $this->_decode_amenities_array($p),
+            'images' => $images_rel,
+            'video_url' => $video_url,
+            'is_active' => isset($p->is_active) ? (int) (bool) $p->is_active : 0,
+            'is_featured' => isset($p->is_featured) ? (int) (bool) $p->is_featured : 0,
+            'views' => isset($p->views) ? (int) $p->views : 0,
+            'created_at' => isset($p->created_at) ? (string) $p->created_at : null,
+            'updated_at' => isset($p->updated_at) ? (string) $p->updated_at : null,
+            'city_name' => isset($p->city_name) ? $p->city_name : '',
+            'owner_name' => isset($p->owner_name) ? $p->owner_name : '',
+            'owner_phone' => isset($p->owner_phone) ? $p->owner_phone : null,
+            'property_type_label' => nb_property_type_label(isset($p->property_type) ? $p->property_type : ''),
+            'price_formatted' => nb_format_listing_price(isset($p->price) ? $p->price : 0, isset($p->listing_type) ? $p->listing_type : 'sale'),
+            'thumbnail_url' => $thumb,
+            'image_urls' => $image_urls,
+            'url' => nb_property_url($p),
         );
 
         return $row;
@@ -1399,9 +1406,9 @@ class Api_nb_app extends CI_Controller {
         $location = !empty($loc) ? implode(', ', $loc) : '';
         $img = $this->_nb_property_first_image($p);
         return array(
-            'property_name'     => isset($p->title) ? $p->title : '',
-            'property_image'    => $img !== '' ? $img : null,
-            'property_price'    => isset($p->price) ? (float) $p->price : null,
+            'property_name' => isset($p->title) ? $p->title : '',
+            'property_image' => $img !== '' ? $img : null,
+            'property_price' => isset($p->price) ? (float) $p->price : null,
             'property_location' => $location !== '' ? $location : null,
         );
     }
@@ -1417,12 +1424,12 @@ class Api_nb_app extends CI_Controller {
             }
         }
         return array(
-            'id'          => isset($w->id) ? (string) $w->id : '',
-            'userId'      => isset($w->user_id) ? (string) $w->user_id : '',
-            'propertyId'  => isset($w->property_id) ? (string) $w->property_id : '',
-            'createdAt'   => isset($w->created_at) ? (string) $w->created_at : '',
+            'id' => isset($w->id) ? (string) $w->id : '',
+            'userId' => isset($w->user_id) ? (string) $w->user_id : '',
+            'propertyId' => isset($w->property_id) ? (string) $w->property_id : '',
+            'createdAt' => isset($w->created_at) ? (string) $w->created_at : '',
             'propertyName' => isset($w->property_name) ? $w->property_name : null,
-            'property'    => $property,
+            'property' => $property,
         );
     }
 
@@ -1434,7 +1441,7 @@ class Api_nb_app extends CI_Controller {
         }
         $this->load->library('email');
         $tname = isset($tenant->name) ? $tenant->name : 'User';
-        $this->email->from('noreply@localhost', 'Dream Villa Makers');
+        $this->email->from('noreply@localhost', 'Coimbatore Properties');
         $this->email->to($admin);
         $this->email->subject('New property enquiry: ' . $prop->title);
         $this->email->message(
@@ -1683,11 +1690,11 @@ class Api_nb_app extends CI_Controller {
                 $out[] = $this->_format_wishlist_item($row);
             }
             $this->_json(array(
-                'success'   => true,
-                'wishlist'  => $out,
-                'total'     => $this->Wishlist_model->count_by_user($uid),
-                'limit'     => $limit,
-                'offset'    => $offset,
+                'success' => true,
+                'wishlist' => $out,
+                'total' => $this->Wishlist_model->count_by_user($uid),
+                'limit' => $limit,
+                'offset' => $offset,
             ));
             return;
         }
@@ -1728,9 +1735,9 @@ class Api_nb_app extends CI_Controller {
             return;
         }
         $this->_json(array(
-            'success'    => true,
+            'success' => true,
             'wishlisted' => true,
-            'id'         => (int) $id,
+            'id' => (int) $id,
             'propertyId' => $pid,
         ));
     }
@@ -1893,14 +1900,14 @@ class Api_nb_app extends CI_Controller {
         }
 
         $this->load->model('Enquiry_model');
-        $this->load->library('security');
         $id = $this->Enquiry_model->create(array(
-            'user_id'     => (int) $u->id,
+            'user_id' => (int) $u->id,
+            'name' => isset($u->name) ? $this->security->xss_clean($u->name) : 'User',
             'property_id' => $pid,
-            'message'     => $this->security->xss_clean($message),
-            'phone'       => $this->security->xss_clean($phone),
-            'email'       => $this->security->xss_clean($email),
-            'status'      => 'new',
+            'message' => $this->security->xss_clean($message),
+            'phone' => $this->security->xss_clean($phone),
+            'email' => $this->security->xss_clean($email),
+            'status' => 'new',
         ));
         if (!$id) {
             $this->_json(array('success' => false, 'message' => 'Could not save enquiry'), 500);
@@ -1911,7 +1918,7 @@ class Api_nb_app extends CI_Controller {
         $this->_json(array(
             'success' => true,
             'message' => 'Enquiry sent. We\'ve routed it to the listing owner; they may contact you on your phone or email.',
-            'id'      => (int) $id,
+            'id' => (int) $id,
         ));
     }
 }

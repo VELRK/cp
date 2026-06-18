@@ -8,7 +8,7 @@ export default function AboutPage() {
   return (
     <div className="nb-body">
       {/* Hero Header Section */}
-      <section 
+      <section
         className="text-white text-center py-5 mt-5 d-flex align-items-center justify-content-center position-relative"
         style={{
           background: 'linear-gradient(135deg, #0b2c56 0%, #071f3f 100%)',
@@ -27,9 +27,9 @@ export default function AboutPage() {
             Building Your Legacy with Trust, Quality, and Excellence
           </p>
         </div>
-        
+
         {/* Subtle background glow */}
-        <div 
+        <div
           className="position-absolute top-50 start-50 translate-middle rounded-circle opacity-10"
           style={{
             width: '400px',
@@ -48,7 +48,7 @@ export default function AboutPage() {
             <div className="col-lg-10 text-center">
               <h2 className="display-6 fw-bold text-dark mb-3">Coimbatore Properties</h2>
               <p className="text-secondary fs-5" style={{ lineHeight: '1.8' }}>
-                At Coimbatore Properties (Dream Villa Makers), we believe that a home is more than just a building—it's a reflection of your dreams, your lifestyle, and your future. With a strong commitment to quality craftsmanship, transparency, and customer satisfaction, we have grown into a trusted name in real estate development.
+                At Coimbatore Properties , we believe that a home is more than just a building—it's a reflection of your dreams, your lifestyle, and your future. With a strong commitment to quality craftsmanship, transparency, and customer satisfaction, we have grown into a trusted name in real estate development.
               </p>
               <p className="text-secondary fs-6 mt-3" style={{ lineHeight: '1.8' }}>
                 For years, we have been creating thoughtfully planned homes and residential spaces designed to offer comfort, convenience, and long-lasting value. Every project we undertake is shaped by our passion for innovation, architectural excellence, and attention to detail.
@@ -59,8 +59,8 @@ export default function AboutPage() {
           {/* Mission & Vision Row */}
           <div className="row g-4 mb-5">
             <div className="col-md-6">
-              <div 
-                className="card border-0 shadow-sm h-100 p-4 rounded-4" 
+              <div
+                className="card border-0 shadow-sm h-100 p-4 rounded-4"
                 style={{ background: '#fff', borderLeft: '5px solid #0b2c56' }}
               >
                 <div className="d-flex align-items-center gap-2 mb-3">
@@ -79,8 +79,8 @@ export default function AboutPage() {
             </div>
 
             <div className="col-md-6">
-              <div 
-                className="card border-0 shadow-sm h-100 p-4 rounded-4" 
+              <div
+                className="card border-0 shadow-sm h-100 p-4 rounded-4"
                 style={{ background: '#fff', borderLeft: '5px solid #f2b203' }}
               >
                 <div className="d-flex align-items-center gap-2 mb-3">
@@ -102,7 +102,7 @@ export default function AboutPage() {
           {/* What Sets Us Apart */}
           <div className="my-5">
             <h3 className="h3 fw-bold text-center text-dark mb-5">What Sets Us Apart</h3>
-            
+
             <div className="row g-4">
               {/* Feature 1 */}
               <div className="col-md-6 col-lg-4">
@@ -173,9 +173,9 @@ export default function AboutPage() {
 
           {/* Our Commitment Banner */}
           <div className="mt-5 text-center">
-            <div 
-              className="p-5 rounded-4 shadow-sm text-white position-relative overflow-hidden" 
-              style={{ 
+            <div
+              className="p-5 rounded-4 shadow-sm text-white position-relative overflow-hidden"
+              style={{
                 background: 'linear-gradient(135deg, #0b2c56 0%, #0c2340 100%)',
               }}
             >
@@ -190,8 +190,8 @@ export default function AboutPage() {
                 <p className="fs-4 fw-bold text-accent italic mb-4" style={{ fontStyle: 'italic' }}>
                   "We don't just build houses - We build homes that last a lifetime."
                 </p>
-                <Link 
-                  href="/search" 
+                <Link
+                  href="/search"
                   className="btn btn-warning btn-lg px-4 py-2.5 rounded-pill fw-bold text-primary shadow-sm hover-up d-inline-flex align-items-center gap-2"
                   style={{ backgroundColor: '#f2b203', borderColor: '#f2b203', color: '#0b2c56' }}
                 >
@@ -201,7 +201,7 @@ export default function AboutPage() {
               </div>
 
               {/* Decorative design vector element */}
-              <div 
+              <div
                 className="position-absolute end-0 bottom-0 opacity-10"
                 style={{
                   transform: 'translate(20%, 20%)',

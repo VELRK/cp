@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../../components/AuthContext';
-import api from '../../../lib/api';
+import { useAuth } from '@/components/AuthContext';
+import api from '@/lib/api';
 import { ArrowLeft, MessageSquare, Calendar } from 'lucide-react';
 
 interface Enquiry {
@@ -91,9 +91,8 @@ export default function OwnerEnquiriesPage() {
                       </td>
                       <td>{new Date(e.created_at).toLocaleDateString('en-IN')}</td>
                       <td>
-                        <span className={`badge rounded-pill ${
-                          e.status === 'new' ? 'bg-info text-dark' : 'bg-secondary'
-                        }`}>
+                        <span className={`badge rounded-pill ${e.status === 'new' ? 'bg-info text-dark' : 'bg-secondary'
+                          }`}>
                           {e.status}
                         </span>
                       </td>

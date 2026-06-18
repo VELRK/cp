@@ -1,3 +1,6 @@
 {
-  "/page": "app/page.js"
+  "/search/page": "app/search/page.js",
+  "/page": "app/page.js",
+  "/property-detail/[slug]/page": "app/property-detail/[slug]/page.js",
+  "/user/wishlist/page": "app/user/wishlist/page.js"
 }

@@ -370,6 +370,17 @@ class Nb_property_model extends CI_Model {
         return $this->db->get()->result();
     }
 
+    public function for_owner_all($owner_id)
+    {
+        $this->db->select('p.*, c.name AS city_name, u.name AS owner_name, u.phone AS owner_phone');
+        $this->db->from($this->table . ' p');
+        $this->db->join('nb_cities c', 'c.id = p.city_id', 'left');
+        $this->db->join('nb_users u', 'u.id = p.owner_id', 'left');
+        $this->db->where('p.owner_id', (int) $owner_id);
+        $this->db->order_by('p.created_at', 'DESC');
+        return $this->db->get()->result();
+    }
+
     public function create($data)
     {
         $this->db->insert($this->table, $data);

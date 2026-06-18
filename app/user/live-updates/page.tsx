@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../../components/AuthContext';
-import api from '../../../lib/api';
-import LiveUpdateModal from '../../../components/LiveUpdateModal';
+import { useAuth } from '@/components/AuthContext';
+import api from '@/lib/api';
+import LiveUpdateModal from '@/components/common/LiveUpdateModal';
 import { Bell, ArrowLeft, Calendar, Video, Image as ImageIcon, Plus } from 'lucide-react';
 
 interface Notification {

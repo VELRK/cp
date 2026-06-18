@@ -1,0 +1,305 @@
+'use client';
+
+import React from 'react';
+import Link from 'next/link';
+import { Search, Sliders, ChevronDown, Mic, Navigation } from 'lucide-react';
+
+export interface City {
+  id: number;
+  name: string;
+  state: string;
+}
+
+interface SearchPanelProps {
+  listingType: 'sale' | 'rent';
+  setListingType: (val: 'sale' | 'rent') => void;
+  propertyType: string;
+  setPropertyType: (val: string) => void;
+  cityId: string;
+  setCityId: (val: string) => void;
+  cities: City[];
+  searchQuery: string;
+  setSearchQuery: (val: string) => void;
+  minPrice: string;
+  setMinPrice: (val: string) => void;
+  maxPrice: string;
+  setMaxPrice: (val: string) => void;
+  bedrooms: string;
+  setBedrooms: (val: string) => void;
+  sortBy: string;
+  setSortBy: (val: string) => void;
+  showAdvanced: boolean;
+  setShowAdvanced: (val: boolean) => void;
+  voiceStatus: 'idle' | 'listening' | 'success' | 'error';
+  handleVoiceSearch: () => void;
+  handleLocationSearch: () => void;
+  handleSearchSubmit: (e: React.FormEvent) => void;
+  applySearchFilter: (type: string) => void;
+  user: any;
+  setAuthModalOpen: (val: 'login' | 'register' | null) => void;
+}
+
+const SearchPanel: React.FC<SearchPanelProps> = ({
+  listingType,
+  setListingType,
+  propertyType,
+  setPropertyType,
+  cityId,
+  setCityId,
+  cities,
+  searchQuery,
+  setSearchQuery,
+  minPrice,
+  setMinPrice,
+  maxPrice,
+  setMaxPrice,
+  bedrooms,
+  setBedrooms,
+  sortBy,
+  setSortBy,
+  showAdvanced,
+  setShowAdvanced,
+  voiceStatus,
+  handleVoiceSearch,
+  handleLocationSearch,
+  handleSearchSubmit,
+  applySearchFilter,
+  user,
+  setAuthModalOpen
+}) => {
+  return (
+    <div className="nb-search-card-premium fade-in-up">
+      {/* Tab Header Row */}
+      <div className="nb-search-tabs-premium-row">
+        <ul className="nb-search-tabs-premium-list">
+          <li>
+            <button
+              type="button"
+              className={`nb-search-tab-premium-btn ${listingType === 'sale' ? 'active' : ''}`}
+              onClick={() => setListingType('sale')}
+            >
+              Buy
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              className={`nb-search-tab-premium-btn ${listingType === 'rent' ? 'active' : ''}`}
+              onClick={() => setListingType('rent')}
+            >
+              Rent
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              className="nb-search-tab-premium-btn"
+              onClick={() => {
+                setListingType('sale');
+                setPropertyType('apartment');
+                // Force search submit navigation to new launches
+                window.location.href = '/search?sort=new';
+              }}
+            >
+              New Launch
+              <span className="badge-dot" />
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              className="nb-search-tab-premium-btn"
+              onClick={() => {
+                setPropertyType('commercial');
+                applySearchFilter('commercial');
+              }}
+            >
+              Commercial
+            </button>
+          </li>
+          <li>
+            <button
+              type="button"
+              className="nb-search-tab-premium-btn"
+              onClick={() => {
+                setPropertyType('plot');
+                applySearchFilter('plot');
+              }}
+            >
+              Plots/Land
+            </button>
+          </li>
+          {user?.role === 'owner' && (
+            <li>
+              <Link href="/user/live-updates" className="nb-search-tab-premium-btn text-danger fw-bold text-decoration-none d-inline-block">
+                <span className="me-1" style={{ fontSize: '10px' }}>🔴</span> Live Updates
+              </Link>
+            </li>
+          )}
+        </ul>
+        <Link href={user ? '/owner/property/add' : '#'} onClick={(e) => {
+          if (!user) {
+            e.preventDefault();
+            setAuthModalOpen('login');
+          }
+        }} className="nb-post-property-free-link my-2 text-decoration-none">
+          Post Property <span className="badge bg-success text-white py-1 px-1.5 ms-1">FREE</span>
+        </Link>
+      </div>
+
+      {/* Search Inputs Row */}
+      <form onSubmit={handleSearchSubmit} className="nb-search-inputs-premium-row">
+        {/* City Selector */}
+        <div className="nb-search-select-premium-wrap" style={{ width: '140px' }}>
+          <select
+            className="form-select"
+            value={cityId}
+            onChange={(e) => setCityId(e.target.value)}
+          >
+            <option value="">Any City</option>
+            {cities.map((c) => (
+              <option key={c.id} value={c.id.toString()}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Property Type Selector */}
+        <div className="nb-search-select-premium-wrap" style={{ width: '160px' }}>
+          <select
+            className="form-select"
+            value={propertyType}
+            onChange={(e) => setPropertyType(e.target.value)}
+          >
+            <option value="">Any Type</option>
+            <option value="apartment">Apartment</option>
+            <option value="house">Independent House</option>
+            <option value="villa">Villas &amp; Duplex</option>
+            <option value="plot">Plots &amp; Land</option>
+            <option value="commercial">Commercial Space</option>
+          </select>
+        </div>
+
+        {/* Keyword/Locality Search Input */}
+        <div className="nb-search-input-premium-wrap">
+          <Search size={16} className="nb-search-input-premium-icon" />
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Locality / Area / Project..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <div className="nb-search-input-actions">
+            <button
+              type="button"
+              className={`nb-search-action-btn ${voiceStatus === 'listening' ? 'listening' : ''}`}
+              title={voiceStatus === 'listening' ? 'Listening...' : 'Voice Search'}
+              onClick={handleVoiceSearch}
+            >
+              <Mic size={16} />
+            </button>
+            <button type="button" className="nb-search-action-btn" title="Current Location" onClick={handleLocationSearch}>
+              <Navigation size={16} />
+            </button>
+          </div>
+        </div>
+
+        {/* Collapsible Trigger button */}
+        <button
+          type="button"
+          className="btn btn-light border rounded-pill px-3 d-flex align-items-center gap-1.5 my-1"
+          style={{ fontWeight: 600, color: '#4b5563', fontSize: '0.9rem' }}
+          onClick={() => setShowAdvanced(!showAdvanced)}
+        >
+          <Sliders size={14} />
+          <span>Filters</span>
+          <ChevronDown size={14} style={{ transform: showAdvanced ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+        </button>
+
+        <button type="submit" className="nb-search-submit-premium-btn">
+          Search
+        </button>
+      </form>
+
+      {/* Collapsible Advanced Options */}
+      {showAdvanced && (
+        <div className="p-4 border-top animate-fade-in" style={{ background: '#f8fafc', borderBottomLeftRadius: '20px', borderBottomRightRadius: '20px' }}>
+          <div className="row g-3">
+            {/* Bedrooms Selection */}
+            <div className="col-md-3">
+              <label className="form-label text-secondary small fw-semibold">BHK / Bedrooms</label>
+              <select
+                className="form-select form-select-sm"
+                value={bedrooms}
+                onChange={(e) => setBedrooms(e.target.value)}
+              >
+                <option value="">Any BHK</option>
+                <option value="1">1 BHK</option>
+                <option value="2">2 BHK</option>
+                <option value="3">3 BHK</option>
+                <option value="4">4 BHK</option>
+                <option value="5">5 BHK</option>
+              </select>
+            </div>
+
+            {/* Min Price */}
+            <div className="col-md-3">
+              <label className="form-label text-secondary small fw-semibold">Min Budget</label>
+              <select
+                className="form-select form-select-sm"
+                value={minPrice}
+                onChange={(e) => setMinPrice(e.target.value)}
+              >
+                <option value="">No Min</option>
+                <option value="5000">₹5,000</option>
+                <option value="10000">₹10,000</option>
+                <option value="20000">₹20,000</option>
+                <option value="50000">₹50,000</option>
+                <option value="1000000">₹10 Lakhs</option>
+                <option value="2000000">₹20 Lakhs</option>
+                <option value="5000000">₹50 Lakhs</option>
+                <option value="10000000">₹1 Crore</option>
+              </select>
+            </div>
+
+            {/* Max Price */}
+            <div className="col-md-3">
+              <label className="form-label text-secondary small fw-semibold">Max Budget</label>
+              <select
+                className="form-select form-select-sm"
+                value={maxPrice}
+                onChange={(e) => setMaxPrice(e.target.value)}
+              >
+                <option value="">No Max</option>
+                <option value="10000">₹10,000</option>
+                <option value="20000">₹20,000</option>
+                <option value="50000">₹50,000</option>
+                <option value="100000">₹1 Lakh</option>
+                <option value="5000000">₹50 Lakhs</option>
+                <option value="10000000">₹1 Crore</option>
+                <option value="20000000">₹2 Crores</option>
+                <option value="50000000">₹5 Crores</option>
+              </select>
+            </div>
+
+            {/* Sort By Selection */}
+            <div className="col-md-3">
+              <label className="form-label text-secondary small fw-semibold">Sort By</label>
+              <select
+                className="form-select form-select-sm"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="new">Latest Listed</option>
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default SearchPanel;

@@ -1,7 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Nb_property extends CI_Controller {
+class Nb_property extends CI_Controller
+{
 
     public function __construct()
     {
@@ -44,7 +45,7 @@ class Nb_property extends CI_Controller {
         $this->Nb_property_model->increment_views($id);
         $p->views = (int) $p->views + 1;
 
-        $data['page_title'] = $p->title . ' | ' . $p->city_name . ' | Dream Villa Makers';
+        $data['page_title'] = $p->title . ' | ' . $p->city_name . ' | Coimbatore Properties';
         $data['p'] = $p;
         $data['images'] = array();
         if (!empty($p->images)) {
@@ -91,25 +92,25 @@ class Nb_property extends CI_Controller {
             $og_image = base_url($data['images'][0]);
         }
         $data['nb_seo'] = array(
-            'description'   => $meta_desc,
-            'canonical'     => $canonical,
-            'og_title'      => $p->title,
-            'og_description'=> $meta_desc,
-            'og_image'      => $og_image,
+            'description' => $meta_desc,
+            'canonical' => $canonical,
+            'og_title' => $p->title,
+            'og_description' => $meta_desc,
+            'og_image' => $og_image,
         );
         $json_ld = array(
-            '@context'    => 'https://schema.org',
-            '@type'       => 'Product',
-            'name'        => $p->title,
+            '@context' => 'https://schema.org',
+            '@type' => 'Product',
+            'name' => $p->title,
             'description' => $meta_desc,
-            'url'         => $canonical,
-            'sku'         => 'nb-prop-' . $id,
-            'offers'      => array(
-                '@type'         => 'Offer',
+            'url' => $canonical,
+            'sku' => 'nb-prop-' . $id,
+            'offers' => array(
+                '@type' => 'Offer',
                 'priceCurrency' => 'INR',
-                'price'         => (string) $p->price,
-                'availability'  => 'https://schema.org/InStock',
-                'url'           => $canonical,
+                'price' => (string) $p->price,
+                'availability' => 'https://schema.org/InStock',
+                'url' => $canonical,
             ),
         );
         if ($og_image !== '') {

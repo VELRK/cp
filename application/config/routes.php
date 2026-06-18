@@ -120,10 +120,10 @@ $route['auth/verify_phone_change'] = 'Auth/verify_phone_change';
 $route['auth/verify-phone-change'] = 'Auth/verify_phone_change';
 
 // Account & Instruction Management
-$route['deleteInstruction']   = 'Home/deleteInstruction';
-$route['delete-instruction']  = 'Home/deleteInstruction';
-$route['delete_account']      = 'Auth/delete_account';
-$route['delete-account']      = 'Auth/delete_account';
+$route['deleteInstruction'] = 'Home/deleteInstruction';
+$route['delete-instruction'] = 'Home/deleteInstruction';
+$route['delete_account'] = 'Auth/delete_account';
+$route['delete-account'] = 'Auth/delete_account';
 $route['auth/delete_account'] = 'Auth/delete_account';
 $route['auth/delete-account'] = 'Auth/delete_account';
 
@@ -166,6 +166,8 @@ $route['api/wishlist/store'] = 'Api/wishlist_store';
 $route['api/wishlist/check'] = 'Api/wishlist_check';
 $route['api/track_video_play'] = 'Api/track_video_play';
 $route['api/video/play'] = 'Api/track_video_play';
+$route['api/owner/listings'] = 'Api/owner_listings';
+$route['api/properties/(:any)'] = 'Api/properties/$1';
 
 // ==================== CRUD API Routes ====================
 // Properties
@@ -454,23 +456,23 @@ $route['api/mobile/verify_phone_change'] = 'Api_mobile/verify_phone_change';
 $route['api/mobile/verify-phone-change'] = 'Api_mobile/verify_phone_change';
 $route['api/mobile/delete_account'] = 'Api_mobile/delete_account';
 $route['api/mobile/delete-account'] = 'Api_mobile/delete_account';
-$route['api/mobile/privacy-policy']  = 'Api_mobile/privacy_policy';
-$route['api/mobile/terms']           = 'Api_mobile/terms';
+$route['api/mobile/privacy-policy'] = 'Api_mobile/privacy_policy';
+$route['api/mobile/terms'] = 'Api_mobile/terms';
 
 // Wishlist
-$route['api/mobile/wishlist']        = 'api_nb_app/wishlist';
-$route['api/mobile/wishlist/store']  = 'api_nb_app/wishlist';
-$route['api/mobile/wishlist/check']  = 'api_nb_app/wishlist_check';
-$route['api/mobile/wishlist/list']   = 'api_nb_app/wishlist';
+$route['api/mobile/wishlist'] = 'api_nb_app/wishlist';
+$route['api/mobile/wishlist/store'] = 'api_nb_app/wishlist';
+$route['api/mobile/wishlist/check'] = 'api_nb_app/wishlist_check';
+$route['api/mobile/wishlist/list'] = 'api_nb_app/wishlist';
 $route['api/mobile/wishlist/remove'] = 'api_nb_app/wishlist_remove';
 $route['api/mobile/wishlist/delete/(:num)'] = 'api_nb_app/wishlist_remove/$1';
 
 // Referral
-$route['api/mobile/referral/apply']  = 'Api_mobile/referral_apply';
-$route['api/mobile/referral/list']   = 'Api_mobile/referral_list';
-$route['api/mobile/referral/stats']  = 'Api_mobile/referral_stats';
+$route['api/mobile/referral/apply'] = 'Api_mobile/referral_apply';
+$route['api/mobile/referral/list'] = 'Api_mobile/referral_list';
+$route['api/mobile/referral/stats'] = 'Api_mobile/referral_stats';
 
-// ============ Dream Villa Makers platform (overrides; keep last) ============
+// ============ Coimbatore Properties platform (overrides; keep last) ============
 $route['default_controller'] = 'Nb_home';
 
 $route['login'] = 'Nb_auth/login';
@@ -552,27 +554,27 @@ $route['api/admin/approve-property'] = 'api/admin_api/approve_property';
 // POST api/property/save — routed to Nb_property_form (Api.php blocks controllers/api/).
 $route['api/property/save'] = 'nb_property_form/save';
 
-// Dream Villa Makers mobile JSON API (Bearer token; base path api/nb/)
-$route['api/nb/update-profile']    = 'api_nb_app/update_profile';
-$route['api/nb/property/update']   = 'api_nb_app/update_property';
-$route['api/nb/register']          = 'api_nb_app/register';
-$route['api/nb/upload-image']      = 'api_nb_app/upload_image';
-$route['api/nb/login']             = 'api_nb_app/login';
-$route['api/nb/logout']            = 'api_nb_app/logout';
-$route['api/nb/me']                = 'api_nb_app/me';
-$route['api/nb/delete-account']    = 'api_nb_app/delete_account';
-$route['api/nb/wishlist']          = 'api_nb_app/wishlist';
-$route['api/nb/wishlist/toggle']   = 'api_nb_app/wishlist_toggle';
-$route['api/nb/wishlist/remove']    = 'api_nb_app/wishlist_remove';
-$route['api/nb/wishlist/check']    = 'api_nb_app/wishlist_check';
-$route['api/nb/enquiry']           = 'api_nb_app/enquiry';
-$route['api/nb/search']            = 'api_nb_app/search';
-$route['api/nb/search/city']       = 'api_nb_app/search_city';
-$route['api/nb/search/type']       = 'api_nb_app/search_type';
-$route['api/nb/notifications']     = 'api_nb_app/notifications';
+// Coimbatore Properties mobile JSON API (Bearer token; base path api/nb/)
+$route['api/nb/update-profile'] = 'api_nb_app/update_profile';
+$route['api/nb/property/update'] = 'api_nb_app/update_property';
+$route['api/nb/register'] = 'api_nb_app/register';
+$route['api/nb/upload-image'] = 'api_nb_app/upload_image';
+$route['api/nb/login'] = 'api_nb_app/login';
+$route['api/nb/logout'] = 'api_nb_app/logout';
+$route['api/nb/me'] = 'api_nb_app/me';
+$route['api/nb/delete-account'] = 'api_nb_app/delete_account';
+$route['api/nb/wishlist'] = 'api_nb_app/wishlist';
+$route['api/nb/wishlist/toggle'] = 'api_nb_app/wishlist_toggle';
+$route['api/nb/wishlist/remove'] = 'api_nb_app/wishlist_remove';
+$route['api/nb/wishlist/check'] = 'api_nb_app/wishlist_check';
+$route['api/nb/enquiry'] = 'api_nb_app/enquiry';
+$route['api/nb/search'] = 'api_nb_app/search';
+$route['api/nb/search/city'] = 'api_nb_app/search_city';
+$route['api/nb/search/type'] = 'api_nb_app/search_type';
+$route['api/nb/notifications'] = 'api_nb_app/notifications';
 $route['api/nb/notifications/(:num)'] = 'api_nb_app/notification/$1';
-$route['api/nb/cities']            = 'api_nb_app/cities';
-$route['api/nb/property-types']    = 'api_nb_app/property_types';
+$route['api/nb/cities'] = 'api_nb_app/cities';
+$route['api/nb/property-types'] = 'api_nb_app/property_types';
 
 /* NoBroker JSON helpers — explicit routes (avoid ambiguity with legacy api/* routes). */
 $route['api/cities'] = 'api/cities/index';
@@ -581,22 +583,22 @@ $route['api/locations'] = 'api/locations/index';
 // Prepend owner/tenant routes so CodeIgniter tries them before hundreds of legacy routes.
 // Also supports an extra leading "property/" segment (e.g. /property/tenant/dashboard when base path is wrong).
 $nb_uri_priority = array(
-    'property/owner'                   => 'owner/dashboard/index',
-    'property/owner/dashboard'         => 'owner/dashboard/index',
-    'property/owner/listings'          => 'owner/listings/index',
-    'property/owner/enquiries'         => 'owner/enquiries/index',
-    'property/owner/property/add'      => 'owner/property/add',
+    'property/owner' => 'owner/dashboard/index',
+    'property/owner/dashboard' => 'owner/dashboard/index',
+    'property/owner/listings' => 'owner/listings/index',
+    'property/owner/enquiries' => 'owner/enquiries/index',
+    'property/owner/property/add' => 'owner/property/add',
     'property/owner/property/edit/(:num)' => 'owner/property/edit/$1',
-    'property/tenant'                  => 'tenant/dashboard/index',
-    'property/tenant/dashboard'        => 'tenant/dashboard/index',
-    'property/tenant/enquiries'        => 'tenant/enquiries/index',
-    'owner/dashboard'                  => 'owner/dashboard/index',
-    'owner/listings'                   => 'owner/listings/index',
-    'owner/enquiries'                  => 'owner/enquiries/index',
-    'owner/property/add'               => 'owner/property/add',
-    'owner/property/edit/(:num)'       => 'owner/property/edit/$1',
-    'tenant/dashboard'                 => 'tenant/dashboard/index',
-    'tenant/enquiries'                 => 'tenant/enquiries/index',
+    'property/tenant' => 'tenant/dashboard/index',
+    'property/tenant/dashboard' => 'tenant/dashboard/index',
+    'property/tenant/enquiries' => 'tenant/enquiries/index',
+    'owner/dashboard' => 'owner/dashboard/index',
+    'owner/listings' => 'owner/listings/index',
+    'owner/enquiries' => 'owner/enquiries/index',
+    'owner/property/add' => 'owner/property/add',
+    'owner/property/edit/(:num)' => 'owner/property/edit/$1',
+    'tenant/dashboard' => 'tenant/dashboard/index',
+    'tenant/enquiries' => 'tenant/enquiries/index',
 );
 $route = $nb_uri_priority + $route;
 
@@ -604,19 +606,19 @@ $route = $nb_uri_priority + $route;
  * Re-assert owner/tenant routes last so nothing in $route overrides them. Optional: Dashboard::dashboard()
  * aliases exist on owner/tenant Dashboard controllers for odd URI mappings.
  */
-$route['owner/dashboard']                  = 'owner/dashboard/index';
-$route['owner/listings']                   = 'owner/listings/index';
-$route['owner/enquiries']                  = 'owner/enquiries/index';
-$route['owner/property/add']               = 'owner/property/add';
-$route['owner/property/edit/(:num)']       = 'owner/property/edit/$1';
-$route['tenant/dashboard']                 = 'tenant/dashboard/index';
-$route['tenant/enquiries']                 = 'tenant/enquiries/index';
-$route['property/owner']                   = 'owner/dashboard/index';
-$route['property/owner/dashboard']          = 'owner/dashboard/index';
-$route['property/owner/listings']          = 'owner/listings/index';
-$route['property/owner/enquiries']         = 'owner/enquiries/index';
-$route['property/owner/property/add']      = 'owner/property/add';
+$route['owner/dashboard'] = 'owner/dashboard/index';
+$route['owner/listings'] = 'owner/listings/index';
+$route['owner/enquiries'] = 'owner/enquiries/index';
+$route['owner/property/add'] = 'owner/property/add';
+$route['owner/property/edit/(:num)'] = 'owner/property/edit/$1';
+$route['tenant/dashboard'] = 'tenant/dashboard/index';
+$route['tenant/enquiries'] = 'tenant/enquiries/index';
+$route['property/owner'] = 'owner/dashboard/index';
+$route['property/owner/dashboard'] = 'owner/dashboard/index';
+$route['property/owner/listings'] = 'owner/listings/index';
+$route['property/owner/enquiries'] = 'owner/enquiries/index';
+$route['property/owner/property/add'] = 'owner/property/add';
 $route['property/owner/property/edit/(:num)'] = 'owner/property/edit/$1';
-$route['property/tenant']                  = 'tenant/dashboard/index';
-$route['property/tenant/dashboard']        = 'tenant/dashboard/index';
-$route['property/tenant/enquiries']        = 'tenant/enquiries/index';
+$route['property/tenant'] = 'tenant/dashboard/index';
+$route['property/tenant/dashboard'] = 'tenant/dashboard/index';
+$route['property/tenant/enquiries'] = 'tenant/enquiries/index';

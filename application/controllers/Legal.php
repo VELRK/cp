@@ -1,7 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Legal extends CI_Controller {
+class Legal extends CI_Controller
+{
 
     public function __construct()
     {
@@ -11,9 +12,9 @@ class Legal extends CI_Controller {
 
     public function terms()
     {
-        $data['title'] = 'Terms of Services - Dream Villa Makers';
+        $data['title'] = 'Terms of Services - Coimbatore Properties';
         $data['page'] = 'legal';
-        
+
         $this->load->view('header', $data);
         $this->load->view('legal/terms');
         $this->load->view('footer');
@@ -21,9 +22,9 @@ class Legal extends CI_Controller {
 
     public function privacy()
     {
-        $data['title'] = 'Privacy Policy - Dream Villa Makers';
+        $data['title'] = 'Privacy Policy - Coimbatore Properties';
         $data['page'] = 'legal';
-        
+
         $this->load->view('header', $data);
         $this->load->view('legal/privacy');
         $this->load->view('footer');
@@ -31,9 +32,9 @@ class Legal extends CI_Controller {
 
     public function cookie()
     {
-        $data['title'] = 'Cookie Policy - Dream Villa Makers';
+        $data['title'] = 'Cookie Policy - Coimbatore Properties';
         $data['page'] = 'legal';
-        
+
         $this->load->view('header', $data);
         $this->load->view('legal/cookie');
         $this->load->view('footer');

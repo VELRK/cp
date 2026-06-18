@@ -154,14 +154,14 @@ class Api extends CI_Controller
                 }
             }
             $out = array(
-                'id'          => (int) $r->id,
-                'name'        => $r->name,
-                'author'      => $r->author,
-                'date'        => $r->date,
+                'id' => (int) $r->id,
+                'name' => $r->name,
+                'author' => $r->author,
+                'date' => $r->date,
                 'short_notes' => $r->short_notes,
                 'description' => $r->description,
-                'gallery'     => $gallery,
-                'image'       => count($gallery) > 0 ? $gallery[0] : null
+                'gallery' => $gallery,
+                'image' => count($gallery) > 0 ? $gallery[0] : null
             );
             $this->output->set_content_type('application/json')->set_output(json_encode($out));
             return;
@@ -275,13 +275,108 @@ class Api extends CI_Controller
         if (empty($admin)) {
             return;
         }
-        $this->email->from('noreply@localhost', 'Dream Villa Makers');
+        $this->email->from('noreply@localhost', 'Coimbatore Properties');
         $this->email->to($admin);
         $this->email->subject('New property enquiry: ' . $prop->title);
         $this->email->message(
             "From: {$tenant['name']} ({$email}) {$phone}\nProperty #{$prop->id}: {$prop->title}\n\n{$message}"
         );
         @$this->email->send();
+    }
+
+    public function owner_listings()
+    {
+        $this->load->database();
+        $this->load->library('session');
+        $this->load->library('Nb_api_token');
+        $this->nb_api_token->try_attach_session();
+        $this->load->model('Nb_property_model');
+
+        if (!$this->session->userdata('nb_user_id')) {
+            return $this->_nb_json(array('success' => false, 'message' => 'Login required'), 401);
+        }
+        $uid = (int) $this->session->userdata('nb_user_id');
+        $listings = $this->Nb_property_model->for_owner_all($uid);
+
+        $mapped_listings = array();
+        foreach ($listings as $p) {
+            $mapped_listings[] = $this->_property_response_payload($p);
+        }
+
+        return $this->_nb_json(array('success' => true, 'listings' => $mapped_listings));
+    }
+
+    public function properties($segment = null)
+    {
+        $this->load->database();
+        $this->load->model('Nb_property_model');
+        if ($segment === null) {
+            $segment = $this->input->get('id');
+        }
+        if ($segment === null || $segment === '') {
+            return $this->_nb_json(array('success' => false, 'message' => 'Property identifier is required'), 400);
+        }
+
+        $p = null;
+        if (ctype_digit($segment)) {
+            $p = $this->Nb_property_model->get_by_id((int) $segment);
+        } else {
+            $p = $this->Nb_property_model->get_by_slug($segment);
+        }
+
+        if (!$p) {
+            return $this->_nb_json(array('success' => false, 'message' => 'Property not found'), 404);
+        }
+
+        $property = $this->_property_response_payload($p);
+        return $this->_nb_json(array('success' => true, 'property' => $property));
+    }
+
+    private function _property_response_payload($row)
+    {
+        $out = array();
+        foreach ((array) $row as $k => $v) {
+            if (!is_string($k) || $k === '') {
+                continue;
+            }
+            $out[$k] = $v;
+        }
+
+        if (isset($out['location_image']) && !empty($out['location_image'])) {
+            $li = $out['location_image'];
+            $out['location_image_url'] = preg_match('#^https?://#i', $li) ? $li : base_url($li);
+        }
+
+        if (isset($out['images']) && is_string($out['images']) && $out['images'] !== '') {
+            $decoded = json_decode($out['images'], true);
+            if (is_array($decoded)) {
+                $out['images'] = $decoded;
+                $image_urls = array();
+                foreach ($decoded as $img) {
+                    if (!is_string($img) || trim($img) === '') {
+                        continue;
+                    }
+                    $image_urls[] = preg_match('#^https?://#i', $img) ? $img : base_url($img);
+                }
+                $out['image_urls'] = $image_urls;
+            }
+        }
+
+        if (isset($out['amenities']) && is_string($out['amenities']) && $out['amenities'] !== '') {
+            $amenities = json_decode($out['amenities'], true);
+            if (is_array($amenities)) {
+                $out['amenities'] = $amenities;
+            }
+        }
+
+        if (isset($out['nearby']) && is_string($out['nearby']) && $out['nearby'] !== '') {
+            $nearby = json_decode($out['nearby'], true);
+            if (is_array($nearby)) {
+                $out['nearby'] = $nearby;
+            }
+        }
+
+        return $out;
     }
 }
 

@@ -5,7 +5,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * Legacy `enquiries` + `properties` OR Nobroker `nb_enquiries` + `nb_properties`.
  * When `enquiries` does not exist, all reads/writes use `nb_enquiries` (tenant_id = mobile user id).
  */
-class Enquiry_model extends CI_Model {
+class Enquiry_model extends CI_Model
+{
 
     public function __construct()
     {
@@ -14,7 +15,7 @@ class Enquiry_model extends CI_Model {
     }
 
     /**
-     * True when the old table is absent but nb_enquiries exists (typical Dream Villa Makers DB).
+     * True when the old table is absent but nb_enquiries exists (typical Coimbatore Properties DB).
      */
     public function using_nb_enquiries()
     {
@@ -67,11 +68,20 @@ class Enquiry_model extends CI_Model {
         if ($status) {
             $this->db->where('enquiries.status', $status);
         }
-        $this->db->select('enquiries.*, properties.name as property_name');
+        $this->db->select('enquiries.*, enquiries.propertyName as property_name, enquiries.userName as tenant_name, enquiries.propertyId as property_id');
         $this->db->from('enquiries');
-        $this->db->join('properties', 'properties.id = enquiries.property_id', 'left');
-        $this->db->order_by('enquiries.created_at', 'DESC');
-        return $this->db->get()->result();
+        $this->db->order_by('enquiries.createdAt', 'DESC');
+        $rows = $this->db->get()->result();
+
+        // Map to expected structure so the admin panel can render it correctly
+        foreach ($rows as $row) {
+            $row->name = $row->userName;
+            $row->email = $row->userEmail;
+            $row->phone = $row->userPhone;
+            $row->created_at = $row->createdAt;
+        }
+
+        return $rows;
     }
 
     public function get_by_id($id)
@@ -85,11 +95,17 @@ class Enquiry_model extends CI_Model {
             $row = $this->db->get()->row();
             return $this->map_nb_row_to_legacy_shape($row);
         }
-        $this->db->select('enquiries.*, properties.name as property_name');
+        $this->db->select('enquiries.*, enquiries.propertyName as property_name, enquiries.propertyId as property_id, enquiries.userName as tenant_name');
         $this->db->from('enquiries');
-        $this->db->join('properties', 'properties.id = enquiries.property_id', 'left');
         $this->db->where('enquiries.id', $id);
-        return $this->db->get()->row();
+        $row = $this->db->get()->row();
+        if ($row) {
+            $row->name = $row->userName;
+            $row->email = $row->userEmail;
+            $row->phone = $row->userPhone;
+            $row->created_at = $row->createdAt;
+        }
+        return $row;
     }
 
     public function create($data)
@@ -101,12 +117,12 @@ class Enquiry_model extends CI_Model {
                 return false;
             }
             $insert = array(
-                'tenant_id'   => $tenant_id,
+                'tenant_id' => $tenant_id,
                 'property_id' => $property_id,
-                'message'     => $data['message'],
-                'phone'       => isset($data['phone']) ? $data['phone'] : '',
-                'email'       => $data['email'],
-                'status'      => isset($data['status']) ? $data['status'] : 'new',
+                'message' => $data['message'],
+                'phone' => isset($data['phone']) ? $data['phone'] : '',
+                'email' => $data['email'],
+                'status' => isset($data['status']) ? $data['status'] : 'new',
             );
             if ($this->db->insert('nb_enquiries', $insert)) {
                 return (int) $this->db->insert_id();
@@ -114,15 +130,19 @@ class Enquiry_model extends CI_Model {
             return false;
         }
 
-        $allowed_fields = array('property_id', 'user_id', 'name', 'email', 'phone', 'city', 'message', 'status');
-        $filtered_data  = array();
-        foreach ($allowed_fields as $field) {
-            if (isset($data[$field])) {
-                $filtered_data[$field] = $data[$field];
-            }
-        }
+        $filtered_data = array(
+            'propertyId' => isset($data['property_id']) ? $data['property_id'] : (isset($data['propertyId']) ? $data['propertyId'] : null),
+            'userId' => isset($data['user_id']) ? $data['user_id'] : (isset($data['userId']) ? $data['userId'] : null),
+            'userName' => isset($data['name']) ? $data['name'] : (isset($data['userName']) ? $data['userName'] : ''),
+            'userEmail' => isset($data['email']) ? $data['email'] : (isset($data['userEmail']) ? $data['userEmail'] : ''),
+            'userPhone' => isset($data['phone']) ? $data['phone'] : (isset($data['userPhone']) ? $data['userPhone'] : ''),
+            'city' => isset($data['city']) ? $data['city'] : null,
+            'message' => isset($data['message']) ? $data['message'] : '',
+            'status' => isset($data['status']) ? $data['status'] : 'new',
+            'createdAt' => date('Y-m-d H:i:s')
+        );
 
-        if (empty($filtered_data['name']) || empty($filtered_data['email'])) {
+        if (empty($filtered_data['userName']) || empty($filtered_data['userEmail'])) {
             return false;
         }
 
@@ -189,18 +209,24 @@ class Enquiry_model extends CI_Model {
             $this->db->order_by('e.created_at', 'DESC');
             return $this->map_nb_rows($this->db->get()->result());
         }
-        $this->db->select('enquiries.*, properties.name as property_name, properties.main_image as property_image');
+        $this->db->select('enquiries.*, enquiries.propertyName as property_name, enquiries.propertyId as property_id');
         $this->db->from('enquiries');
-        $this->db->join('properties', 'properties.id = enquiries.property_id', 'left');
-        $this->db->where('enquiries.user_id', $user_id);
+        $this->db->where('enquiries.userId', $user_id);
 
         if ($status) {
             $this->db->where('enquiries.status', $status);
         }
 
-        $this->db->order_by('enquiries.created_at', 'DESC');
+        $this->db->order_by('enquiries.createdAt', 'DESC');
 
-        return $this->db->get()->result();
+        $rows = $this->db->get()->result();
+        foreach ($rows as $row) {
+            $row->name = $row->userName;
+            $row->email = $row->userEmail;
+            $row->phone = $row->userPhone;
+            $row->created_at = $row->createdAt;
+        }
+        return $rows;
     }
 
     /**
@@ -225,9 +251,8 @@ class Enquiry_model extends CI_Model {
             return array();
         }
 
-        $this->db->select('enquiries.*, properties.name as property_name, properties.main_image as property_image');
+        $this->db->select('enquiries.*, enquiries.propertyName as property_name, enquiries.propertyId as property_id');
         $this->db->from('enquiries');
-        $this->db->join('properties', 'properties.id = enquiries.property_id', 'left');
 
         $has_email = !empty($user->email);
         $phone = isset($user->phonenumber) ? $user->phonenumber : (isset($user->phone) ? $user->phone : '');
@@ -236,13 +261,13 @@ class Enquiry_model extends CI_Model {
         if ($has_email || $has_phone) {
             $this->db->group_start();
             if ($has_email) {
-                $this->db->where('enquiries.email', $user->email);
+                $this->db->where('enquiries.userEmail', $user->email);
             }
             if ($has_phone) {
                 if ($has_email) {
-                    $this->db->or_where('enquiries.phone', $phone);
+                    $this->db->or_where('enquiries.userPhone', $phone);
                 } else {
-                    $this->db->where('enquiries.phone', $phone);
+                    $this->db->where('enquiries.userPhone', $phone);
                 }
             }
             $this->db->group_end();
@@ -254,8 +279,15 @@ class Enquiry_model extends CI_Model {
             $this->db->where('enquiries.status', $status);
         }
 
-        $this->db->order_by('enquiries.created_at', 'DESC');
+        $this->db->order_by('enquiries.createdAt', 'DESC');
 
-        return $this->db->get()->result();
+        $rows = $this->db->get()->result();
+        foreach ($rows as $row) {
+            $row->name = $row->userName;
+            $row->email = $row->userEmail;
+            $row->phone = $row->userPhone;
+            $row->created_at = $row->createdAt;
+        }
+        return $rows;
     }
 }

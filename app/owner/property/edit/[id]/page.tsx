@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../../../../components/AuthContext';
-import PropertyForm from '../../../../../components/PropertyForm';
-import api from '../../../../../lib/api';
+import { useAuth } from '@/components/AuthContext';
+import PropertyForm from '@/components/property/PropertyForm';
+import api from '@/lib/api';
 import Link from 'next/link';
+
 import { ArrowLeft } from 'lucide-react';
 
 interface PageProps {

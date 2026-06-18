@@ -1,10 +1,9 @@
-import React from 'react';
 import type { Metadata } from 'next';
 import './globals.css';
-import { AuthProvider } from '../components/AuthContext';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import AuthModals from '../components/AuthModals';
+import { AuthProvider } from '@/components/AuthContext';
+import Navbar from '@/components/common/Navbar';
+import Footer from '@/components/common/Footer';
+import AuthModals from '@/components/common/AuthModals';
 
 export const metadata: Metadata = {
   title: 'Coimbatore Properties | Buy, Rent & Sale without Brokerage',

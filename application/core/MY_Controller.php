@@ -2,9 +2,10 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /**
- * Base controller for Dream Villa Makers module (session keys: nb_user_id, nb_user).
+ * Base controller for Coimbatore Properties module (session keys: nb_user_id, nb_user).
  */
-class MY_Controller extends CI_Controller {
+class MY_Controller extends CI_Controller
+{
 
     public function __construct()
     {

@@ -1,6 +1,6 @@
-# Dream Villa Makers — Mobile API (JSON)
+# Coimbatore Properties — Mobile API (JSON)
 
-REST-style JSON API for the **Nobroker / Dream Villa Makers** module (`nb_*` tables: users, properties, enquiries).
+REST-style JSON API for the **Nobroker / Coimbatore Properties** module (`nb_*` tables: users, properties, enquiries).
 
 **Local base URL (XAMPP):** `http://localhost:8080/property`  
 Full URL example: `http://localhost:8080/property/api/nb/login`. For production, swap the host/path to match your `BASE_URL` (e.g. `https://your-domain.com/property`).
@@ -915,8 +915,8 @@ When files are included (`images[]`), send `multipart/form-data`.
 1. **Store the token** securely (e.g. Keychain / Keystore) after login/register.
 2. **Refresh login** when `401` / invalid token.
 3. **Listing URLs** in search results are full site URLs; open in a WebView or in-app browser if you do not have a native detail screen yet.
-4. **Legacy API:** This project may also expose older `api/mobile/*` routes for a different schema; for **Dream Villa Makers**, use **`api/nb/*`** and the two endpoints above.
+4. **Legacy API:** This project may also expose older `api/mobile/*` routes for a different schema; for **Coimbatore Properties**, use **`api/nb/*`** and the two endpoints above.
 
 ---
 
-*Generated for integration with the Dream Villa Makers CodeIgniter backend. Version follows the repository in use.*
+*Generated for integration with the Coimbatore Properties CodeIgniter backend. Version follows the repository in use.*

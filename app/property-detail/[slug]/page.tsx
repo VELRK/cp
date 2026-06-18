@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect, use } from 'react';
 import Link from 'next/link';
-import api from '../../../lib/api';
-import PropertyCard, { Property } from '../../../components/PropertyCard';
-import { useAuth } from '../../../components/AuthContext';
+import api from '@/lib/api';
+import PropertyCard, { Property } from '@/components/property/PropertyCard';
+import { useAuth } from '@/components/AuthContext';
+
 import { MapPin, Bed, Bath, Grid, Calendar, ShieldCheck, Heart, Eye, Play, ArrowLeft, Mail, Phone, ChevronLeft, ChevronRight, Check, Key, Star, Image as ImageIcon } from 'lucide-react';
 
 interface PageProps {
@@ -95,6 +96,7 @@ export default function PropertyDetailPage({ params }: PageProps) {
       const response = await api.post('/api/nb/enquiry', {
         property_id: property.id,
         user_id: user.id,
+        name: user.name,
         email: enqEmail,
         phone: enqPhone,
         message: enqMessage,

@@ -1,7 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class Enquiry extends CI_Controller {
+class Enquiry extends CI_Controller
+{
 
     public function __construct()
     {
@@ -45,12 +46,12 @@ class Enquiry extends CI_Controller {
             return $this->_json(array('success' => false, 'message' => 'You cannot send an enquiry on your own listing'), 403);
         }
         $this->Nb_enquiry_model->create(array(
-            'tenant_id'   => (int) $u['id'],
+            'tenant_id' => (int) $u['id'],
             'property_id' => $pid,
-            'message'     => $this->security->xss_clean($message),
-            'phone'       => $this->security->xss_clean($phone),
-            'email'       => $this->security->xss_clean($email),
-            'status'      => 'new',
+            'message' => $this->security->xss_clean($message),
+            'phone' => $this->security->xss_clean($phone),
+            'email' => $this->security->xss_clean($email),
+            'status' => 'new',
         ));
         $this->_notify_admin_email($prop, $u, $message, $phone, $email);
         return $this->_json(array('success' => true, 'message' => 'Enquiry sent. We\'ve routed it to the listing owner; they may contact you on your phone or email.'));
@@ -62,7 +63,7 @@ class Enquiry extends CI_Controller {
         if (empty($admin)) {
             return;
         }
-        $this->email->from('noreply@localhost', 'Dream Villa Makers');
+        $this->email->from('noreply@localhost', 'Coimbatore Properties');
         $this->email->to($admin);
         $this->email->subject('New property enquiry: ' . $prop->title);
         $this->email->message(

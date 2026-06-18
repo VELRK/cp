@@ -3765,3 +3765,309 @@ body,
 .nb-bg-green {
   background: linear-gradient(180deg, #f2fcf7 0%, #daf2e4 100%);
 }
+
+/* 9. Revamped Homepage Blog tab styles */
+.nb-blogs-section-wrapper {
+  margin-top: 2rem;
+  margin-bottom: 3rem;
+}
+
+.nb-blogs-tabs-scroll-wrap {
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none;  /* IE/Edge */
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.nb-blogs-tabs-scroll-wrap::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.nb-blogs-tabs-row {
+  display: flex;
+  gap: 2rem;
+  white-space: nowrap;
+}
+
+.nb-blog-tab-btn {
+  border: none;
+  background: transparent;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #64748b;
+  padding: 0.75rem 0;
+  position: relative;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.nb-blog-tab-btn:hover {
+  color: #0b2c56;
+}
+
+.nb-blog-tab-btn.active {
+  color: #0076de;
+}
+
+.nb-blog-tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: #0076de;
+  border-radius: 4px;
+}
+
+/* 10. Revamped Blog Detail Page Styles */
+.nb-blog-sticky-header {
+  position: sticky;
+  top: 56px;
+  left: 0;
+  right: 0;
+  height: 50px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  z-index: 99;
+  transition: all 0.3s ease;
+}
+
+.nb-blog-promo-popup {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 340px;
+  height: 96px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  z-index: 1040;
+  animation: slideInUp 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(120px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .nb-blog-promo-popup {
+    left: 10px;
+    right: 10px;
+    width: auto;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Premium Coimbatore Properties Trend Overrides & Animations
+   ───────────────────────────────────────────────────────────── */
+
+/* Scroll behavior */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Glassmorphism search panel extension */
+.nb-search-card-premium {
+  background: rgba(255, 255, 255, 0.75) !important;
+  backdrop-filter: blur(25px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(25px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 25px 60px rgba(11, 44, 86, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.5) !important;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.nb-search-card-premium:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 30px 70px rgba(11, 44, 86, 0.18), 0 0 0 1px rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Interactive elements animations */
+.nb-search-tab-premium-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nb-search-tab-premium-btn::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 3px;
+  background-color: var(--nb-accent);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateX(-50%);
+}
+
+.nb-search-tab-premium-btn.active::after,
+.nb-search-tab-premium-btn:hover::after {
+  width: 100%;
+}
+
+.nb-search-tab-premium-btn.active {
+  color: var(--nb-accent) !important;
+  font-weight: 800;
+}
+
+/* Float Animation for RERA and Featured badges */
+@keyframes nb-float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0px); }
+}
+
+.nb-classic-card-featured,
+.nb-handpicked-badge,
+.nb-classic-card-badge,
+.position-absolute.text-white.fw-bold.px-2.py-0\.5.rounded.text-uppercase.text-center {
+  animation: nb-float 3s ease-in-out infinite;
+}
+
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  background-color: var(--nb-accent);
+  border-radius: 50%;
+  display: inline-block;
+  margin-left: 4px;
+  box-shadow: 0 0 8px var(--nb-accent);
+}
+
+/* Shimmer Sweep Animation for new arrivals */
+@keyframes nb-shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: 200px 0; }
+}
+
+.text-dark.fw-bold.px-3.py-1.text-uppercase {
+  background: linear-gradient(90deg, #ffe6a7 0%, #fff7d6 50%, #ffe6a7 100%) !important;
+  background-size: 200% 100% !important;
+  animation: nb-shimmer 2.5s infinite linear;
+}
+
+/* Verified card design pulse */
+.nb-verified-card-banner {
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.05);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.nb-verified-card-banner:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 15px 30px rgba(16, 185, 129, 0.15);
+  background-color: #e6f6ee !important;
+}
+
+/* Interactive sliding selector glow */
+.nb-search-submit-premium-btn {
+  background: linear-gradient(135deg, var(--nb-primary) 0%, var(--nb-primary-dark) 100%) !important;
+  position: relative;
+  z-index: 1;
+}
+
+.nb-search-submit-premium-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, var(--nb-accent) 0%, var(--nb-accent-dark) 100%);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  border-radius: 30px;
+}
+
+.nb-search-submit-premium-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(242, 178, 3, 0.35) !important;
+}
+
+.nb-search-submit-premium-btn:hover::before {
+  opacity: 1;
+}
+
+/* Inputs focus hover enhancements */
+.nb-search-inputs-premium-row select:focus,
+.nb-search-inputs-premium-row input:focus {
+  border-color: var(--nb-primary) !important;
+  box-shadow: 0 0 0 3px rgba(11, 44, 86, 0.1) !important;
+  transform: scale(1.005);
+}
+
+.nb-search-inputs-premium-row select,
+.nb-search-inputs-premium-row input {
+  transition: all 0.25s ease !important;
+}
+
+/* Magic Loans Button Glow */
+.nb-magic-loans-btn-filled {
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 14px rgba(242, 178, 3, 0.2);
+}
+
+.nb-magic-loans-btn-filled:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(242, 178, 3, 0.45) !important;
+  background-color: var(--nb-accent-dark) !important;
+}
+
+.nb-magic-loans-btn-outline {
+  transition: all 0.3s ease !important;
+}
+
+.nb-magic-loans-btn-outline:hover {
+  background-color: var(--nb-primary) !important;
+  color: #fff !important;
+  transform: translateY(-2px);
+}
+
+/* Smooth fade filter animation */
+.animate-fade-in {
+  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Category cards hover gradients */
+.nb-classic-cat-card {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  border: 1px solid rgba(0, 0, 0, 0.03) !important;
+}
+
+.nb-classic-cat-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 15px 35px rgba(12, 35, 64, 0.08) !important;
+  border-color: rgba(11, 44, 86, 0.1) !important;
+}
+
+.nb-classic-cat-card:hover .nb-classic-cat-card-arrow {
+  transform: translateX(5px) scale(1.1);
+  color: var(--nb-primary);
+}
+
+.nb-classic-cat-card-arrow {
+  transition: all 0.3s ease;
+}
+
+/* Image zoom skeleton glow */
+@keyframes nb-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.95; }
+}
+
+.spinner-border.nb-text-brand {
+  color: var(--nb-primary) !important;
+}

@@ -2,10 +2,11 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /**
- * Forces Dream Villa Makers owner/tenant panel routes to resolve before the global routes table.
+ * Forces Coimbatore Properties owner/tenant panel routes to resolve before the global routes table.
  * Fixes 404s when other regex routes (e.g. legacy property URLs) match first or when routing order differs by environment.
  */
-class MY_Router extends CI_Router {
+class MY_Router extends CI_Router
+{
 
     /**
      * Rebuild URI from REQUEST_URI when CI segments are wrong (RewriteBase / mod_rewrite quirks).
@@ -73,20 +74,20 @@ class MY_Router extends CI_Router {
         static $nb_panel = null;
         if ($nb_panel === null) {
             $nb_panel = array(
-                'property/owner'                   => 'owner/dashboard/index',
-                'property/owner/dashboard'         => 'owner/dashboard/index',
-                'property/owner/listings'          => 'owner/listings/index',
-                'property/owner/enquiries'         => 'owner/enquiries/index',
-                'property/owner/property/add'      => 'owner/property/add',
-                'property/tenant'                  => 'tenant/dashboard/index',
-                'property/tenant/dashboard'        => 'tenant/dashboard/index',
-                'property/tenant/enquiries'        => 'tenant/enquiries/index',
-                'owner/dashboard'                  => 'owner/dashboard/index',
-                'owner/listings'                   => 'owner/listings/index',
-                'owner/enquiries'                  => 'owner/enquiries/index',
-                'owner/property/add'               => 'owner/property/add',
-                'tenant/dashboard'                 => 'tenant/dashboard/index',
-                'tenant/enquiries'                 => 'tenant/enquiries/index',
+                'property/owner' => 'owner/dashboard/index',
+                'property/owner/dashboard' => 'owner/dashboard/index',
+                'property/owner/listings' => 'owner/listings/index',
+                'property/owner/enquiries' => 'owner/enquiries/index',
+                'property/owner/property/add' => 'owner/property/add',
+                'property/tenant' => 'tenant/dashboard/index',
+                'property/tenant/dashboard' => 'tenant/dashboard/index',
+                'property/tenant/enquiries' => 'tenant/enquiries/index',
+                'owner/dashboard' => 'owner/dashboard/index',
+                'owner/listings' => 'owner/listings/index',
+                'owner/enquiries' => 'owner/enquiries/index',
+                'owner/property/add' => 'owner/property/add',
+                'tenant/dashboard' => 'tenant/dashboard/index',
+                'tenant/enquiries' => 'tenant/enquiries/index',
             );
         }
 

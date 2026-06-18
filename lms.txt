@@ -1,4 +1,4 @@
-# Dream Villa Makers
+# Coimbatore Properties
 site: https://www.dreamvillamakers.com/
 canonical_host: www.dreamvillamakers.com
 sitemap: https://www.dreamvillamakers.com/sitemap.xml

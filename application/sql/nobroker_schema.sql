@@ -1,4 +1,4 @@
--- Dream Villa Makers module tables (prefix nb_) — import into your CI database (e.g. property)
+-- Coimbatore Properties module tables (prefix nb_) — import into your CI database (e.g. property)
 SET NAMES utf8mb4;
 
 CREATE TABLE IF NOT EXISTS nb_cities (

@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import api from '../../lib/api';
-import { useAuth } from '../../components/AuthContext';
+import api from '@/lib/api';
+import { useAuth } from '@/components/AuthContext';
 import { 
   Filter, 
   Sliders, 
@@ -731,6 +731,40 @@ function SearchContent() {
         </div>
       </div>
       
+      {/* Mobile filter drawer trigger button (sticky bottom) */}
+      <div className="d-lg-none position-fixed bottom-0 start-50 translate-middle-x mb-3" style={{ zIndex: 1000 }}>
+        <button 
+          type="button" 
+          className="btn btn-dark d-flex align-items-center gap-2 px-4 py-2.5 rounded-pill shadow-lg border-2 border-white text-white fw-bold"
+          onClick={() => setShowMobileFilters(true)}
+        >
+          <Sliders size={16} />
+          <span>Filters &amp; Sort</span>
+        </button>
+      </div>
+
+      {/* Mobile Filters Drawer Modal */}
+      {showMobileFilters && (
+        <div className="position-fixed inset-0 bg-dark bg-opacity-50" style={{ zIndex: 1050, left: 0, top: 0, right: 0, bottom: 0 }}>
+          <div className="position-fixed end-0 top-0 bottom-0 bg-white h-100 shadow-lg p-4" style={{ width: '85%', maxWidth: '380px', overflowY: 'auto', transition: 'transform 0.3s ease' }}>
+            <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+              <h3 className="h6 fw-bold text-dark m-0 d-flex align-items-center gap-2">
+                <Filter size={16} />
+                <span>Filters &amp; Sort</span>
+              </h3>
+              <button 
+                type="button" 
+                className="btn btn-light rounded-circle p-1 d-flex"
+                onClick={() => setShowMobileFilters(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            {renderFilterForm('mobile')}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

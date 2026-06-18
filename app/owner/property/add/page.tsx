@@ -2,9 +2,10 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../../../components/AuthContext';
-import PropertyForm from '../../../../components/PropertyForm';
+import { useAuth } from '@/components/AuthContext';
+import PropertyForm from '@/components/property/PropertyForm';
 import Link from 'next/link';
+
 import { ArrowLeft, ShieldAlert, Clock } from 'lucide-react';
 
 export default function AddPropertyPage() {

@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../../components/AuthContext';
-import api from '../../../lib/api';
+import { useAuth } from '@/components/AuthContext';
+import api from '@/lib/api';
 import { Search, Mail, MessageSquare, ClipboardList, CheckCircle2 } from 'lucide-react';
 
 interface Enquiry {

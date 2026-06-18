@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../../components/AuthContext';
-import api from '../../../lib/api';
+import { useAuth } from '@/components/AuthContext';
+import api from '@/lib/api';
 import { ArrowLeft, MessageSquare, Tag, Calendar } from 'lucide-react';
 
 interface Enquiry {

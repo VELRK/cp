@@ -31,6 +31,16 @@ const Navbar: React.FC = () => {
             <li className="nav-item">
               <Link href="/search" className="nav-link nb-nav-link">Search</Link>
             </li>
+            <li className="nav-item dropdown">
+              <a className="nav-link nb-nav-link dropdown-toggle" href="#" id="knowledgeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Knowledge Centre
+              </a>
+              <ul className="dropdown-menu border-0 shadow-sm rounded-3 mt-2" aria-labelledby="knowledgeDropdown">
+                <li><Link href="/knowledge-centre" className="dropdown-item py-2">Insights Hub</Link></li>
+                <li><Link href="/articles" className="dropdown-item py-2">Articles</Link></li>
+                <li><Link href="/news" className="dropdown-item py-2">Real Estate News</Link></li>
+              </ul>
+            </li>
             {user && user.role === 'owner' && user.status === 'approved' && (
               <>
                 <li className="nav-item">

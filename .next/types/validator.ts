@@ -56,6 +56,24 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../app/articles/[slug]/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/articles/[slug]">> = Specific
+  const handler = {} as typeof import("../../app/articles/[slug]/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/articles/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/articles">> = Specific
+  const handler = {} as typeof import("../../app/articles/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/blog/[id]/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/blog/[id]">> = Specific
@@ -74,10 +92,37 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../app/knowledge-centre/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/knowledge-centre">> = Specific
+  const handler = {} as typeof import("../../app/knowledge-centre/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/login/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/login">> = Specific
   const handler = {} as typeof import("../../app/login/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/news/[slug]/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/news/[slug]">> = Specific
+  const handler = {} as typeof import("../../app/news/[slug]/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/news/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/news">> = Specific
+  const handler = {} as typeof import("../../app/news/page.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

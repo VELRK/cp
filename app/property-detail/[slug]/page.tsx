@@ -6,7 +6,7 @@ import api from '@/lib/api';
 import PropertyCard, { Property } from '@/components/property/PropertyCard';
 import { useAuth } from '@/components/AuthContext';
 
-import { MapPin, Bed, Bath, Grid, Calendar, ShieldCheck, Heart, Eye, Play, ArrowLeft, Mail, Phone, ChevronLeft, ChevronRight, Check, Key, Star, Image as ImageIcon } from 'lucide-react';
+import { MapPin, Bed, Bath, Grid, Calendar, ShieldCheck, Heart, Eye, Play, ArrowLeft, Mail, Phone, ChevronLeft, ChevronRight, Check, Key, Star, Image as ImageIcon, Compass, Info, Tag, ExternalLink } from 'lucide-react';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -187,6 +187,41 @@ export default function PropertyDetailPage({ params }: PageProps) {
 
   const videoEmbed = property.video_url ? getYoutubeEmbed(property.video_url) : null;
 
+  const hasCoords = property.latitude && property.longitude;
+  const mapQuery = hasCoords 
+    ? `${property.latitude},${property.longitude}` 
+    : `${property.address || property.locality || ''}, ${property.city_name || ''}`;
+  const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+
+  const locationImageUrl = property.location_image 
+    ? (property.location_image.startsWith('http') ? property.location_image : `/${property.location_image}`)
+    : null;
+
+  const nearbyList = (() => {
+    if (!property.nearby) return [];
+    try {
+      return typeof property.nearby === 'string' ? JSON.parse(property.nearby) : property.nearby;
+    } catch (e) {
+      console.warn('Error parsing nearby list:', e);
+      return [];
+    }
+  })();
+
+  const specItems = [
+    { label: 'Property Type', value: property.property_type_label || property.property_type, icon: <Grid size={16} /> },
+    { label: 'Listing For', value: property.listing_type === 'rent' ? 'Rent' : 'Sale', icon: <Tag size={16} /> },
+    { label: 'Bedrooms', value: property.bedrooms ? `${property.bedrooms} BHK` : 'N/A', icon: <Bed size={16} /> },
+    { label: 'Bathrooms', value: property.bathrooms ? `${property.bathrooms} Baths` : 'N/A', icon: <Bath size={16} /> },
+    { label: 'Covered Area', value: property.area_sqft ? `${property.area_sqft} sq.ft.` : 'N/A', icon: <Compass size={16} /> },
+    { label: 'Rate / Sq.Ft.', value: property.rate_per_sqft ? `₹${Number(property.rate_per_sqft).toLocaleString('en-IN')}` : 'N/A', icon: <Key size={16} /> },
+    { label: 'Plot Length', value: property.plot_length_ft ? `${property.plot_length_ft} ft` : 'N/A', icon: <Grid size={16} /> },
+    { label: 'Plot Width', value: property.plot_width_ft ? `${property.plot_width_ft} ft` : 'N/A', icon: <Grid size={16} /> },
+    { label: 'Boundary Wall', value: property.has_boundary_wall === 1 ? 'Yes' : property.has_boundary_wall === 0 ? 'No' : 'N/A', icon: <ShieldCheck size={16} /> },
+    { label: 'Available From', value: property.available_from ? new Date(property.available_from).toLocaleDateString('en-IN') : 'Immediate', icon: <Calendar size={16} /> },
+    { label: 'Negotiable Price', value: property.is_price_negotiable === 1 ? 'Yes' : 'No', icon: <Info size={16} /> },
+    { label: 'Listing ID', value: `#${property.id}`, icon: <Info size={16} /> },
+  ];
+
   return (
     <>
       <style>{pageStyles}</style>
@@ -338,54 +373,24 @@ export default function PropertyDetailPage({ params }: PageProps) {
                     </div>
                   )}
                 </div>
+              </div>
 
-                <div className="pd-info-strip mt-3">
-                  <div className="row g-3">
-                    {property.available_from && (
-                      <div className="col-sm-6">
-                        <div className="pd-info-row">
-                          <Key size={16} />
-                          <div>
-                            <span className="pd-info-label">Available from</span>
-                            <strong className="pd-info-value">{new Date(property.available_from).toLocaleDateString('en-IN')}</strong>
-                          </div>
-                        </div>
+              {/* Property Facts & Specifications Section */}
+              <div className="pd-specs-card mb-4 pd-anim-2">
+                <h2 className="pd-section-title">
+                  <Info size={17} />
+                  <span>Facts & Specifications</span>
+                </h2>
+                <div className="pd-specs-grid">
+                  {specItems.map((spec, index) => (
+                    <div key={index} className="pd-spec-item">
+                      <div className="pd-spec-icon">{spec.icon}</div>
+                      <div className="pd-spec-info">
+                        <span className="pd-spec-label">{spec.label}</span>
+                        <span className="pd-spec-value">{spec.value || 'N/A'}</span>
                       </div>
-                    )}
-                    {property.created_at && (
-                      <div className="col-sm-6">
-                        <div className="pd-info-row">
-                          <Calendar size={16} />
-                          <div>
-                            <span className="pd-info-label">Listed on</span>
-                            <strong className="pd-info-value">{new Date(property.created_at).toLocaleDateString('en-IN')}</strong>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {property.has_boundary_wall !== null && (
-                      <div className="col-sm-6">
-                        <div className="pd-info-row">
-                          <Grid size={16} />
-                          <div>
-                            <span className="pd-info-label">Boundary Wall</span>
-                            <strong className="pd-info-value">{property.has_boundary_wall === 1 ? 'Yes' : 'No'}</strong>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    {property.plot_length_ft && property.plot_width_ft && (
-                      <div className="col-sm-6">
-                        <div className="pd-info-row">
-                          <Grid size={16} />
-                          <div>
-                            <span className="pd-info-label">Plot Dimension</span>
-                            <strong className="pd-info-value">{property.plot_length_ft} × {property.plot_width_ft} ft</strong>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -417,6 +422,41 @@ export default function PropertyDetailPage({ params }: PageProps) {
                 </div>
               )}
 
+              {/* Neighbourhood Guide */}
+              {nearbyList.length > 0 && (
+                <div className="pd-section-card mb-4 pd-anim-3">
+                  <h2 className="pd-section-title">
+                    <Compass size={17} />
+                    <span>Neighbourhood & Connectivity</span>
+                  </h2>
+                  <div className="pd-nearby-grid">
+                    {nearbyList.map((item: any, idx: number) => {
+                      const cat = String(item.category || '').toLowerCase();
+                      let catIcon = <MapPin size={14} className="text-secondary" />;
+                      if (cat.includes('school') || cat.includes('college') || cat.includes('education')) {
+                        catIcon = <Star size={14} className="text-warning" />;
+                      } else if (cat.includes('hospital') || cat.includes('medical') || cat.includes('clinic')) {
+                        catIcon = <Heart size={14} className="text-danger" fill="#fee2e2" />;
+                      } else if (cat.includes('bus') || cat.includes('station') || cat.includes('train') || cat.includes('transit')) {
+                        catIcon = <Compass size={14} className="text-primary" />;
+                      }
+                      return (
+                        <div key={idx} className="pd-nearby-card">
+                          <div className="pd-nearby-icon-wrap">{catIcon}</div>
+                          <div className="pd-nearby-info">
+                            <span className="pd-nearby-name">{item.name || item.title || 'Nearby Facility'}</span>
+                            <span className="pd-nearby-cat">{item.category || 'Facility'}</span>
+                          </div>
+                          {item.distance && (
+                            <span className="pd-nearby-dist">{item.distance}</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Video */}
               {videoEmbed && (
                 <div className="pd-section-card mb-4 pd-anim-4">
@@ -424,28 +464,71 @@ export default function PropertyDetailPage({ params }: PageProps) {
                     <Play size={17} />
                     <span>Video Tour</span>
                   </h2>
-                  {videoEmbed}
+                  <div className="pd-video-frame-wrap border rounded-3 overflow-hidden shadow-sm">
+                    {videoEmbed}
+                  </div>
                 </div>
               )}
 
-              {/* Location */}
-              {property.location && (
-                <div className="pd-section-card mb-4 pd-anim-4">
-                  <h2 className="pd-section-title">
-                    <MapPin size={17} />
-                    <span>Detailed Location</span>
-                  </h2>
-                  {property.location.startsWith('http') ? (
-                    <a href={property.location} target="_blank" rel="noopener noreferrer"
-                      className="pd-map-link d-inline-flex align-items-center gap-1">
-                      <MapPin size={14} />
-                      <span>View on Google Maps</span>
+              {/* Location Map */}
+              <div className="pd-section-card mb-4 pd-anim-4">
+                <h2 className="pd-section-title">
+                  <MapPin size={17} />
+                  <span>Property Location & Maps</span>
+                </h2>
+                
+                <p className="pd-location-text mb-3">
+                  <MapPin size={14} className="text-danger flex-shrink-0 mt-1" />
+                  <span>{property.address || property.locality}, {property.city_name}</span>
+                </p>
+
+                {/* Google Maps Embed iframe */}
+                <div className="pd-map-frame-wrap border rounded-3 overflow-hidden shadow-sm mb-3">
+                  <iframe
+                    width="100%"
+                    height="350"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    allowFullScreen
+                    referrerPolicy="no-referrer-when-downgrade"
+                    src={mapUrl}
+                  />
+                </div>
+
+                <div className="d-flex flex-wrap gap-2">
+                  <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="pd-map-link d-inline-flex align-items-center gap-2">
+                    <ExternalLink size={14} />
+                    <span>Open in Google Maps</span>
+                  </a>
+                  {property.location && property.location.startsWith('http') && (
+                    <a href={property.location}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="pd-map-link pd-map-link--secondary d-inline-flex align-items-center gap-2">
+                      <ExternalLink size={14} />
+                      <span>View Original Link</span>
                     </a>
-                  ) : (
-                    <p className="pd-location-text mb-0">{property.location}</p>
                   )}
                 </div>
-              )}
+
+                {/* Owner's Location Image Uploaded */}
+                {locationImageUrl && (
+                  <div className="pd-location-image-wrap mt-4 pt-3 border-top">
+                    <h3 className="pd-location-image-title mb-2 text-secondary small fw-bold uppercase">Location Map / Layout Image</h3>
+                    <div className="pd-location-image-container border rounded overflow-hidden shadow-sm bg-light text-center p-2">
+                      <img
+                        src={locationImageUrl}
+                        className="pd-location-image img-fluid rounded"
+                        alt="Location layout / schematic uploaded by owner"
+                        style={{ maxHeight: '280px', objectFit: 'contain' }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* ── SIDEBAR ── */}
@@ -521,7 +604,7 @@ export default function PropertyDetailPage({ params }: PageProps) {
           {similar.length > 0 && (
             <section className="mt-5 pt-4 pd-similar-section pd-anim-4">
               <div className="mb-4">
-                <h2 className="h4 fw-bold mb-1">Similar Properties</h2>
+                <h2 className="h4 fw-bold mb-1" style={{ color: 'var(--nb-secondary)' }}>Similar Properties</h2>
                 <p className="text-muted small">Properties matching the same region &amp; category</p>
               </div>
               <div className="row g-4 nb-property-grid">
@@ -563,21 +646,21 @@ const pageStyles = `
   .pd-ready .pd-anim-4 { animation: pd-fadeUp 0.42s cubic-bezier(.22,.68,0,1.2) 0.22s both; }
 
   /* ── Breadcrumb ── */
-  .pd-breadcrumb-link { color: #6b7280; transition: color .18s; }
-  .pd-breadcrumb-link:hover { color: #2563eb; }
+  .pd-breadcrumb-link { color: var(--nb-muted); transition: color .18s; }
+  .pd-breadcrumb-link:hover { color: var(--nb-primary); }
 
   .pd-back-link {
-    color: #6b7280; text-decoration: none; font-size: 13.5px;
+    color: var(--nb-muted); text-decoration: none; font-size: 13.5px;
     transition: color .18s, gap .18s;
     padding: 0;
   }
-  .pd-back-link:hover { color: #2563eb; }
+  .pd-back-link:hover { color: var(--nb-primary); }
 
   /* ── Gallery ── */
   .pd-gallery-wrap { border-radius: 14px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.1); }
   .pd-gallery-frame {
     position: relative; overflow: hidden;
-    height: 450px;
+    height: 480px;
     background: #111827;
   }
   .pd-gallery-img {
@@ -594,18 +677,18 @@ const pageStyles = `
   .pd-gallery-nav {
     position: absolute; top: 50%; transform: translateY(-50%);
     width: 42px; height: 42px; border-radius: 50%; border: none;
-    background: rgba(255,255,255,0.2); backdrop-filter: blur(8px);
+    background: rgba(255,255,255,0.25); backdrop-filter: blur(8px);
     color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
     transition: background .2s, transform .22s cubic-bezier(.22,.68,0,1.5);
     z-index: 2;
   }
-  .pd-gallery-nav:hover { background: rgba(255,255,255,0.38); transform: translateY(-50%) scale(1.12); }
+  .pd-gallery-nav:hover { background: rgba(255,255,255,0.45); transform: translateY(-50%) scale(1.12); }
   .pd-gallery-nav--prev { left: 14px; }
   .pd-gallery-nav--next { right: 14px; }
 
   .pd-photo-count {
     position: absolute; bottom: 14px; right: 14px;
-    background: rgba(0,0,0,0.5); backdrop-filter: blur(6px);
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
     color: #fff; font-size: 12px; font-weight: 600;
     padding: 4px 11px; border-radius: 20px;
   }
@@ -613,13 +696,13 @@ const pageStyles = `
   .pd-featured-badge {
     position: absolute; top: 14px; left: 14px; z-index: 3;
     font-size: 11px; font-weight: 800; letter-spacing: .7px; text-transform: uppercase;
-    background: linear-gradient(135deg,#f59e0b,#d97706); color: #fff;
+    background: linear-gradient(135deg, var(--nb-accent), var(--nb-accent-dark)); color: var(--nb-primary-dark);
     padding: 5px 12px; border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(245,158,11,.35);
+    box-shadow: 0 2px 8px rgba(242,178,3,.35);
   }
 
   .pd-img-placeholder {
-    height: 450px; border-radius: 14px;
+    height: 480px; border-radius: 14px;
     background: #f7f8fa; color: #9ca3af;
     border: 2px dashed #e5e7eb;
   }
@@ -632,28 +715,29 @@ const pageStyles = `
   .pd-thumbs::-webkit-scrollbar { height: 3px; }
   .pd-thumbs::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
   .pd-thumb {
-    flex-shrink: 0; width: 66px; height: 48px; border-radius: 8px;
+    flex-shrink: 0; width: 72px; height: 52px; border-radius: 8px;
     overflow: hidden; border: 2.5px solid transparent; cursor: pointer; padding: 0;
     transition: border-color .18s, transform .18s;
   }
   .pd-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .pd-thumb.active { border-color: #2563eb; }
+  .pd-thumb.active { border-color: var(--nb-primary); }
   .pd-thumb:hover:not(.active) { transform: scale(1.06); }
 
   /* ── Summary panel ── */
   .pd-summary-panel {
-    background: #fff; border-radius: 14px; padding: 1.5rem;
-    box-shadow: 0 2px 14px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+    background: #fff; border-radius: 14px; padding: 1.75rem;
+    box-shadow: 0 4px 20px rgba(11, 44, 86, 0.05);
+    border: 1px solid var(--nb-card-border);
   }
 
-  .pd-title { font-size: 1.45rem; font-weight: 800; color: #111827; line-height: 1.25; }
+  .pd-title { font-size: 1.8rem; font-weight: 800; color: var(--nb-secondary); line-height: 1.25; }
 
   .pd-wish-btn {
     display: inline-flex; align-items: center; gap: 6px;
-    font-size: 13px; font-weight: 600; padding: 7px 15px;
-    border-radius: 30px; border: 1.5px solid #d1d5db;
-    background: #ffffff; color: #6b7280; cursor: pointer;
-    transition: background .2s, color .2s, border-color .2s, transform .22s cubic-bezier(.22,.68,0,1.5);
+    font-size: 13px; font-weight: 600; padding: 8px 16px;
+    border-radius: 30px; border: 1.5px solid var(--nb-card-border);
+    background: #ffffff; color: var(--nb-muted); cursor: pointer;
+    transition: all .2s;
     white-space: nowrap;
   }
   .pd-wish-btn:hover { background: #fff5f5; color: #ef4444; border-color: #fca5a5; transform: scale(1.04); }
@@ -664,168 +748,286 @@ const pageStyles = `
 
   .pd-views-badge {
     display: inline-flex; align-items: center; gap: 5px;
-    font-size: 12px; color: #6b7280;
-    background: #f3f4f6; border: 1px solid #e5e7eb;
+    font-size: 12px; color: var(--nb-muted);
+    background: var(--nb-mint); border: 1px solid var(--nb-card-border);
     padding: 6px 12px; border-radius: 20px;
   }
 
   .pd-address-line {
     display: flex; align-items: center; gap: 5px;
-    font-size: 13.5px; color: #6b7280; margin: 0;
+    font-size: 14px; color: var(--nb-muted); margin: 0;
   }
 
-  .pd-price-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
-  .pd-price { font-size: 2rem; font-weight: 900; color: #111827; letter-spacing: -1px; line-height: 1; }
+  .pd-price-row { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+  .pd-price { font-size: 2.25rem; font-weight: 800; color: var(--nb-primary); letter-spacing: -1px; line-height: 1; }
 
   .pd-tag {
     font-size: 11.5px; font-weight: 700; letter-spacing: .3px;
-    padding: 4px 12px; border-radius: 20px;
+    padding: 5px 14px; border-radius: 20px;
+    text-transform: uppercase;
   }
-  .pd-tag--rent       { background: #dbeafe; color: #1d4ed8; }
-  .pd-tag--sale       { background: #dcfce7; color: #166534; }
-  .pd-tag--type       { background: #ede9fe; color: #4f46e5; }
-  .pd-tag--negotiable { background: #fef3c7; color: #b45309; }
+  .pd-tag--rent       { background: #e8f5e9; color: #2e7d32; }
+  .pd-tag--sale       { background: var(--nb-primary-soft); color: var(--nb-primary); }
+  .pd-tag--type       { background: var(--nb-mint); color: var(--nb-secondary); }
+  .pd-tag--negotiable { background: #fff8e1; color: var(--nb-accent-dark); border: 1px solid #ffe082; }
 
   /* Stats grid */
   .pd-stat-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px;
   }
   .pd-stat {
-    background: #eff6ff; border-radius: 10px; padding: 12px 14px;
-    border: 1px solid #bfdbfe;
+    background: var(--nb-primary-soft); border-radius: 10px; padding: 12px 14px;
+    border: 1px solid rgba(11, 44, 86, 0.1);
     transition: transform .2s, box-shadow .2s;
   }
-  .pd-stat:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(37,99,235,.12); }
-  .pd-stat__label { font-size: 11px; color: #6b7280; font-weight: 500; margin-bottom: 3px; }
-  .pd-stat__value { font-size: 1rem; font-weight: 800; color: #1e3a8a; }
+  .pd-stat:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(11, 44, 86, 0.08); }
+  .pd-stat__label { font-size: 11px; color: var(--nb-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 3px; }
+  .pd-stat__value { font-size: 1.1rem; font-weight: 800; color: var(--nb-primary); }
 
-  /* Info strip rows */
-  .pd-info-row {
-    display: flex; align-items: flex-start; gap: 9px;
-    background: #f9fafb; border: 1px solid #e5e7eb;
-    border-radius: 10px; padding: 10px 13px; font-size: 13px;
-    transition: box-shadow .18s;
+  /* ── Specs card ── */
+  .pd-specs-card {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.75rem;
+    box-shadow: 0 4px 20px rgba(11, 44, 86, 0.05);
+    border: 1px solid var(--nb-card-border);
   }
-  .pd-info-row:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
-  .pd-info-row svg { color: #2563eb; flex-shrink: 0; margin-top: 1px; }
-  .pd-info-label { display: block; font-size: 11px; color: #9ca3af; margin-bottom: 1px; }
-  .pd-info-value { color: #111827; }
+  .pd-specs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.25rem;
+  }
+  .pd-spec-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--nb-light-bg);
+    border-radius: 10px;
+    border: 1px solid #f1f5f9;
+    transition: all 0.2s ease;
+  }
+  .pd-spec-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(11, 44, 86, 0.05);
+    border-color: #cbd5e1;
+  }
+  .pd-spec-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--nb-primary-soft);
+    color: var(--nb-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .pd-spec-info {
+    display: flex;
+    flex-direction: column;
+  }
+  .pd-spec-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--nb-muted);
+    font-weight: 600;
+  }
+  .pd-spec-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--nb-secondary);
+  }
 
   /* ── Section cards ── */
   .pd-section-card {
-    background: #fff; border-radius: 14px; padding: 1.5rem;
-    box-shadow: 0 2px 14px rgba(0,0,0,0.07), 0 0 0 1px rgba(0,0,0,0.04);
+    background: #fff; border-radius: 14px; padding: 1.75rem;
+    box-shadow: 0 4px 20px rgba(11, 44, 86, 0.05);
+    border: 1px solid var(--nb-card-border);
     transition: box-shadow .25s;
   }
-  .pd-section-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.1); }
+  .pd-section-card:hover { box-shadow: 0 6px 24px rgba(11,44,86,0.08); }
 
   .pd-section-title {
     display: flex; align-items: center; gap: 8px;
-    font-size: 1rem; font-weight: 700; color: #111827;
-    margin: 0 0 1rem; padding-bottom: 0.75rem;
-    border-bottom: 2px solid #eff6ff;
+    font-size: 1.1rem; font-weight: 700; color: var(--nb-secondary);
+    margin: 0 0 1.25rem; padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--nb-primary-soft);
   }
-  .pd-section-title svg { color: #2563eb; }
+  .pd-section-title svg { color: var(--nb-primary); }
 
-  .pd-description { font-size: 14px; color: #374151; line-height: 1.8; white-space: pre-line; }
+  .pd-description { font-size: 14.5px; color: var(--nb-text); line-height: 1.8; white-space: pre-line; }
 
   /* Amenity pills */
   .pd-amenity-pill {
     display: inline-flex; align-items: center; gap: 5px;
-    font-size: 12.5px; font-weight: 500; color: #166534;
-    background: #f0fdf4; border: 1px solid #bbf7d0;
-    padding: 5px 12px; border-radius: 20px;
+    font-size: 12.5px; font-weight: 600; color: #2e7d32;
+    background: #e8f5e9; border: 1px solid #c8e6c9;
+    padding: 6px 14px; border-radius: 20px;
     transition: transform .18s, box-shadow .18s;
   }
-  .pd-amenity-pill:hover { transform: translateY(-2px); box-shadow: 0 3px 8px rgba(22,163,74,.15); }
-  .pd-amenity-pill svg { color: #16a34a; }
+  .pd-amenity-pill:hover { transform: translateY(-2px); box-shadow: 0 3px 8px rgba(46,125,50,.15); }
+  .pd-amenity-pill svg { color: #2e7d32; }
 
-  .pd-video-frame { border-radius: 12px !important; display: block; }
-
-  .pd-map-link {
-    font-size: 13.5px; font-weight: 600; color: #2563eb;
-    text-decoration: none; padding: 8px 16px; border-radius: 8px;
-    background: #eff6ff; transition: background .2s;
+  /* Nearby Grid */
+  .pd-nearby-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
   }
-  .pd-map-link:hover { background: #dbeafe; color: #1d4ed8; }
+  .pd-nearby-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--nb-light-bg);
+    border: 1px solid var(--nb-card-border);
+    border-radius: 10px;
+    transition: all 0.2s ease;
+  }
+  .pd-nearby-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(11, 44, 86, 0.05);
+    border-color: #cbd5e1;
+  }
+  .pd-nearby-icon-wrap {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--nb-card-border);
+    flex-shrink: 0;
+  }
+  .pd-nearby-info {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    overflow: hidden;
+  }
+  .pd-nearby-name {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--nb-secondary);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+  .pd-nearby-cat {
+    font-size: 11px;
+    color: var(--nb-muted);
+    text-transform: capitalize;
+  }
+  .pd-nearby-dist {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--nb-primary);
+    background: var(--nb-primary-soft);
+    padding: 2px 8px;
+    border-radius: 12px;
+    white-space: nowrap;
+  }
+
+  /* Video */
+  .pd-video-frame-wrap { border-radius: 12px !important; overflow: hidden; background: #000; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+  .pd-video-frame { border-radius: 0 !important; display: block; border: none !important; }
+
+  /* Map and Location */
+  .pd-map-frame-wrap { border-radius: 12px !important; overflow: hidden; }
+  .pd-map-link {
+    font-size: 13.5px; font-weight: 700; color: var(--nb-primary-dark);
+    text-decoration: none; padding: 8px 16px; border-radius: 8px;
+    background: var(--nb-accent); border: 1.5px solid var(--nb-accent);
+    transition: all .2s;
+  }
+  .pd-map-link:hover { background: var(--nb-accent-dark); border-color: var(--nb-accent-dark); transform: translateY(-1px); }
+  .pd-map-link--secondary {
+    color: var(--nb-secondary); background: #fff; border: 1.5px solid var(--nb-card-border);
+  }
+  .pd-map-link--secondary:hover { background: var(--nb-light-bg); border-color: #cbd5e1; }
   .pd-location-text {
-    font-size: 13.5px; color: #374151; line-height: 1.7;
-    background: #f9fafb; border: 1px solid #e5e7eb;
-    border-radius: 10px; padding: 12px 14px; white-space: pre-line;
+    font-size: 14px; color: var(--nb-text); line-height: 1.6;
+    background: var(--nb-light-bg); border: 1px solid var(--nb-card-border);
+    border-radius: 10px; padding: 12px 14px; display: flex; gap: 8px; align-items: flex-start;
   }
 
   /* ── Enquiry sidebar card ── */
   .pd-enquiry-card {
     background: #fff; border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05);
+    box-shadow: 0 8px 32px rgba(11, 44, 86, 0.12), 0 0 0 1px rgba(11, 44, 86, 0.04);
     overflow: hidden;
   }
   .pd-enquiry-head {
-    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
-    padding: 1.25rem 1.4rem;
+    background: linear-gradient(135deg, var(--nb-primary) 0%, var(--nb-primary-dark) 100%);
+    padding: 1.5rem;
+    border-bottom: 2px solid var(--nb-accent);
   }
-  .pd-enquiry-title { font-size: 15px; font-weight: 800; color: #fff; margin: 0 0 3px; }
-  .pd-enquiry-sub   { font-size: 12px; color: rgba(255,255,255,.72); margin: 0; line-height: 1.4; }
-  .pd-enquiry-body  { padding: 1.25rem 1.4rem; }
+  .pd-enquiry-title { font-size: 17px; font-weight: 800; color: #fff; margin: 0 0 4px; }
+  .pd-enquiry-sub   { font-size: 12.5px; color: rgba(255,255,255,.8); margin: 0; line-height: 1.4; }
+  .pd-enquiry-body  { padding: 1.5rem; }
   .pd-enquiry-trust {
     display: flex; align-items: center; gap: 6px;
-    padding: 0.7rem 1.4rem; background: #f9fafb;
-    border-top: 1px solid #e5e7eb;
-    font-size: 11.5px; color: #6b7280;
+    padding: 0.85rem 1.5rem; background: var(--nb-light-bg);
+    border-top: 1px solid var(--nb-card-border);
+    font-size: 11.5px; color: var(--nb-muted);
   }
-  .pd-enquiry-trust svg { color: #16a34a; }
+  .pd-enquiry-trust svg { color: #2e7d32; }
 
   /* Form */
-  .pd-form-group { margin-bottom: .85rem; }
-  .pd-form-label { display: block; font-size: 11.5px; font-weight: 600; color: #6b7280; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .4px; }
+  .pd-form-group { margin-bottom: 1rem; }
+  .pd-form-label { display: block; font-size: 11px; font-weight: 700; color: var(--nb-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .5px; }
   .pd-form-input {
-    display: block; width: 100%; padding: 9px 12px;
-    font-size: 13.5px; color: #111827; font-family: inherit;
-    background: #f9fafb; border: 1.5px solid #e5e7eb; border-radius: 9px;
-    outline: none; transition: border-color .18s, box-shadow .18s, background .18s;
+    display: block; width: 100%; padding: 10px 14px;
+    font-size: 13.5px; color: var(--nb-text); font-family: inherit;
+    background: var(--nb-light-bg); border: 1.5px solid var(--nb-card-border); border-radius: 9px;
+    outline: none; transition: all .18s;
   }
   .pd-form-input:focus {
-    border-color: #2563eb; background: #fff;
-    box-shadow: 0 0 0 3.5px rgba(37,99,235,.1);
+    border-color: var(--nb-primary); background: #fff;
+    box-shadow: 0 0 0 3.5px rgba(11, 44, 86, 0.1);
   }
-  .pd-form-input[readonly] { background: #f0f2f5; color: #9ca3af; cursor: default; }
+  .pd-form-input[readonly] { background: #f1f5f9; color: #94a3b8; cursor: default; }
   textarea.pd-form-input { resize: vertical; }
 
   /* Alerts */
   .pd-alert {
-    font-size: 13px; padding: 10px 14px; border-radius: 9px; line-height: 1.45;
+    font-size: 13px; padding: 12px 14px; border-radius: 9px; line-height: 1.45;
   }
-  .pd-alert--success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-  .pd-alert--error   { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
-  .pd-alert--warning { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
-  .pd-alert--info    { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+  .pd-alert--success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+  .pd-alert--error   { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+  .pd-alert--warning { background: #fff8e1; color: #b7791f; border: 1px solid #ffe082; }
+  .pd-alert--info    { background: var(--nb-primary-soft); color: var(--nb-primary); border: 1px solid rgba(11, 44, 86, 0.1); }
 
   /* Primary button */
   .pd-btn-primary {
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    font-size: 14px; font-weight: 700; padding: 11px 22px;
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
-    color: #fff; border: none; border-radius: 10px; cursor: pointer;
-    box-shadow: 0 4px 14px rgba(37,99,235,.3);
+    font-size: 14.5px; font-weight: 700; padding: 12px 22px;
+    background: linear-gradient(135deg, var(--nb-accent), var(--nb-accent-dark));
+    color: var(--nb-primary-dark); border: none; border-radius: 10px; cursor: pointer;
+    box-shadow: 0 4px 14px rgba(242, 178, 3, 0.3);
     text-decoration: none;
-    transition: background .2s, transform .2s, box-shadow .2s;
+    transition: all .2s;
+    width: 100%;
   }
   .pd-btn-primary:hover {
-    background: linear-gradient(135deg, #1d4ed8, #1e40af);
-    transform: translateY(-1px); color: #fff;
-    box-shadow: 0 6px 20px rgba(37,99,235,.38);
+    background: linear-gradient(135deg, var(--nb-accent-dark), #d59d02);
+    transform: translateY(-1px); color: var(--nb-primary-dark);
+    box-shadow: 0 6px 20px rgba(242, 178, 3, 0.45);
   }
   .pd-btn-primary:disabled { opacity: .65; transform: none; cursor: not-allowed; }
 
   .pd-spinner {
-    display: inline-block; width: 16px; height: 16px;
-    border: 2.5px solid rgba(255,255,255,.3);
-    border-top-color: #fff; border-radius: 50%;
+    display: inline-block; width: 18px; height: 18px;
+    border: 2.5px solid rgba(7,31,63,.2);
+    border-top-color: var(--nb-primary-dark); border-radius: 50%;
     animation: pd-spin .65s linear infinite;
   }
 
   /* Similar section */
-  .pd-similar-section { border-top: 1px solid #e5e7eb; }
+  .pd-similar-section { border-top: 1px solid var(--nb-card-border); }
 
   /* Error box */
   .pd-error-box {

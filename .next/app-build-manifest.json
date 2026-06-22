@@ -11,65 +11,60 @@
       "static/chunks/main-app.js",
       "static/chunks/app/page.js"
     ],
-    "/search/page": [
+    "/owner/dashboard/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/search/page.js"
+      "static/chunks/app/owner/dashboard/page.js"
     ],
-    "/property-detail/[slug]/page": [
+    "/api/owner/dashboard/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/property-detail/[slug]/page.js"
-    ],
-    "/api/properties/[id]/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/properties/[id]/route.js"
-    ],
-    "/tenant/dashboard/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/tenant/dashboard/page.js"
-    ],
-    "/api/tenant/enquiries/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/tenant/enquiries/route.js"
-    ],
-    "/user/wishlist/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/user/wishlist/page.js"
-    ],
-    "/articles/[slug]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/articles/[slug]/page.js"
-    ],
-    "/articles/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/articles/page.js"
-    ],
-    "/blog/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/blog/page.js"
+      "static/chunks/app/api/owner/dashboard/route.js"
     ],
     "/knowledge-centre/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/knowledge-centre/page.js"
     ],
-    "/news/page": [
+    "/search/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/news/page.js"
+      "static/chunks/app/search/page.js"
     ],
-    "/news/[slug]/page": [
+    "/owner/listings/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/news/[slug]/page.js"
+      "static/chunks/app/owner/listings/page.js"
+    ],
+    "/api/owner/listings/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/owner/listings/route.js"
+    ],
+    "/owner/enquiries/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/owner/enquiries/page.js"
+    ],
+    "/api/owner/enquiries/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/owner/enquiries/route.js"
+    ],
+    "/tenant/enquiries/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/tenant/enquiries/page.js"
+    ],
+    "/api/tenant/enquiries/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/tenant/enquiries/route.js"
+    ],
+    "/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/login/page.js"
     ]
   }
 }

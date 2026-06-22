@@ -9,7 +9,7 @@ interface SidebarConsoleProps {
   user: any;
   wishlistedIds: number[];
   setAuthModalOpen: (val: 'login' | 'register' | null) => void;
-  setShowLiveUpdateModal: (val: boolean) => void;
+  setShowLiveUpdateModal?: (val: boolean) => void;
   getDashboardPath: () => string;
   cityName: string;
 }
@@ -64,13 +64,15 @@ const SidebarConsole: React.FC<SidebarConsoleProps> = ({
             >
               Go to Dashboard
             </Link>
+            {/*
             <button
               type="button"
-              onClick={() => setShowLiveUpdateModal(true)}
+              onClick={() => setShowLiveUpdateModal?.(true)}
               className="btn w-100 py-2 rounded-3 small fw-bold text-danger border border-danger bg-white"
             >
               <span className="me-1" style={{ fontSize: '10px' }}>🔴</span> Manage Live Updates
             </button>
+            */}
           </>
         ) : (
           <button

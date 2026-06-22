@@ -129,13 +129,13 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
               Plots/Land
             </button>
           </li>
-          {user?.role === 'owner' && (
+          {/* user?.role === 'owner' && (
             <li>
               <Link href="/user/live-updates" className="nb-search-tab-premium-btn text-danger fw-bold text-decoration-none d-inline-block">
                 <span className="me-1" style={{ fontSize: '10px' }}>🔴</span> Live Updates
               </Link>
             </li>
-          )}
+          ) */}
         </ul>
         <Link href={user ? '/owner/property/add' : '#'} onClick={(e) => {
           if (!user) {

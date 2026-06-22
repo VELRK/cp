@@ -29,10 +29,10 @@ const Navbar: React.FC = () => {
         <div className="collapse navbar-collapse" id="nbNav">
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
             <li className="nav-item">
-              <Link href="/search" className="nav-link nb-nav-link">Search</Link>
+              <Link href="/search" className="nav-link nb-nav-link text-nowrap">Search</Link>
             </li>
             <li className="nav-item dropdown">
-              <a className="nav-link nb-nav-link dropdown-toggle" href="#" id="knowledgeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <a className="nav-link nb-nav-link text-nowrap dropdown-toggle" href="#" id="knowledgeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                 Knowledge Centre
               </a>
               <ul className="dropdown-menu border-0 shadow-sm rounded-3 mt-2" aria-labelledby="knowledgeDropdown">
@@ -44,42 +44,42 @@ const Navbar: React.FC = () => {
             {user && user.role === 'owner' && user.status === 'approved' && (
               <>
                 <li className="nav-item">
-                  <Link href="/owner/dashboard" className="nav-link nb-nav-link">Owner Dashboard</Link>
+                  <Link href="/owner/dashboard" className="nav-link nb-nav-link text-nowrap">Owner Dashboard</Link>
                 </li>
                 <li className="nav-item">
-                  <Link href="/owner/listings" className="nav-link nb-nav-link">My Properties</Link>
+                  <Link href="/owner/listings" className="nav-link nb-nav-link text-nowrap">My Properties</Link>
                 </li>
                 <li className="nav-item">
-                  <Link href="/owner/enquiries" className="nav-link nb-nav-link">Received Enquiries</Link>
+                  <Link href="/owner/enquiries" className="nav-link nb-nav-link text-nowrap">Received Enquiries</Link>
                 </li>
                 <li className="nav-item">
-                  <Link href="/tenant/enquiries" className="nav-link nb-nav-link">Sent Enquiries</Link>
+                  <Link href="/tenant/enquiries" className="nav-link nb-nav-link text-nowrap">Sent Enquiries</Link>
                 </li>
               </>
             )}
             {user && user.role === 'tenant' && user.status === 'approved' && (
               <>
                 <li className="nav-item">
-                  <Link href="/tenant/dashboard" className="nav-link nb-nav-link">Tenant Dashboard</Link>
+                  <Link href="/tenant/dashboard" className="nav-link nb-nav-link text-nowrap">Tenant Dashboard</Link>
                 </li>
                 <li className="nav-item">
-                  <Link href="/user/wishlist" className="nav-link nb-nav-link">My Wishlist</Link>
+                  <Link href="/user/wishlist" className="nav-link nb-nav-link text-nowrap">My Wishlist</Link>
                 </li>
               </>
             )}
             {user && user.status === 'approved' && (
               <>
+                {/* <li className="nav-item">
+                  <Link href="/user/live-updates" className="nav-link nb-nav-link text-nowrap">Live Updates</Link>
+                </li> */}
                 <li className="nav-item">
-                  <Link href="/user/live-updates" className="nav-link nb-nav-link">Live Updates</Link>
-                </li>
-                <li className="nav-item">
-                  <Link href="/user/feedback" className="nav-link nb-nav-link">Feedback</Link>
+                  <Link href="/user/feedback" className="nav-link nb-nav-link text-nowrap">Feedback</Link>
                 </li>
               </>
             )}
             {user && user.role === 'admin' && (
               <li className="nav-item">
-                <a href="/panel" className="nav-link nb-nav-link text-danger fw-bold">Admin Panel</a>
+                <a href="/panel" className="nav-link nb-nav-link text-nowrap text-danger fw-bold">Admin Panel</a>
               </li>
             )}
           </ul>

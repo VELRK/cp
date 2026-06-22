@@ -56,7 +56,7 @@ const Footer: React.FC = () => {
               <li className="mb-2"><Link href="/" className="text-white-50 text-decoration-none hover-white">Home</Link></li>
               <li className="mb-2"><Link href="/search" className="text-white-50 text-decoration-none hover-white">Search properties</Link></li>
               <li className="mb-2"><Link href="/about" className="text-white-50 text-decoration-none hover-white">About Us</Link></li>
-              <li className="mb-2"><Link href="/user/live-updates" className="text-white-50 text-decoration-none hover-white">Live Updates</Link></li>
+              {/* <li className="mb-2"><Link href="/user/live-updates" className="text-white-50 text-decoration-none hover-white">Live Updates</Link></li> */}
             </ul>
           </div>
 

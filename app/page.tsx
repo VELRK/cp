@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { useAuth } from '@/components/AuthContext';
 import ResearchTools from '@/components/common/ResearchTools';
-import LiveUpdateModal from '@/components/common/LiveUpdateModal';
+// import LiveUpdateModal from '@/components/common/LiveUpdateModal';
 
 // Homepage subcomponents (extracted for clean architecture & modularity)
 import HeroSlider from '../components/home/HeroSlider';
@@ -100,7 +100,7 @@ export default function Home() {
   const [wishlistedIds, setWishlistedIds] = useState<number[]>([]);
 
   // Live Update Modal
-  const [showLiveUpdateModal, setShowLiveUpdateModal] = useState(false);
+  // const [showLiveUpdateModal, setShowLiveUpdateModal] = useState(false);
 
   // Fetch Cities and Blogs once on mount
   useEffect(() => {
@@ -577,7 +577,7 @@ export default function Home() {
               user={user}
               wishlistedIds={wishlistedIds}
               setAuthModalOpen={setAuthModalOpen}
-              setShowLiveUpdateModal={setShowLiveUpdateModal}
+              // setShowLiveUpdateModal={setShowLiveUpdateModal}
               getDashboardPath={getDashboardPath}
               cityName={cityName}
             />
@@ -587,7 +587,7 @@ export default function Home() {
       </div>
 
       {/* Live Update Modal */}
-      <LiveUpdateModal show={showLiveUpdateModal} onClose={() => setShowLiveUpdateModal(false)} />
+      {/* <LiveUpdateModal show={showLiveUpdateModal} onClose={() => setShowLiveUpdateModal(false)} /> */}
     </div>
   );
 }

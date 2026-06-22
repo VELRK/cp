@@ -1,9 +1,14 @@
 {
+  "/api/owner/dashboard/route": "app/api/owner/dashboard/route.js",
+  "/api/owner/listings/route": "app/api/owner/listings/route.js",
+  "/api/owner/enquiries/route": "app/api/owner/enquiries/route.js",
+  "/api/tenant/enquiries/route": "app/api/tenant/enquiries/route.js",
   "/page": "app/page.js",
-  "/articles/[slug]/page": "app/articles/[slug]/page.js",
-  "/articles/page": "app/articles/page.js",
-  "/blog/page": "app/blog/page.js",
   "/knowledge-centre/page": "app/knowledge-centre/page.js",
-  "/news/page": "app/news/page.js",
-  "/news/[slug]/page": "app/news/[slug]/page.js"
+  "/owner/dashboard/page": "app/owner/dashboard/page.js",
+  "/search/page": "app/search/page.js",
+  "/owner/listings/page": "app/owner/listings/page.js",
+  "/owner/enquiries/page": "app/owner/enquiries/page.js",
+  "/tenant/enquiries/page": "app/tenant/enquiries/page.js",
+  "/login/page": "app/login/page.js"
 }

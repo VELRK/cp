@@ -164,6 +164,8 @@ function stageReleaseToRoot() {
   }
 
   for (const entry of fs.readdirSync(outDir)) {
+    // uploads/assets already live in repo — skip to save disk during staging
+    if (entry === 'assets' || entry === 'uploads') continue;
     copyRecursive(path.join(outDir, entry), path.join(root, entry));
   }
 
@@ -177,9 +179,10 @@ async function main() {
   stashApiRoutes();
   try {
     run('npm run build', buildEnv);
-    packageRelease();
     if (stageForGit) {
       stageReleaseToRoot();
+    } else {
+      packageRelease();
     }
   } finally {
     restoreApiRoutes();

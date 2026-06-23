@@ -60,6 +60,14 @@ class Nb_api_token {
         if (is_string($x) && $x !== '') {
             return trim($x);
         }
+        $q = $this->CI->input->get('token');
+        if (is_string($q) && trim($q) !== '') {
+            return trim($q);
+        }
+        $cookie = $this->CI->input->cookie('nb_token');
+        if (is_string($cookie) && trim($cookie) !== '') {
+            return trim($cookie);
+        }
         return '';
     }
 }

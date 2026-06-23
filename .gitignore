@@ -1,40 +1,69 @@
 .DS_Store
+Thumbs.db
+desktop.ini
 
-# Local secrets (copy from .env.example)
+# --- Secrets (never commit) ---
 .env
-
-# Local API keys (copy from *.example)
+.env.*
+!.env.example
+deploy.local.php
 application/config/google_maps_api_key.local.php
 
+# --- PHP / CodeIgniter ---
 application/cache/*
 !application/cache/index.html
-
 application/logs/*
 !application/logs/index.html
-
 !application/*/.htaccess
-
 composer.lock
-tests/mocks/database/ci_test.sqlite
-
-user_guide_src/build/*
-user_guide_src/cilexer/build/*
-user_guide_src/cilexer/dist/*
-user_guide_src/cilexer/pycilexer.egg-info/*
 /vendor/
+tests/mocks/database/ci_test.sqlite
+tests/tests/
+tests/results/
 
-# IDE Files
-#-------------------------
+# --- Next.js / Node ---
+node_modules/
+.next/
+out/
+.deploy-stash/
+*.tsbuildinfo
+next-env.d.ts
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# --- Build & deploy artifacts ---
+deploy/release/
+deploy/dist/
+*.zip
+*.tar.gz
+
+# --- User uploads (keep folder structure only if needed) ---
+public/uploads/*
+!public/uploads/.gitkeep
+assets/uploads/*
+!assets/uploads/.gitkeep
+
+# --- IDE ---
 /nbproject/
-.idea/*
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
 
-## Sublime Text cache files
+# --- Sublime Text ---
 *.tmlanguage.cache
 *.tmPreferences.cache
 *.stTheme.cache
 *.sublime-workspace
 *.sublime-project
-/tests/tests/
-/tests/results/
-node_modules
+
+# --- Hosting / misc ---
 .vercel
+user_guide_src/build/*
+user_guide_src/cilexer/build/*
+user_guide_src/cilexer/dist/*
+user_guide_src/cilexer/pycilexer.egg-info/*

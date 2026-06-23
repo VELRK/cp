@@ -443,3 +443,44 @@
   opacity: 0.35;
   margin-bottom: 0.75rem;
 }
+
+/* Property form — listing control toggles */
+.nb-admin-panel .form-check.form-switch {
+  padding-left: 2.75em;
+  min-height: 1.6rem;
+}
+
+.nb-admin-panel .form-check.form-switch .form-check-input {
+  width: 2.25em;
+  height: 1.25em;
+  margin-left: -2.75em;
+  cursor: pointer;
+  float: left;
+}
+
+.nb-admin-panel .form-check.form-switch .form-check-label {
+  cursor: pointer;
+  padding-top: 0.1rem;
+  user-select: none;
+}
+
+.nb-admin-panel--accent {
+  border-color: #bbf7d0;
+}
+
+.nb-admin-panel--accent .nb-admin-panel-header {
+  background: linear-gradient(90deg, #f0fdf4 0%, #fff 100%);
+}
+
+.nb-admin-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--nb-admin-border);
+}
+
+.nb-admin-input {
+  border-radius: 10px;
+}

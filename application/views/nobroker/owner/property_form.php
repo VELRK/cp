@@ -46,9 +46,17 @@ $nearbyCategoryOptions = array(
   <?php if (!$is_admin && !$is_edit) : ?>
   <div class="alert alert-info border-0 shadow-sm small mb-4">After you save, an admin must publish the listing before it appears in search and on the public site.</div>
   <?php endif; ?>
-  <?php echo form_open_multipart('api/property/save'); ?>
+  <?php
+  if ($is_admin) {
+    // Same-origin relative action so session cookies are always sent (localhost:3000 or :8080).
+    echo form_open_multipart('panel/property/save', array('action' => '/panel/property/save'));
+  } else {
+    echo form_open_multipart('api/property/save');
+  }
+  ?>
     <?php if ($is_admin) : ?>
       <input type="hidden" name="admin_save" value="1">
+      <input type="hidden" name="admin_property_token" value="<?php echo html_escape(isset($admin_property_token) ? $admin_property_token : ''); ?>">
     <?php endif; ?>
     <input type="hidden" name="image_action" value="replace">
     <input type="hidden" name="cover_index" id="nbCoverIndex" value="0">
@@ -79,31 +87,51 @@ $nearbyCategoryOptions = array(
           </select>
           <p class="small text-muted mb-0 mt-1"><?php echo $is_edit ? 'Reassign the listing to another approved owner account if needed.' : 'The listing will belong to this owner account.'; ?></p>
         </div>
+        <?php
+        $admin_listing_flags = array(
+          array('name' => 'is_active', 'id' => 'nb_ad_active', 'label' => 'Published (visible in search)', 'default_on' => true),
+          array('name' => 'is_featured', 'id' => 'nb_ad_feat', 'label' => 'Feature'),
+          array('name' => 'tags_best_rate_localities', 'id' => 'nb_ad_best_rate', 'label' => 'Best Rate'),
+          array('name' => 'tags_high_growth_localities', 'id' => 'nb_ad_high_growth', 'label' => 'High Growth'),
+          array('name' => 'is_recommended', 'id' => 'nb_ad_recommended', 'label' => 'Recommended'),
+          array('name' => 'is_newly_launched', 'id' => 'nb_ad_newly_launched', 'label' => 'Newly Launched Project'),
+          array('name' => 'is_verified_property', 'id' => 'nb_ad_verified', 'label' => 'Verified Property'),
+          array('name' => 'is_premium', 'id' => 'nb_ad_premium', 'label' => 'Premium Project'),
+          array('name' => 'is_home_banner', 'id' => 'nb_ad_home_banner', 'label' => 'Home Banner (hero slideshow)'),
+        );
+        $home_banner_on = $r && !empty($r->is_home_banner);
+        ?>
         <div class="row g-3 mt-1">
+          <?php foreach ($admin_listing_flags as $flag) :
+            $fname = $flag['name'];
+            if ($r) {
+              $is_on = !empty($r->{$fname});
+            } else {
+              $is_on = !empty($flag['default_on']);
+            }
+          ?>
           <div class="col-md-6">
             <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" name="is_active" value="1" id="nb_ad_active" role="switch" <?php echo ($r ? !empty($r->is_active) : true) ? 'checked' : ''; ?>>
-              <label class="form-check-label fw-medium" for="nb_ad_active">Published (visible in search)</label>
+              <input type="hidden" name="<?php echo html_escape($fname); ?>" value="0">
+              <input class="form-check-input" type="checkbox" name="<?php echo html_escape($fname); ?>" value="1" id="<?php echo html_escape($flag['id']); ?>"<?php echo $is_on ? ' checked' : ''; ?>>
+              <label class="form-check-label fw-medium" for="<?php echo html_escape($flag['id']); ?>"><?php echo html_escape($flag['label']); ?></label>
             </div>
           </div>
-          <div class="col-md-6">
-            <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" name="is_featured" value="1" id="nb_ad_feat" role="switch" <?php echo ($r && !empty($r->is_featured)) ? 'checked' : ''; ?>>
-              <label class="form-check-label fw-medium" for="nb_ad_feat">Featured on homepage</label>
+          <?php endforeach; ?>
+        </div>
+        <div id="nbHomeBannerUpload" class="mt-4 pt-3 border-top" style="<?php echo $home_banner_on ? '' : 'display:none;'; ?>">
+          <label class="form-label fw-semibold" for="nbHomeBannerImage">Home banner image <span class="text-danger">*</span></label>
+          <p class="small text-muted mb-2">Required when Home Banner is enabled. JPEG, PNG or WebP only — min 800×300 px, max 2 MB, max 4000×2000 px.</p>
+          <?php if ($r && !empty($r->home_banner_image)) : ?>
+          <div class="mb-2">
+            <img src="<?php echo base_url($r->home_banner_image); ?>" alt="Home banner" class="img-thumbnail" style="max-height: 160px;">
+            <div class="form-check mt-2">
+              <input class="form-check-input" type="checkbox" name="remove_home_banner_image" value="1" id="nbRemoveHomeBanner">
+              <label class="form-check-label text-danger" for="nbRemoveHomeBanner">Remove current banner image</label>
             </div>
           </div>
-          <div class="col-md-6">
-            <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" name="tags_best_rate_localities" value="1" id="nb_ad_best_rate" role="switch" <?php echo ($r && !empty($r->tags_best_rate_localities)) ? 'checked' : ''; ?>>
-              <label class="form-check-label fw-medium" for="nb_ad_best_rate">Best Rate</label>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" name="tags_high_growth_localities" value="1" id="nb_ad_high_growth" role="switch" <?php echo ($r && !empty($r->tags_high_growth_localities)) ? 'checked' : ''; ?>>
-              <label class="form-check-label fw-medium" for="nb_ad_high_growth">High Growth</label>
-            </div>
-          </div>
+          <?php endif; ?>
+          <input type="file" name="home_banner_image" id="nbHomeBannerImage" class="form-control nb-admin-input" accept="image/jpeg,image/png,image/webp">
         </div>
       </div>
     </div>
@@ -382,6 +410,36 @@ $nearbyCategoryOptions = array(
       <p class="small text-muted mb-1">Paste a <strong>YouTube</strong> or <strong>Vimeo</strong> link (e.g. <code>https://www.youtube.com/watch?v=…</code>).</p>
       <input type="text" name="video_url" id="nbVideoUrl" class="form-control<?php echo $is_admin ? ' nb-admin-input' : ''; ?>" inputmode="url" autocomplete="off" placeholder="https://www.youtube.com/watch?v=... or youtu.be/..." value="<?php echo ($r && isset($r->video_url) && $r->video_url !== '') ? html_escape($r->video_url) : ''; ?>" maxlength="512"<?php echo (isset($nb_has_video_url_column) && !$nb_has_video_url_column) ? ' disabled' : ''; ?>>
     </div>
+    <div class="mb-4">
+      <label class="form-label fw-semibold" for="nbBrochure">Brochure (optional)</label>
+      <p class="small text-muted mb-1">PDF, Word, or image brochure for this listing.</p>
+      <?php if ($r && !empty($r->brochure_url)) : ?>
+      <div class="mb-2 small">
+        <a href="<?php echo base_url($r->brochure_url); ?>" target="_blank" rel="noopener">View current brochure</a>
+        <div class="form-check mt-1">
+          <input class="form-check-input" type="checkbox" name="remove_brochure" value="1" id="nbRemoveBrochure">
+          <label class="form-check-label text-danger" for="nbRemoveBrochure">Remove brochure</label>
+        </div>
+      </div>
+      <?php endif; ?>
+      <input type="file" name="brochure" id="nbBrochure" class="form-control<?php echo $is_admin ? ' nb-admin-input' : ''; ?>" accept=".pdf,.doc,.docx,image/jpeg,image/png,image/webp">
+    </div>
+    <div class="mb-4">
+      <label class="form-label fw-semibold" for="nbAudioNotes">Audio notes (optional)</label>
+      <p class="small text-muted mb-1">Upload a voice note or audio walkthrough (MP3, WAV, M4A, OGG).</p>
+      <?php if ($r && !empty($r->audio_notes_url)) : ?>
+      <div class="mb-2 small">
+        <audio controls preload="none" class="w-100" style="max-width:420px;">
+          <source src="<?php echo base_url($r->audio_notes_url); ?>">
+        </audio>
+        <div class="form-check mt-1">
+          <input class="form-check-input" type="checkbox" name="remove_audio_notes" value="1" id="nbRemoveAudio">
+          <label class="form-check-label text-danger" for="nbRemoveAudio">Remove audio notes</label>
+        </div>
+      </div>
+      <?php endif; ?>
+      <input type="file" name="audio_notes" id="nbAudioNotes" class="form-control<?php echo $is_admin ? ' nb-admin-input' : ''; ?>" accept="audio/*,.mp3,.wav,.m4a,.ogg,.webm,.aac">
+    </div>
     <?php if ($is_admin) : ?>
       </div>
     </div>
@@ -426,5 +484,26 @@ $nearbyCategoryOptions = array(
       if (row) row.remove();
     }
   });
+})();
+
+(function () {
+  var toggle = document.getElementById('nb_ad_home_banner');
+  var panel = document.getElementById('nbHomeBannerUpload');
+  var fileInput = document.getElementById('nbHomeBannerImage');
+  var removeCb = document.getElementById('nbRemoveHomeBanner');
+  var hasExisting = <?php echo ($r && !empty($r->home_banner_image)) ? 'true' : 'false'; ?>;
+  if (!toggle || !panel) return;
+  function syncHomeBannerPanel() {
+    panel.style.display = toggle.checked ? '' : 'none';
+    if (fileInput) {
+      var removed = removeCb && removeCb.checked;
+      fileInput.required = toggle.checked && (!hasExisting || removed);
+    }
+  }
+  toggle.addEventListener('change', syncHomeBannerPanel);
+  if (removeCb) {
+    removeCb.addEventListener('change', syncHomeBannerPanel);
+  }
+  syncHomeBannerPanel();
 })();
 </script>

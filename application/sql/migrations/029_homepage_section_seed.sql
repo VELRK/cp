@@ -1,0 +1,3 @@
+-- Homepage section flags use existing columns from 025_nb_properties_flags_and_media.sql:
+-- is_recommended, is_newly_launched, is_verified_property
+-- Seed data: php tools/run_migration_029_homepage_seed.php

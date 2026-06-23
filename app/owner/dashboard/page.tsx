@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
-import api from '@/lib/api';
+import { getOwnerDashboard } from '@/lib/frontendApi';
 import { Home, Eye, MessageSquare, Plus, FileText, ClipboardList, CheckCircle } from 'lucide-react';
 
 interface Enquiry {
@@ -41,7 +41,7 @@ export default function OwnerDashboard() {
   // Fetch stats and enquiries
   useEffect(() => {
     if (user) {
-      api.get('/api/owner/dashboard')
+      getOwnerDashboard()
         .then((res) => {
           if (res.data?.success) {
             setStats(res.data.stats);

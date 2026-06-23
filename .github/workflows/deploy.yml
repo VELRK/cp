@@ -1,0 +1,20 @@
+name: Deploy to Hostinger — CP
+# GitHub: Settings → Secrets → Actions → DEPLOY_TOKEN
+# Server: copy deploy.local.php.example → deploy.local.php (same token, not in git)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger deploy via PHP webhook
+        run: |
+          RESPONSE=$(curl -sf --max-time 60 \
+            "https://superfinelabels.in/cp/hook.php?token=${{ secrets.DEPLOY_TOKEN }}")
+          echo "$RESPONSE"
+          echo "$RESPONSE" | grep -q '"success":true' || { echo "Deploy failed"; exit 1; }

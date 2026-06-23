@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Search, Sliders, ChevronDown, Mic, Navigation } from 'lucide-react';
+import type { PropertyTypeItem } from '@/lib/propertyTypes';
 
 export interface City {
   id: number;
@@ -11,13 +12,16 @@ export interface City {
 }
 
 interface SearchPanelProps {
-  listingType: 'sale' | 'rent';
-  setListingType: (val: 'sale' | 'rent') => void;
-  propertyType: string;
-  setPropertyType: (val: string) => void;
   cityId: string;
   setCityId: (val: string) => void;
   cities: City[];
+  mainTypes: PropertyTypeItem[];
+  mainTypeSlug: string;
+  subTypeSlug: string;
+  subTypes: PropertyTypeItem[];
+  onMainTypeChange: (slug: string) => void;
+  onSubTypeChange: (slug: string) => void;
+  typesLoading?: boolean;
   searchQuery: string;
   setSearchQuery: (val: string) => void;
   minPrice: string;
@@ -34,19 +38,21 @@ interface SearchPanelProps {
   handleVoiceSearch: () => void;
   handleLocationSearch: () => void;
   handleSearchSubmit: (e: React.FormEvent) => void;
-  applySearchFilter: (type: string) => void;
   user: any;
   setAuthModalOpen: (val: 'login' | 'register' | null) => void;
 }
 
 const SearchPanel: React.FC<SearchPanelProps> = ({
-  listingType,
-  setListingType,
-  propertyType,
-  setPropertyType,
   cityId,
   setCityId,
   cities,
+  mainTypes,
+  mainTypeSlug,
+  subTypeSlug,
+  subTypes,
+  onMainTypeChange,
+  onSubTypeChange,
+  typesLoading = false,
   searchQuery,
   setSearchQuery,
   minPrice,
@@ -63,79 +69,40 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
   handleVoiceSearch,
   handleLocationSearch,
   handleSearchSubmit,
-  applySearchFilter,
   user,
   setAuthModalOpen
 }) => {
   return (
     <div className="nb-search-card-premium fade-in-up">
-      {/* Tab Header Row */}
+      {/* Tab Header Row — main property types from API */}
       <div className="nb-search-tabs-premium-row">
         <ul className="nb-search-tabs-premium-list">
-          <li>
-            <button
-              type="button"
-              className={`nb-search-tab-premium-btn ${listingType === 'sale' ? 'active' : ''}`}
-              onClick={() => setListingType('sale')}
-            >
-              Buy
-            </button>
-          </li>
-          <li>
-            <button
-              type="button"
-              className={`nb-search-tab-premium-btn ${listingType === 'rent' ? 'active' : ''}`}
-              onClick={() => setListingType('rent')}
-            >
-              Rent
-            </button>
-          </li>
-          <li>
-            <button
-              type="button"
-              className="nb-search-tab-premium-btn"
-              onClick={() => {
-                setListingType('sale');
-                setPropertyType('apartment');
-                // Force search submit navigation to new launches
-                window.location.href = '/search?sort=new';
-              }}
-            >
-              New Launch
-              <span className="badge-dot" />
-            </button>
-          </li>
-          <li>
-            <button
-              type="button"
-              className="nb-search-tab-premium-btn"
-              onClick={() => {
-                setPropertyType('commercial');
-                applySearchFilter('commercial');
-              }}
-            >
-              Commercial
-            </button>
-          </li>
-          <li>
-            <button
-              type="button"
-              className="nb-search-tab-premium-btn"
-              onClick={() => {
-                setPropertyType('plot');
-                applySearchFilter('plot');
-              }}
-            >
-              Plots/Land
-            </button>
-          </li>
-          {/* user?.role === 'owner' && (
+          {typesLoading && mainTypes.length === 0 ? (
             <li>
-              <Link href="/user/live-updates" className="nb-search-tab-premium-btn text-danger fw-bold text-decoration-none d-inline-block">
-                <span className="me-1" style={{ fontSize: '10px' }}>🔴</span> Live Updates
-              </Link>
+              <span className="nb-search-tab-premium-btn text-muted" style={{ cursor: 'default' }}>
+                Loading…
+              </span>
             </li>
-          ) */}
+          ) : mainTypes.length === 0 ? (
+            <li>
+              <span className="nb-search-tab-premium-btn text-muted" style={{ cursor: 'default' }}>
+                No property types
+              </span>
+            </li>
+          ) : (
+            mainTypes.map((mt) => (
+              <li key={mt.id}>
+                <button
+                  type="button"
+                  className={`nb-search-tab-premium-btn ${mainTypeSlug === mt.slug ? 'active' : ''}`}
+                  onClick={() => onMainTypeChange(mt.slug)}
+                  disabled={typesLoading}
+                >
+                  {mt.name}
+                </button>
+              </li>
+            ))
+          )}
         </ul>
         <Link href={user ? '/owner/property/add' : '#'} onClick={(e) => {
           if (!user) {
@@ -149,6 +116,26 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
 
       {/* Search Inputs Row */}
       <form onSubmit={handleSearchSubmit} className="nb-search-inputs-premium-row">
+        {/* Sub type dropdown (main type chosen via tabs above) */}
+        {mainTypeSlug && subTypes.length > 0 && (
+          <div className="nb-search-select-premium-wrap" style={{ width: '170px' }}>
+            <select
+              className="form-select"
+              value={subTypeSlug}
+              onChange={(e) => onSubTypeChange(e.target.value)}
+              disabled={typesLoading}
+              aria-label="Sub property type"
+            >
+              <option value="">Select</option>
+              {subTypes.map((s) => (
+                <option key={s.id} value={s.slug}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
         {/* City Selector */}
         <div className="nb-search-select-premium-wrap" style={{ width: '140px' }}>
           <select
@@ -160,22 +147,6 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
             {cities.map((c) => (
               <option key={c.id} value={c.id.toString()}>{c.name}</option>
             ))}
-          </select>
-        </div>
-
-        {/* Property Type Selector */}
-        <div className="nb-search-select-premium-wrap" style={{ width: '160px' }}>
-          <select
-            className="form-select"
-            value={propertyType}
-            onChange={(e) => setPropertyType(e.target.value)}
-          >
-            <option value="">Any Type</option>
-            <option value="apartment">Apartment</option>
-            <option value="house">Independent House</option>
-            <option value="villa">Villas &amp; Duplex</option>
-            <option value="plot">Plots &amp; Land</option>
-            <option value="commercial">Commercial Space</option>
           </select>
         </div>
 

@@ -1,7 +1,9 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
+import { getCities, saveProperty } from '@/lib/frontendApi';
+import { usePropertyTypeFilters } from '@/hooks/usePropertyTypeFilters';
+import { PropertyTypeFilterFields } from '@/components/common/PropertyTypeSelects';
 import { useAuth } from '@/components/AuthContext';
 import {
   ArrowLeft,
@@ -32,6 +34,8 @@ interface City {
 interface PropertyFormProps {
   initialData?: any;
   isEdit?: boolean;
+  /** Owner dashboard add flow — skip public landing, require login */
+  ownerMode?: boolean;
 }
 
 const AMENITIES_LIST = [
@@ -47,30 +51,25 @@ const AMENITIES_LIST = [
   'Gated Community',
 ];
 
-const PROPERTY_TYPES = [
-  { val: 'apartment', label: 'Apartment / Flat' },
-  { val: 'house', label: 'Independent House' },
-  { val: 'villa', label: 'Villa / Duplex' },
-  { val: 'plot', label: 'Plot / Land' },
-  { val: 'commercial', label: 'Commercial Space' },
-  { val: 'office', label: 'Office Space' },
-  { val: 'retail', label: 'Retail / Shop' },
-  { val: 'warehouse', label: 'Warehouse / Godown' },
-  { val: 'farmhouse', label: 'Farmhouse' },
-  { val: 'pg', label: 'PG Accommodation' },
-  { val: 'shared_flat', label: 'Shared Flat' },
-  { val: 'serviced_apartment', label: 'Serviced Apartment' },
-];
+const COMMERCIAL_TYPE_SLUGS = new Set([
+  'commercial',
+  'office',
+  'retail',
+  'warehouse',
+  'shop',
+  'industrial',
+  'godown',
+]);
 
-const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false }) => {
+const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false, ownerMode = false }) => {
   const router = useRouter();
   const { user, login, registerUser, setAuthModalOpen } = useAuth();
 
   // Dual mode UI state: 'modern' | 'classic'
   const [uiMode, setUiMode] = useState<'modern' | 'classic'>('modern');
 
-  // Modern Step 0 Landing options page state
-  const [isLandingMode, setIsLandingMode] = useState(!isEdit);
+  // Modern Step 0 Landing options page state (skipped for owner dashboard add)
+  const [isLandingMode, setIsLandingMode] = useState(!isEdit && !ownerMode);
 
   // Modern landing custom options
   const [landingListingType, setLandingListingType] = useState<'sale' | 'rent' | 'pg'>('sale');
@@ -95,7 +94,15 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
 
   // Form states
   const [title, setTitle] = useState(initialData?.title || '');
-  const [propertyType, setPropertyType] = useState(initialData?.property_type || 'apartment');
+  const {
+    mainTypes,
+    mainTypeSlug,
+    subTypeSlug,
+    subTypes,
+    propertyType,
+    setMainTypeSlug,
+    setSubTypeSlug,
+  } = usePropertyTypeFilters(initialData?.property_type || '');
   const [listingType, setListingType] = useState<'rent' | 'sale'>(initialData?.listing_type || 'sale');
   const [price, setPrice] = useState(initialData?.price || '');
   const [isPriceNegotiable, setIsPriceNegotiable] = useState(initialData?.is_price_negotiable === 1);
@@ -109,6 +116,12 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
   const [description, setDescription] = useState(initialData?.description || '');
   const [location, setLocation] = useState(initialData?.location || '');
   const [videoUrl, setVideoUrl] = useState(initialData?.video_url || '');
+  const [brochureFile, setBrochureFile] = useState<File | null>(null);
+  const [audioNotesFile, setAudioNotesFile] = useState<File | null>(null);
+  const [removeBrochure, setRemoveBrochure] = useState(false);
+  const [removeAudioNotes, setRemoveAudioNotes] = useState(false);
+  const [existingBrochureUrl, setExistingBrochureUrl] = useState(initialData?.brochure_url || initialData?.brochure_url_url || '');
+  const [existingAudioUrl, setExistingAudioUrl] = useState(initialData?.audio_notes_url || initialData?.audio_notes_url_url || '');
   const [availableFrom, setAvailableFrom] = useState(initialData?.available_from ? initialData.available_from.substring(0, 10) : '');
   const [plotLength, setPlotLength] = useState(initialData?.plot_length_ft || '');
   const [plotWidth, setPlotWidth] = useState(initialData?.plot_width_ft || '');
@@ -139,7 +152,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
 
   // Fetch Cities on mount
   useEffect(() => {
-    api.get('/api/nb/cities')
+    getCities()
       .then((res) => {
         if (res.data?.success && Array.isArray(res.data.cities)) {
           setCities(res.data.cities);
@@ -150,6 +163,23 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
       })
       .catch((err) => console.error('Error fetching cities', err));
   }, [isEdit]);
+
+  // Keep landing sub-type in sync with API main types
+  useEffect(() => {
+    if (mainTypes.length === 0) return;
+    const options = mainTypes.filter((m) => {
+      const commercial =
+        COMMERCIAL_TYPE_SLUGS.has(m.slug) ||
+        m.name.toLowerCase().includes('commercial') ||
+        m.name.toLowerCase().includes('office') ||
+        m.name.toLowerCase().includes('shop');
+      return landingCategory === 'commercial' ? commercial : !commercial;
+    });
+    const list = options.length > 0 ? options : mainTypes;
+    if (!list.some((m) => m.slug === landingSubcategory)) {
+      setLandingSubcategory(list[0].slug);
+    }
+  }, [mainTypes, landingCategory, landingSubcategory]);
 
   // Draft recovery check on load
   useEffect(() => {
@@ -233,7 +263,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
       try {
         const parsed = JSON.parse(savedDraft);
         setTitle(parsed.title || '');
-        setPropertyType(parsed.propertyType || 'apartment');
+        setMainTypeSlug(parsed.propertyType || 'apartment');
+        setSubTypeSlug('');
         setListingType(parsed.listingType || 'sale');
         setPrice(parsed.price || '');
         setIsPriceNegotiable(!!parsed.isPriceNegotiable);
@@ -378,13 +409,20 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
     return true;
   };
 
+  const maxWizardSteps = uiMode === 'classic' ? 4 : 5;
+
   const nextStep = () => {
-    const maxSteps = uiMode === 'classic' ? 4 : 5;
     if (validateStep(step, uiMode)) {
-      if (step < maxSteps) {
+      if (step < maxWizardSteps) {
         setStep((prev) => prev + 1);
       }
     }
+  };
+
+  const handleContinue = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    nextStep();
   };
 
   const prevStep = () => {
@@ -398,9 +436,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
   const handleLandingStartNow = (e: React.FormEvent) => {
     e.preventDefault();
     setListingType(landingListingType === 'pg' ? 'rent' : landingListingType);
-    setPropertyType(landingSubcategory);
-    // If user has chosen PG, append PG details to title
-    setTitle(`Premium ${landingSubcategory.toUpperCase()} for ${landingListingType === 'sale' ? 'Sale' : 'Rent'} in Coimbatore`);
+    setMainTypeSlug(landingSubcategory);
+    setSubTypeSlug('');
+    const cityLabel = cities.find((c) => c.id.toString() === cityId)?.name || 'your city';
+    setTitle(`Premium ${landingSubcategory.replace(/_/g, ' ')} for ${landingListingType === 'sale' ? 'Sale' : 'Rent'} in ${cityLabel}`);
     if (landingPhone) {
       setLandingPhone(landingPhone);
     }
@@ -480,12 +519,30 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key !== 'Enter') return;
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'TEXTAREA') return;
+    if (step >= maxWizardSteps) return;
     e.preventDefault();
-    const finalStepVal = uiMode === 'classic' ? 3 : 3; // Step 3 holds city and pricing
-    if (!validateStep(finalStepVal, uiMode)) {
-      setStep(finalStepVal);
+    nextStep();
+  };
+
+  const handleSave = async () => {
+    if (!user) {
+      setErrorMsg('Please log in as a property owner to publish this listing.');
+      setAuthModalOpen('login');
       return;
+    }
+    if (step !== maxWizardSteps) {
+      setErrorMsg(`Please complete step ${step} and continue to step ${maxWizardSteps} before submitting.`);
+      return;
+    }
+    for (let s = 1; s <= maxWizardSteps; s += 1) {
+      if (!validateStep(s, uiMode)) {
+        setStep(s);
+        return;
+      }
     }
     setErrorMsg(null);
     setLoading(true);
@@ -510,6 +567,18 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
       formData.append('description', description);
       formData.append('location', location);
       formData.append('video_url', videoUrl);
+      if (brochureFile) {
+        formData.append('brochure', brochureFile);
+      }
+      if (audioNotesFile) {
+        formData.append('audio_notes', audioNotesFile);
+      }
+      if (isEdit && removeBrochure) {
+        formData.append('remove_brochure', '1');
+      }
+      if (isEdit && removeAudioNotes) {
+        formData.append('remove_audio_notes', '1');
+      }
       if (availableFrom) formData.append('available_from', availableFrom);
       if (plotLength) formData.append('plot_length_ft', plotLength.toString());
       if (plotWidth) formData.append('plot_width_ft', plotWidth.toString());
@@ -536,11 +605,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
         formData.append('image_action', 'replace');
       }
 
-      const response = await api.post('/api/property/save', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const response = await saveProperty(formData);
 
       if (response.data?.success) {
         // Clear local storage draft
@@ -560,6 +625,18 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
   };
 
   const getSubcategories = () => {
+    if (mainTypes.length > 0) {
+      const filtered = mainTypes.filter((m) => {
+        const commercial =
+          COMMERCIAL_TYPE_SLUGS.has(m.slug) ||
+          m.name.toLowerCase().includes('commercial') ||
+          m.name.toLowerCase().includes('office') ||
+          m.name.toLowerCase().includes('shop');
+        return landingCategory === 'commercial' ? commercial : !commercial;
+      });
+      const list = filtered.length > 0 ? filtered : mainTypes;
+      return list.map((m) => ({ val: m.slug, label: m.name }));
+    }
     if (landingCategory === 'residential') {
       return [
         { val: 'apartment', label: 'Flat/Apartment' },
@@ -607,6 +684,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
       )}
 
       {/* 1. Header Dual-Mode Toggle Bar */}
+      {!ownerMode && (
       <div className="nb-post-option-toggle-bar">
         <div className="btn-group border rounded-pill p-1 bg-white shadow-sm" role="group">
           <button
@@ -635,6 +713,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
           </button>
         </div>
       </div>
+      )}
 
       {/* 2. Step 0 Landing Option page (Modern Mode only) */}
       {uiMode === 'modern' && isLandingMode ? (
@@ -882,7 +961,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
               </div>
             )}
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={(e) => e.preventDefault()} onKeyDown={handleFormKeyDown}>
               {/* STEP 1: Basic Details */}
               {step === 1 && (
                 <div className="fade-in-up-wizard">
@@ -916,17 +995,35 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                     </div>
 
                     <div className="col-md-6 mt-4">
-                      <label className="form-label small fw-bold text-secondary">Property Type</label>
+                      <label className="form-label small fw-bold text-secondary">Main property type</label>
                       <select
                         className="form-select"
-                        value={propertyType}
-                        onChange={(e) => setPropertyType(e.target.value)}
+                        value={mainTypeSlug}
+                        onChange={(e) => setMainTypeSlug(e.target.value)}
+                        required
                       >
-                        {PROPERTY_TYPES.map((pt) => (
-                          <option key={pt.val} value={pt.val}>{pt.label}</option>
+                        <option value="">Select main type</option>
+                        {mainTypes.map((m) => (
+                          <option key={m.id} value={m.slug}>{m.name}</option>
                         ))}
                       </select>
                     </div>
+
+                    {mainTypeSlug && subTypes.length > 0 && (
+                      <div className="col-md-6 mt-4">
+                        <label className="form-label small fw-bold text-secondary">Sub property type</label>
+                        <select
+                          className="form-select"
+                          value={subTypeSlug}
+                          onChange={(e) => setSubTypeSlug(e.target.value)}
+                        >
+                          <option value="">Select sub type (optional)</option>
+                          {subTypes.map((s) => (
+                            <option key={s.id} value={s.slug}>{s.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1205,6 +1302,58 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                       onChange={(e) => setVideoUrl(e.target.value)}
                     />
                   </div>
+
+                  <div className="mb-3">
+                    <label className="form-label small text-secondary fw-semibold">Brochure (optional)</label>
+                    {existingBrochureUrl && !removeBrochure && (
+                      <div className="small mb-2">
+                        <a href={existingBrochureUrl} target="_blank" rel="noopener noreferrer">View current brochure</a>
+                        <div className="form-check mt-1">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            id="removeBrochureModern"
+                            checked={removeBrochure}
+                            onChange={(e) => setRemoveBrochure(e.target.checked)}
+                          />
+                          <label className="form-check-label text-danger" htmlFor="removeBrochureModern">Remove brochure</label>
+                        </div>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      className="form-control"
+                      accept=".pdf,.doc,.docx,image/jpeg,image/png,image/webp"
+                      onChange={(e) => setBrochureFile(e.target.files?.[0] || null)}
+                    />
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label small text-secondary fw-semibold">Audio notes (optional)</label>
+                    {existingAudioUrl && !removeAudioNotes && (
+                      <div className="small mb-2">
+                        <audio controls preload="none" className="w-100" style={{ maxWidth: 420 }}>
+                          <source src={existingAudioUrl} />
+                        </audio>
+                        <div className="form-check mt-1">
+                          <input
+                            className="form-check-input"
+                            type="checkbox"
+                            id="removeAudioModern"
+                            checked={removeAudioNotes}
+                            onChange={(e) => setRemoveAudioNotes(e.target.checked)}
+                          />
+                          <label className="form-check-label text-danger" htmlFor="removeAudioModern">Remove audio notes</label>
+                        </div>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      className="form-control"
+                      accept="audio/*,.mp3,.wav,.m4a,.ogg,.webm,.aac"
+                      onChange={(e) => setAudioNotesFile(e.target.files?.[0] || null)}
+                    />
+                  </div>
                 </div>
               )}
 
@@ -1277,11 +1426,11 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                   </button>
                 )}
 
-                {step < 5 ? (
+                {step < maxWizardSteps ? (
                   <button
                     type="button"
                     className="btn btn-primary px-4 rounded-pill d-inline-flex align-items-center gap-1.5 text-white"
-                    onClick={nextStep}
+                    onClick={handleContinue}
                     style={{ background: '#3b82f6', borderColor: '#3b82f6' }}
                   >
                     <span>Continue</span>
@@ -1289,13 +1438,14 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                   </button>
                 ) : (
                   <button
-                    type="submit"
+                    type="button"
                     className="btn btn-danger px-5 rounded-pill text-dark fw-bold d-inline-flex align-items-center gap-1.5"
                     disabled={loading}
+                    onClick={handleSave}
                     style={{ background: 'var(--nb-accent)', borderColor: 'var(--nb-accent)' }}
                   >
                     <Save size={16} />
-                    <span>{loading ? 'Saving Listing...' : 'Submit Property'}</span>
+                    <span>{loading ? 'Saving Listing...' : isEdit ? 'Update Property' : 'Submit Property'}</span>
                   </button>
                 )}
               </div>
@@ -1359,7 +1509,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
             </div>
           )}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={(e) => e.preventDefault()} onKeyDown={handleFormKeyDown}>
             {/* STEP 1: Basic Info & Property Type */}
             {step === 1 && (
               <div className="fade-in-up">
@@ -1405,20 +1555,39 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                   <div className="col-12 mt-4">
                     <label className="form-label small fw-bold text-secondary mb-2">Property Category</label>
                     <div className="row g-2">
-                      {PROPERTY_TYPES.map((pt) => (
-                        <div className="col-6 col-sm-4 col-md-3" key={pt.val}>
+                      {mainTypes.map((m) => (
+                        <div className="col-6 col-sm-4 col-md-3" key={m.slug}>
                           <button
                             type="button"
-                            className={`btn w-100 h-100 py-3 small rounded-4 border ${propertyType === pt.val ? 'btn-primary border-primary text-white shadow-sm fw-bold' : 'btn-light border-light text-muted'}`}
-                            onClick={() => setPropertyType(pt.val)}
+                            className={`btn w-100 h-100 py-3 small rounded-4 border ${mainTypeSlug === m.slug ? 'btn-primary border-primary text-white shadow-sm fw-bold' : 'btn-light border-light text-muted'}`}
+                            onClick={() => setMainTypeSlug(m.slug)}
                             style={{ fontSize: '0.85rem', transition: 'all 0.2s' }}
                           >
-                            {pt.label}
+                            {m.name}
                           </button>
                         </div>
                       ))}
                     </div>
                   </div>
+
+                  {mainTypeSlug && subTypes.length > 0 && (
+                    <div className="col-12 mt-3">
+                      <label className="form-label small fw-bold text-secondary mb-2">Sub property type</label>
+                      <div className="row g-2">
+                        {subTypes.map((s) => (
+                          <div className="col-6 col-sm-4 col-md-3" key={s.slug}>
+                            <button
+                              type="button"
+                              className={`btn w-100 py-2 small rounded-4 border ${subTypeSlug === s.slug ? 'btn-primary border-primary text-white fw-bold' : 'btn-light border-light text-muted'}`}
+                              onClick={() => setSubTypeSlug(s.slug)}
+                            >
+                              {s.name}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1680,6 +1849,58 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                   />
                 </div>
 
+                <div className="mb-4">
+                  <label className="form-label small text-secondary fw-semibold">Brochure (optional)</label>
+                  {existingBrochureUrl && !removeBrochure && (
+                    <div className="small mb-2">
+                      <a href={existingBrochureUrl} target="_blank" rel="noopener noreferrer">View current brochure</a>
+                      <div className="form-check mt-1">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id="removeBrochureClassic"
+                          checked={removeBrochure}
+                          onChange={(e) => setRemoveBrochure(e.target.checked)}
+                        />
+                        <label className="form-check-label text-danger" htmlFor="removeBrochureClassic">Remove brochure</label>
+                      </div>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    className="form-control"
+                    accept=".pdf,.doc,.docx,image/jpeg,image/png,image/webp"
+                    onChange={(e) => setBrochureFile(e.target.files?.[0] || null)}
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="form-label small text-secondary fw-semibold">Audio notes (optional)</label>
+                  {existingAudioUrl && !removeAudioNotes && (
+                    <div className="small mb-2">
+                      <audio controls preload="none" className="w-100" style={{ maxWidth: 420 }}>
+                        <source src={existingAudioUrl} />
+                      </audio>
+                      <div className="form-check mt-1">
+                        <input
+                          className="form-check-input"
+                          type="checkbox"
+                          id="removeAudioClassic"
+                          checked={removeAudioNotes}
+                          onChange={(e) => setRemoveAudioNotes(e.target.checked)}
+                        />
+                        <label className="form-check-label text-danger" htmlFor="removeAudioClassic">Remove audio notes</label>
+                      </div>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    className="form-control"
+                    accept="audio/*,.mp3,.wav,.m4a,.ogg,.webm,.aac"
+                    onChange={(e) => setAudioNotesFile(e.target.files?.[0] || null)}
+                  />
+                </div>
+
                 {/* Photo Upload Panel */}
                 <div className="border-top pt-3 mb-4">
                   <label className="form-label small fw-bold text-secondary d-block">Upload Photos (Max 10)</label>
@@ -1777,23 +1998,24 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                 </button>
               )}
 
-              {step < 4 ? (
+              {step < maxWizardSteps ? (
                 <button
                   type="button"
                   className="btn btn-primary px-4 rounded-pill d-inline-flex align-items-center gap-1.5 text-white"
-                  onClick={nextStep}
+                  onClick={handleContinue}
                 >
                   <span>Continue</span>
                   <ChevronRight size={16} />
                 </button>
               ) : (
                 <button
-                  type="submit"
+                  type="button"
                   className="btn btn-danger px-5 rounded-pill text-dark fw-bold d-inline-flex align-items-center gap-1.5"
                   disabled={loading}
+                  onClick={handleSave}
                 >
                   <Save size={16} />
-                  <span>{loading ? 'Saving Listing...' : 'Submit Property'}</span>
+                  <span>{loading ? 'Saving Listing...' : isEdit ? 'Update Property' : 'Submit Property'}</span>
                 </button>
               )}
             </div>

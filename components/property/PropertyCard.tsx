@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthContext';
-import api from '@/lib/api';
+import { checkWishlist, toggleWishlist } from '@/lib/frontendApi';
 import { Heart, Image as ImageIcon, MapPin, Bed, Bath, Grid, ArrowRight } from 'lucide-react';
 
 export interface Property {
@@ -21,6 +21,8 @@ export interface Property {
   city_name?: string;
   city_id?: number;
   is_featured?: number;
+  is_home_banner?: number;
+  home_banner_image_url?: string;
   images?: string | string[];
   image_urls?: string[];
   thumbnail_url?: string;
@@ -54,7 +56,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
 
   useEffect(() => {
     if (user) {
-      api.get(`/api/nb/wishlist/check?property_id=${property.id}&userId=${user.id}`)
+      checkWishlist(property.id, user.id)
         .then((res) => {
           if (res.data?.success && res.data.wishlisted) setIsWishlisted(true);
         })
@@ -70,7 +72,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
     if (!user) { setAuthModalOpen('login'); return; }
     setWishlistLoading(true);
     try {
-      const response = await api.post('/api/nb/wishlist/toggle', {
+      const response = await toggleWishlist({
         property_id: property.id,
         userId: user.id,
       });
@@ -86,7 +88,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
   const getPropertyTypeLabel = () => property.property_type_label || property.property_type;
   const formatPrice = (price: number) => property.price_formatted || `₹${price.toLocaleString('en-IN')}`;
 
-  const detailUrl = `/property-detail/${property.slug}`;
+  const detailUrl = `/property/${property.slug}`;
 
   return (
     <>

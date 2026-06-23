@@ -1,0 +1,23 @@
+# Files and folders excluded when uploading deploy/release/ via rsync/FTP
+node_modules/
+.next/
+out/
+.git/
+.github/
+.deploy-stash/
+deploy/release/
+deploy/dist/
+app/
+components/
+hooks/
+lib/
+scripts/
+*.ts
+*.tsx
+tsconfig.json
+next.config.js
+package.json
+package-lock.json
+.env
+.env.*
+!.env.example

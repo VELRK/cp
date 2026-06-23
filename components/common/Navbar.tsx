@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/components/AuthContext';
+import { getAdminPanelUrl } from '@/lib/frontendApi';
 import { Home, User, Menu } from 'lucide-react';
 
 const Navbar: React.FC = () => {
@@ -79,7 +80,9 @@ const Navbar: React.FC = () => {
             )}
             {user && user.role === 'admin' && (
               <li className="nav-item">
-                <a href="/panel" className="nav-link nb-nav-link text-nowrap text-danger fw-bold">Admin Panel</a>
+                <a href={getAdminPanelUrl()} className="nav-link nb-nav-link text-nowrap text-danger fw-bold">
+                  Admin Panel
+                </a>
               </li>
             )}
           </ul>
@@ -120,7 +123,18 @@ const Navbar: React.FC = () => {
 
                   <li><Link href="/user/profile" className="dropdown-item py-2">Manage Profile</Link></li>
                   <li><Link href="/user/settings" className="dropdown-item py-2">Change Password</Link></li>
-                  <li><button className="dropdown-item py-2 text-dark" onClick={logout}>Logout</button></li>
+                  <li>
+                    <button
+                      type="button"
+                      className="dropdown-item py-2 text-dark"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        void logout();
+                      }}
+                    >
+                      Logout
+                    </button>
+                  </li>
 
                   <li><hr className="dropdown-divider my-2" /></li>
 

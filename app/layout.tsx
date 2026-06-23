@@ -8,6 +8,9 @@ import AuthModals from '@/components/common/AuthModals';
 export const metadata: Metadata = {
   title: 'Coimbatore Properties | Buy, Rent & Sale without Brokerage',
   description: 'Search owner-listed properties in Coimbatore. Zero brokerage, transparent pricing, verified listings, and direct connection with owners.',
+  icons: {
+    icon: '/assets/assets/img/nb-placeholder-property.svg',
+  },
 };
 
 export default function RootLayout({

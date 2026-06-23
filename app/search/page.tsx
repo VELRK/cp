@@ -1,8 +1,17 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import api from '@/lib/api';
+import {
+  getCities,
+  searchProperties,
+  checkWishlist,
+  toggleWishlist,
+} from '@/lib/frontendApi';
+import { usePropertyTypeFilters } from '@/hooks/usePropertyTypeFilters';
+import { effectivePropertyTypeSlug } from '@/lib/propertyTypes';
+import { PropertyTypeFilterFields } from '@/components/common/PropertyTypeSelects';
+import OwnerPhoneModal from '@/components/common/OwnerPhoneModal';
 import { useAuth } from '@/components/AuthContext';
 import { 
   Filter, 
@@ -43,28 +52,129 @@ export interface Property {
   locality: string;
   city_name?: string;
   city_id?: number;
-  is_featured?: number;
   images?: string | string[];
   image_urls?: string[];
   thumbnail_url?: string;
   property_type_label?: string;
   description?: string;
+  brochure_url?: string | null;
+  owner_name?: string | null;
+  owner_phone?: string | null;
+  owner_user_type?: string | null;
+  posted_by?: string;
+  amenities?: string[] | null;
+  video_url?: string | null;
+  is_verified_property?: number;
+  is_newly_launched?: number;
+  is_featured?: number;
+  is_recommended?: number;
+  is_price_negotiable?: number;
+  views?: number;
+  created_at?: string | null;
 }
 
-const PROPERTY_TYPES = [
-  { val: 'apartment', label: 'Apartment / Flat' },
-  { val: 'house', label: 'Independent House' },
-  { val: 'villa', label: 'Villa / Duplex' },
-  { val: 'plot', label: 'Plot / Land' },
-  { val: 'commercial', label: 'Commercial' },
-  { val: 'office', label: 'Office Space' },
-  { val: 'retail', label: 'Retail / Shop' },
-  { val: 'warehouse', label: 'Warehouse / Godown' },
-  { val: 'farmhouse', label: 'Farmhouse' },
-  { val: 'pg', label: 'PG Accommodation' },
-  { val: 'shared_flat', label: 'Shared Flat' },
-  { val: 'serviced_apartment', label: 'Serviced Apartment' },
-];
+function resolveBrochureUrl(url: string | null | undefined): string | null {
+  if (!url || !String(url).trim()) return null;
+  const trimmed = String(url).trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+}
+
+function formatRelativeTime(dateStr?: string | null): string {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return '';
+  const diffMs = Date.now() - date.getTime();
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (days <= 0) return 'today';
+  if (days === 1) return '1 day ago';
+  if (days < 30) return `${days} days ago`;
+  const months = Math.floor(days / 30);
+  if (months === 1) return '1 month ago';
+  if (months < 12) return `${months} months ago`;
+  const years = Math.floor(months / 12);
+  return years === 1 ? '1 year ago' : `${years} years ago`;
+}
+
+function getPropertyTags(property: Property): string[] {
+  const tags: string[] = [];
+  if (Number(property.is_verified_property) === 1) tags.push('Verified');
+  if (Number(property.is_newly_launched) === 1) tags.push('New Launch');
+  if (Number(property.is_featured) === 1) tags.push('Featured');
+  if (Number(property.is_recommended) === 1) tags.push('Recommended');
+  if (Number(property.is_price_negotiable) === 1) tags.push('Negotiable');
+  if (property.video_url) tags.push('Video Tour');
+  if (Array.isArray(property.amenities)) {
+    property.amenities.forEach((item) => {
+      const label = String(item || '').trim();
+      if (label && !tags.includes(label)) tags.push(label);
+    });
+  }
+  return tags.slice(0, 4);
+}
+
+function formatListingPrice(property: Property): string {
+  if (property.price_formatted) return property.price_formatted;
+  if (property.price >= 10000000) {
+    return `₹ ${(property.price / 10000000).toFixed(2)} Cr`;
+  }
+  if (property.price >= 100000) {
+    return `₹ ${(property.price / 100000).toFixed(2)} L`;
+  }
+  return `₹ ${property.price.toLocaleString('en-IN')}`;
+}
+
+function formatLayout(property: Property): string {
+  if (property.bedrooms) return `${property.bedrooms} BHK`;
+  if (property.property_type_label) return property.property_type_label;
+  if (property.property_type) return property.property_type.replace(/_/g, ' ');
+  return '—';
+}
+
+function getPostedByLabel(property: Property): string {
+  if (property.posted_by === 'Agent' || property.posted_by === 'Owner') {
+    return property.posted_by;
+  }
+  if (property.owner_user_type?.toLowerCase() === 'agent') return 'Agent';
+  return 'Owner';
+}
+
+const QUICK_FILTER_PARAMS: Record<string, string> = {
+  new_launch: 'is_newly_launched',
+  verified: 'is_verified_property',
+  owner: 'posted_by_owner',
+  under_const: 'under_construction',
+  ready_move: 'ready_to_move',
+  video: 'has_video',
+};
+
+function getActiveQuickFilters(sp: URLSearchParams): string[] {
+  const active: string[] = [];
+  if (sp.get('is_newly_launched')) active.push('new_launch');
+  if (sp.get('is_verified_property') || sp.get('verified')) active.push('verified');
+  if (sp.get('posted_by_owner') || sp.get('owner_only') || sp.get('owner')) active.push('owner');
+  if (sp.get('under_construction')) active.push('under_const');
+  if (sp.get('ready_to_move')) active.push('ready_move');
+  if (sp.get('has_video') || sp.get('video')) active.push('video');
+  return active;
+}
+
+function buildApiParamsFromUrl(sp: URLSearchParams, page = 1, limit = 12): Record<string, string | number> {
+  const params: Record<string, string | number> = { page, limit };
+  const passthrough = ['city_id', 'q', 'listing_type', 'property_type', 'min_price', 'max_price', 'bedrooms', 'sort'] as const;
+  passthrough.forEach((key) => {
+    const value = sp.get(key);
+    if (value) params[key] = value;
+  });
+  if (sp.get('is_recommended')) params.is_recommended = 1;
+  if (sp.get('is_newly_launched')) params.is_newly_launched = 1;
+  if (sp.get('is_verified_property') || sp.get('verified')) params.is_verified_property = 1;
+  if (sp.get('posted_by_owner') || sp.get('owner_only') || sp.get('owner')) params.posted_by_owner = 1;
+  if (sp.get('has_video') || sp.get('video')) params.has_video = 1;
+  if (sp.get('ready_to_move')) params.ready_to_move = 1;
+  if (sp.get('under_construction')) params.under_construction = 1;
+  return params;
+}
 
 function SearchContent() {
   const searchParams = useSearchParams();
@@ -75,15 +185,20 @@ function SearchContent() {
   const [cityId, setCityId] = useState(searchParams.get('city_id') || '');
   const [locality, setLocality] = useState(searchParams.get('q') || '');
   const [listingType, setListingType] = useState(searchParams.get('listing_type') || '');
-  const [propertyType, setPropertyType] = useState(searchParams.get('property_type') || '');
+  const {
+    mainTypes,
+    mainTypeSlug,
+    subTypeSlug,
+    subTypes,
+    propertyType,
+    loading: typesLoading,
+    setMainTypeSlug,
+    setSubTypeSlug,
+  } = usePropertyTypeFilters(searchParams.get('property_type') || '');
   const [minPrice, setMinPrice] = useState(searchParams.get('min_price') || '');
   const [maxPrice, setMaxPrice] = useState(searchParams.get('max_price') || '');
   const [bedrooms, setBedrooms] = useState(searchParams.get('bedrooms') || '');
   const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'new');
-
-  // Horizontal top filter tags
-  const [activeQuickFilters, setActiveQuickFilters] = useState<string[]>([]);
-  const [verifiedOnly, setVerifiedOnly] = useState(false);
 
   // App UI states
   const [cities, setCities] = useState<City[]>([]);
@@ -93,13 +208,23 @@ function SearchContent() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const skipAutoPushRef = useRef(false);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const activeQuickFilters = getActiveQuickFilters(searchParams);
+  const verifiedOnly = !!searchParams.get('is_verified_property') || !!searchParams.get('verified');
 
   // Keep track of wishlists locally for immediate toggle response
   const [wishlistIds, setWishlistIds] = useState<number[]>([]);
+  const [phoneModal, setPhoneModal] = useState<{
+    ownerName?: string | null;
+    ownerPhone?: string | null;
+    propertyTitle?: string | null;
+  } | null>(null);
 
   // Fetch cities list
   useEffect(() => {
-    api.get('/api/nb/cities')
+    getCities()
       .then((res) => {
         if (res.data?.success && Array.isArray(res.data.cities)) {
           setCities(res.data.cities);
@@ -108,31 +233,131 @@ function SearchContent() {
       .catch((err) => console.error('Error fetching cities', err));
   }, []);
 
-  // Fetch results when searchParams or filters change
+  // Keep filter state in sync when URL query changes (e.g. Explore Cities link)
+  useEffect(() => {
+    skipAutoPushRef.current = true;
+    setCityId(searchParams.get('city_id') || '');
+    setLocality(searchParams.get('q') || '');
+    setListingType(searchParams.get('listing_type') || '');
+    setMinPrice(searchParams.get('min_price') || '');
+    setMaxPrice(searchParams.get('max_price') || '');
+    setBedrooms(searchParams.get('bedrooms') || '');
+    setSortBy(searchParams.get('sort') || 'new');
+    skipAutoPushRef.current = false;
+  }, [searchParams]);
+
+  const pushSearchUrl = useCallback(
+    (updates: Record<string, string | null | undefined>, replace = true) => {
+      const qp = new URLSearchParams(searchParams.toString());
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === null || value === undefined || value === '') {
+          qp.delete(key);
+        } else {
+          qp.set(key, value);
+        }
+      });
+      qp.delete('verified');
+      qp.delete('owner');
+      qp.delete('video');
+      qp.delete('owner_only');
+      const qs = qp.toString();
+      const path = qs ? `/search?${qs}` : '/search';
+      if (replace) {
+        router.replace(path);
+      } else {
+        router.push(path);
+      }
+    },
+    [router, searchParams]
+  );
+
+  const pushRefineFilters = useCallback(
+    (overrides: Record<string, string | null | undefined> = {}, replace = true) => {
+      pushSearchUrl(
+        {
+          city_id: cityId || null,
+          q: locality.trim() || null,
+          listing_type: listingType || null,
+          property_type: searchParams.get('property_type') ? (propertyType || null) : null,
+          min_price: minPrice || null,
+          max_price: maxPrice || null,
+          bedrooms: bedrooms || null,
+          sort: sortBy || 'new',
+          ...overrides,
+        },
+        replace
+      );
+    },
+    [pushSearchUrl, cityId, locality, listingType, propertyType, minPrice, maxPrice, bedrooms, sortBy, searchParams]
+  );
+
+  // Auto-apply refine search when sidebar fields change (debounced for text/number)
+  useEffect(() => {
+    if (skipAutoPushRef.current) return;
+
+    const urlSnapshot = {
+      city_id: searchParams.get('city_id') || '',
+      q: searchParams.get('q') || '',
+      listing_type: searchParams.get('listing_type') || '',
+      property_type: searchParams.get('property_type') || '',
+      min_price: searchParams.get('min_price') || '',
+      max_price: searchParams.get('max_price') || '',
+      bedrooms: searchParams.get('bedrooms') || '',
+      sort: searchParams.get('sort') || 'new',
+    };
+    const nextSnapshot = {
+      city_id: cityId,
+      q: locality.trim(),
+      listing_type: listingType,
+      property_type: propertyType,
+      min_price: minPrice,
+      max_price: maxPrice,
+      bedrooms,
+      sort: sortBy,
+    };
+    if (JSON.stringify(urlSnapshot) === JSON.stringify(nextSnapshot)) return;
+
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      pushRefineFilters();
+    }, 450);
+
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, [
+    cityId,
+    locality,
+    listingType,
+    propertyType,
+    minPrice,
+    maxPrice,
+    bedrooms,
+    sortBy,
+    searchParams,
+    pushRefineFilters,
+  ]);
+
+  // Fetch results when searchParams change
   useEffect(() => {
     setLoading(true);
     setCurrentPage(1);
 
-    const params: any = {};
-    if (cityId) params.city_id = cityId;
-    if (locality) params.q = locality;
-    if (listingType) params.listing_type = listingType;
-    if (propertyType) params.property_type = propertyType;
-    if (minPrice) params.min_price = minPrice;
-    if (maxPrice) params.max_price = maxPrice;
-    if (bedrooms) params.bedrooms = bedrooms;
-    if (sortBy) params.sort = sortBy;
-    params.page = 1;
-    params.limit = 12;
-
-    api.get('/api/nb/search', { params })
+    searchProperties(buildApiParamsFromUrl(searchParams, 1, 12))
       .then((res) => {
         if (res.data?.success && Array.isArray(res.data.items)) {
           setResults(res.data.items);
           setTotalResults(res.data.total || res.data.items.length);
+        } else {
+          setResults([]);
+          setTotalResults(0);
         }
       })
-      .catch((err) => console.error('Error searching properties', err))
+      .catch((err) => {
+        console.error('Error searching properties', err);
+        setResults([]);
+        setTotalResults(0);
+      })
       .finally(() => setLoading(false));
   }, [searchParams]);
 
@@ -141,19 +366,7 @@ function SearchContent() {
     setLoadingMore(true);
     const nextPage = currentPage + 1;
 
-    const params: any = {};
-    if (cityId) params.city_id = cityId;
-    if (locality) params.q = locality;
-    if (listingType) params.listing_type = listingType;
-    if (propertyType) params.property_type = propertyType;
-    if (minPrice) params.min_price = minPrice;
-    if (maxPrice) params.max_price = maxPrice;
-    if (bedrooms) params.bedrooms = bedrooms;
-    if (sortBy) params.sort = sortBy;
-    params.page = nextPage;
-    params.limit = 12;
-
-    api.get('/api/nb/search', { params })
+    searchProperties(buildApiParamsFromUrl(searchParams, nextPage, 12))
       .then((res) => {
         if (res.data?.success && Array.isArray(res.data.items)) {
           setResults((prev) => [...prev, ...res.data.items]);
@@ -169,7 +382,7 @@ function SearchContent() {
     if (user && results.length > 0) {
       // For each result, query wishlist status
       results.forEach((p) => {
-        api.get(`/api/nb/wishlist/check?property_id=${p.id}&user_id=${user.id}`)
+        checkWishlist(p.id, user.id, 'user_id')
           .then((res) => {
             if (res.data?.success && res.data.wishlisted) {
               setWishlistIds((prev) => prev.includes(p.id) ? prev : [...prev, p.id]);
@@ -190,7 +403,7 @@ function SearchContent() {
     }
 
     try {
-      const response = await api.post('/api/nb/wishlist/toggle', {
+      const response = await toggleWishlist({
         property_id: propertyId,
         user_id: user.id,
       });
@@ -206,55 +419,93 @@ function SearchContent() {
     }
   };
 
-  const applyFilters = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    setShowMobileFilters(false);
+  const clearPropertyTypeFilter = () => {
+    setMainTypeSlug('');
+    setSubTypeSlug('');
+    pushSearchUrl({ property_type: null });
+  };
 
-    const queryParams = new URLSearchParams();
-    if (cityId) queryParams.append('city_id', cityId);
-    if (locality) queryParams.append('q', locality);
-    if (listingType) queryParams.append('listing_type', listingType);
-    if (propertyType) queryParams.append('property_type', propertyType);
-    if (minPrice) queryParams.append('min_price', minPrice);
-    if (maxPrice) queryParams.append('max_price', maxPrice);
-    if (bedrooms) queryParams.append('bedrooms', bedrooms);
-    if (sortBy) queryParams.append('sort', sortBy);
+  const handleMainTypeChange = (slug: string) => {
+    setMainTypeSlug(slug);
+    pushRefineFilters({ property_type: effectivePropertyTypeSlug(slug, '') || null });
+  };
 
-    router.push(`/search?${queryParams.toString()}`);
+  const handleSubTypeChange = (slug: string) => {
+    setSubTypeSlug(slug);
+    pushRefineFilters({ property_type: effectivePropertyTypeSlug(mainTypeSlug, slug) || null });
+  };
+
+  const handleViewNumber = (property: Property) => {
+    if (!user) {
+      setAuthModalOpen('login');
+      return;
+    }
+    setPhoneModal({
+      ownerName: property.owner_name,
+      ownerPhone: property.owner_phone,
+      propertyTitle: property.title,
+    });
   };
 
   const clearFilters = () => {
     setCityId('');
     setLocality('');
     setListingType('');
-    setPropertyType('');
+    setMainTypeSlug('');
+    setSubTypeSlug('');
     setMinPrice('');
     setMaxPrice('');
     setBedrooms('');
     setSortBy('new');
-    setActiveQuickFilters([]);
-    setVerifiedOnly(false);
     router.push('/search');
   };
 
   const toggleQuickFilter = (tag: string) => {
-    if (activeQuickFilters.includes(tag)) {
-      setActiveQuickFilters((prev) => prev.filter((t) => t !== tag));
+    const param = QUICK_FILTER_PARAMS[tag];
+    if (!param) return;
+    const qp = new URLSearchParams(searchParams.toString());
+    if (qp.has(param)) {
+      qp.delete(param);
     } else {
-      setActiveQuickFilters((prev) => [...prev, tag]);
+      qp.set(param, '1');
     }
+    qp.delete('verified');
+    qp.delete('owner');
+    qp.delete('video');
+    qp.delete('owner_only');
+    const qs = qp.toString();
+    router.push(qs ? `/search?${qs}` : '/search');
   };
 
-  const formatPrice = (price: number) => {
-    if (price >= 10000000) {
-      return `₹ ${(price / 10000000).toFixed(2)} Cr`;
-    }
-    return `₹ ${(price / 100000).toFixed(0)} L`;
+  const handleVerifiedToggle = (checked: boolean) => {
+    pushSearchUrl({ is_verified_property: checked ? '1' : null });
   };
+
+  const removeFilter = (key: string) => {
+    if (key === 'property_type') {
+      clearPropertyTypeFilter();
+      return;
+    }
+    if (key === 'locality') pushSearchUrl({ q: null });
+    else if (key === 'listing_type') pushSearchUrl({ listing_type: null });
+    else if (key === 'bedrooms') pushSearchUrl({ bedrooms: null });
+    else if (key === 'verified') pushSearchUrl({ is_verified_property: null });
+    else pushSearchUrl({ [key]: null });
+  };
+
+  const selectedCityName =
+    cities.find((c) => String(c.id) === cityId)?.name ||
+    results[0]?.city_name ||
+    'All Cities';
+
+  const listingTypeLabel =
+    listingType === 'rent' ? 'Rent' : listingType === 'sale' ? 'Sale' : 'Sale & Rent';
+
+  const formatPrice = (property: Property) => formatListingPrice(property);
 
   // Sidebar Filter Layout
   const renderFilterForm = (sfx: string) => (
-    <form onSubmit={applyFilters} className="nb-search-filter-form">
+    <div className="nb-search-filter-form">
       {/* City */}
       <div className="mb-3">
         <label className="form-label nb-filter-label" htmlFor={`city-select-${sfx}`}>City</label>
@@ -298,20 +549,16 @@ function SearchContent() {
         </select>
       </div>
 
-      {/* Property Type */}
-      <div className="mb-3">
-        <label className="form-label nb-filter-label">Property Type</label>
-        <select
-          className="form-select form-select-sm nb-filter-control"
-          value={propertyType}
-          onChange={(e) => setPropertyType(e.target.value)}
-        >
-          <option value="">Any Type</option>
-          {PROPERTY_TYPES.map((pt) => (
-            <option key={pt.val} value={pt.val}>{pt.label}</option>
-          ))}
-        </select>
-      </div>
+      {/* Property types from API — sub type after city */}
+      <PropertyTypeFilterFields
+        mainTypes={mainTypes}
+        mainTypeSlug={mainTypeSlug}
+        subTypeSlug={subTypeSlug}
+        subTypes={subTypes}
+        onMainChange={handleMainTypeChange}
+        onSubChange={handleSubTypeChange}
+        loading={typesLoading}
+      />
 
       {/* Budget */}
       <div className="mb-3">
@@ -361,7 +608,11 @@ function SearchContent() {
         <select
           className="form-select form-select-sm nb-filter-control"
           value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            setSortBy(value);
+            pushRefineFilters({ sort: value });
+          }}
         >
           <option value="new">Latest Listed</option>
           <option value="price_asc">Price: Low to High</option>
@@ -369,9 +620,9 @@ function SearchContent() {
         </select>
       </div>
 
-      <button type="submit" className="btn btn-danger w-100 rounded-pill fw-semibold mb-2 text-dark">
-        Apply Filters
-      </button>
+      <p className="text-muted small mb-3">
+        Filters apply automatically as you change them.
+      </p>
       <button
         type="button"
         className="btn btn-outline-secondary btn-sm w-100 rounded-pill"
@@ -379,7 +630,7 @@ function SearchContent() {
       >
         Reset Filters
       </button>
-    </form>
+    </div>
   );
 
   return (
@@ -390,10 +641,10 @@ function SearchContent() {
         <nav aria-label="breadcrumb">
           <ol className="breadcrumb small text-muted mb-2">
             <li className="breadcrumb-item"><Link href="/" className="text-decoration-none text-muted">Home</Link></li>
-            <li className="breadcrumb-item"><Link href="/search" className="text-decoration-none text-muted">Property In Coimbatore</Link></li>
-            {locality && (
+            <li className="breadcrumb-item"><Link href="/search" className="text-decoration-none text-muted">Search Properties</Link></li>
+            {(locality || cityId) && (
               <li className="breadcrumb-item active text-dark fw-semibold" aria-current="page">
-                Property in {locality}
+                {locality ? `Property in ${locality}` : `Property in ${selectedCityName}`}
               </li>
             )}
           </ol>
@@ -401,11 +652,13 @@ function SearchContent() {
 
         {/* Dynamic Title */}
         <h1 className="h4 fw-bold text-dark mb-1">
-          {totalResults} results | Property in {locality || 'Coimbatore'} for {listingType === 'rent' ? 'Rent' : 'Sale'}
+          {totalResults} results | Property in {locality || selectedCityName} for {listingTypeLabel}
         </h1>
-        <p className="text-muted small mb-3">
-          Get to know more about <Link href="/about" className="text-primary text-decoration-none fw-semibold">Coimbatore Locality →</Link>
-        </p>
+        {(locality || selectedCityName !== 'All Cities') && (
+          <p className="text-muted small mb-3">
+            Browse owner-listed homes in {locality ? `${locality}, ${selectedCityName}` : selectedCityName}
+          </p>
+        )}
       </div>
 
       <div className="container pb-5">
@@ -425,28 +678,40 @@ function SearchContent() {
                 {locality && (
                   <span className="badge bg-light border text-dark py-1.5 px-2 rounded-1 d-flex align-items-center gap-1">
                     <span>{locality}</span>
-                    <X size={12} className="cursor-pointer text-muted" onClick={() => setLocality('')} />
+                    <X size={12} className="cursor-pointer text-muted" onClick={() => removeFilter('locality')} />
                   </span>
                 )}
                 {listingType && (
                   <span className="badge bg-light border text-dark py-1.5 px-2 rounded-1 d-flex align-items-center gap-1">
                     <span>{listingType === 'rent' ? 'For Rent' : 'For Sale'}</span>
-                    <X size={12} className="cursor-pointer text-muted" onClick={() => setListingType('')} />
+                    <X size={12} className="cursor-pointer text-muted" onClick={() => removeFilter('listing_type')} />
                   </span>
                 )}
                 {propertyType && (
                   <span className="badge bg-light border text-dark py-1.5 px-2 rounded-1 d-flex align-items-center gap-1">
                     <span>{propertyType}</span>
-                    <X size={12} className="cursor-pointer text-muted" onClick={() => setPropertyType('')} />
+                    <X size={12} className="cursor-pointer text-muted" onClick={() => removeFilter('property_type')} />
                   </span>
                 )}
                 {bedrooms && (
                   <span className="badge bg-light border text-dark py-1.5 px-2 rounded-1 d-flex align-items-center gap-1">
                     <span>{bedrooms} BHK</span>
-                    <X size={12} className="cursor-pointer text-muted" onClick={() => setBedrooms('')} />
+                    <X size={12} className="cursor-pointer text-muted" onClick={() => removeFilter('bedrooms')} />
                   </span>
                 )}
-                {!locality && !listingType && !propertyType && !bedrooms && (
+                {verifiedOnly && (
+                  <span className="badge bg-light border text-dark py-1.5 px-2 rounded-1 d-flex align-items-center gap-1">
+                    <span>Verified</span>
+                    <X size={12} className="cursor-pointer text-muted" onClick={() => removeFilter('verified')} />
+                  </span>
+                )}
+                {activeQuickFilters.filter((t) => t !== 'verified').map((tag) => (
+                  <span key={tag} className="badge bg-light border text-dark py-1.5 px-2 rounded-1 d-flex align-items-center gap-1">
+                    <span>{tag.replace(/_/g, ' ')}</span>
+                    <X size={12} className="cursor-pointer text-muted" onClick={() => toggleQuickFilter(tag)} />
+                  </span>
+                ))}
+                {!locality && !listingType && !propertyType && !bedrooms && !verifiedOnly && activeQuickFilters.length === 0 && (
                   <span className="text-muted small">No active filters.</span>
                 )}
               </div>
@@ -465,7 +730,7 @@ function SearchContent() {
                   role="switch"
                   id="verifiedSwitch"
                   checked={verifiedOnly}
-                  onChange={(e) => setVerifiedOnly(e.target.checked)}
+                  onChange={(e) => handleVerifiedToggle(e.target.checked)}
                   style={{ width: '2.5rem', height: '1.25rem' }}
                 />
               </div>
@@ -559,8 +824,9 @@ function SearchContent() {
                       style={{ width: '150px' }}
                       value={sortBy}
                       onChange={(e) => {
-                        setSortBy(e.target.value);
-                        applyFilters();
+                        const value = e.target.value;
+                        setSortBy(value);
+                        pushRefineFilters({ sort: value });
                       }}
                     >
                       <option value="new">Latest</option>
@@ -576,6 +842,17 @@ function SearchContent() {
                     const imagesList = Array.isArray(p.image_urls) ? p.image_urls : [];
                     const thumbnail = p.thumbnail_url || imagesList[0] || '';
                     const isWishlisted = wishlistIds.includes(p.id);
+                    const brochureUrl = resolveBrochureUrl(p.brochure_url);
+                    const tags = getPropertyTags(p);
+                    const typeLabel = p.property_type_label || p.property_type?.replace(/_/g, ' ') || 'Property';
+                    const locationLine = [
+                      p.bedrooms ? `${p.bedrooms} BHK` : null,
+                      typeLabel,
+                      p.locality ? `in ${p.locality}` : null,
+                      p.city_name ? `, ${p.city_name}` : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' ');
 
                     return (
                       <article key={p.id} className="nb-search-list-card">
@@ -583,7 +860,7 @@ function SearchContent() {
                           {/* Image Column */}
                           <div className="col-md-5">
                             <div className="nb-search-list-card__img-wrap">
-                              <Link href={`/property-detail/${p.slug}`}>
+                              <Link href={`/property/${p.slug}`}>
                                 {thumbnail ? (
                                   <img 
                                     src={thumbnail} 
@@ -602,12 +879,20 @@ function SearchContent() {
                               <span className="nb-search-list-card__img-tag text-uppercase">
                                 {p.listing_type === 'rent' ? 'For Rent' : 'For Sale'}
                               </span>
-                              <span className="nb-search-list-card__rera">
-                                RERA APPROVED
-                              </span>
+                              {Number(p.is_verified_property) === 1 && (
+                                <span className="nb-search-list-card__rera">VERIFIED</span>
+                              )}
+                              {Number(p.is_newly_launched) === 1 && (
+                                <span
+                                  className="nb-search-list-card__rera"
+                                  style={{ top: Number(p.is_verified_property) === 1 ? '2.5rem' : undefined }}
+                                >
+                                  NEW LAUNCH
+                                </span>
+                              )}
 
                               <div className="nb-search-list-card__price-badge">
-                                {formatPrice(p.price)}
+                                {formatPrice(p)}
                               </div>
 
                               <button 
@@ -626,72 +911,85 @@ function SearchContent() {
                             <div className="nb-search-list-card__body">
                               <div>
                                 <h3 className="nb-search-list-card__title">
-                                  <Link href={`/property-detail/${p.slug}`} className="text-decoration-none text-dark">
+                                  <Link href={`/property/${p.slug}`} className="text-decoration-none text-dark">
                                     {p.title}
                                   </Link>
                                 </h3>
                                 <p className="nb-search-list-card__sub d-flex align-items-center gap-1">
                                   <MapPin size={12} className="text-danger" />
-                                  <span>{p.bedrooms} BHK {p.property_type_label || p.property_type} in {p.locality}, {p.city_name || 'Coimbatore'}</span>
+                                  <span>{locationLine}</span>
                                 </p>
 
                                 {/* Config Table details */}
                                 <div className="nb-search-list-card__config-table row g-0 text-center py-2 rounded">
                                   <div className="col-4 border-end">
                                     <span className="text-muted d-block" style={{ fontSize: '0.65rem' }}>Layout</span>
-                                    <strong className="text-dark small">{p.bedrooms} BHK</strong>
+                                    <strong className="text-dark small">{formatLayout(p)}</strong>
                                   </div>
                                   <div className="col-4 border-end">
                                     <span className="text-muted d-block" style={{ fontSize: '0.65rem' }}>Area Size</span>
-                                    <strong className="text-dark small">{p.area_sqft} sqft</strong>
+                                    <strong className="text-dark small">
+                                      {p.area_sqft ? `${p.area_sqft} sqft` : '—'}
+                                    </strong>
                                   </div>
                                   <div className="col-4">
                                     <span className="text-muted d-block" style={{ fontSize: '0.65rem' }}>Baths</span>
-                                    <strong className="text-dark small">{p.bathrooms} Baths</strong>
+                                    <strong className="text-dark small">
+                                      {p.bathrooms != null ? `${p.bathrooms} Baths` : '—'}
+                                    </strong>
                                   </div>
                                 </div>
 
-                                {/* Near by Landmarks */}
-                                <div className="nb-search-list-card__landmark-chips">
-                                  <span className="nb-landmark-chip">Near IT Corridor</span>
-                                  <span className="nb-landmark-chip">Gated Security</span>
-                                  <span className="nb-landmark-chip">Zero Brokerage</span>
-                                </div>
+                                {tags.length > 0 && (
+                                  <div className="nb-search-list-card__landmark-chips">
+                                    {tags.map((tag) => (
+                                      <span key={`${p.id}-${tag}`} className="nb-landmark-chip">
+                                        {tag}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
 
-                                {/* Description snippet */}
-                                <p className="nb-search-list-card__desc text-truncate">
-                                  {p.description || `Excellent modern ${p.property_type} ready for immediate occupancy in the premium locality of ${p.locality}.`}
-                                </p>
+                                {p.description && (
+                                  <p className="nb-search-list-card__desc text-truncate">
+                                    {p.description}
+                                  </p>
+                                )}
                               </div>
 
                               {/* Footer block */}
                               <div className="nb-search-list-card__footer">
                                 <div className="nb-search-list-card__posted-by">
-                                  Posted by: <strong>Owner</strong> <span className="text-muted">· 1 month ago</span>
+                                  Posted by: <strong>{getPostedByLabel(p)}</strong>
+                                  {p.created_at && (
+                                    <span className="text-muted"> · {formatRelativeTime(p.created_at)}</span>
+                                  )}
+                                  {typeof p.views === 'number' && p.views > 0 && (
+                                    <span className="text-muted"> · {p.views} views</span>
+                                  )}
                                 </div>
                                 <div className="nb-search-list-card__actions">
-                                  <button 
-                                    type="button" 
-                                    className="nb-list-btn-outline d-flex align-items-center gap-1"
-                                    onClick={() => alert(`Brochure details for project ID #${p.id} successfully queued for download!`)}
-                                  >
-                                    <FileText size={12} />
-                                    <span>Brochure</span>
-                                  </button>
-                                  <button 
-                                    type="button" 
-                                    className="nb-list-btn-filled d-flex align-items-center gap-1"
-                                    onClick={() => {
-                                      if (user) {
-                                        alert('Contact owner number: +91 98765 43210 (Direct Route)');
-                                      } else {
-                                        setAuthModalOpen('login');
-                                      }
-                                    }}
-                                  >
-                                    <Phone size={12} />
-                                    <span>View Number</span>
-                                  </button>
+                                  {brochureUrl && (
+                                    <a
+                                      href={brochureUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="nb-list-btn-outline d-flex align-items-center gap-1 text-decoration-none"
+                                    >
+                                      <FileText size={12} />
+                                      <span>Brochure</span>
+                                    </a>
+                                  )}
+                                  {p.owner_phone && (
+                                    <button
+                                      type="button"
+                                      className="nb-list-btn-filled d-flex align-items-center gap-1"
+                                      onClick={() => handleViewNumber(p)}
+                                    >
+                                      <Phone size={12} />
+                                      <span>View Number</span>
+                                    </button>
+                                  )}
                                 </div>
                               </div>
 
@@ -764,6 +1062,14 @@ function SearchContent() {
           </div>
         </div>
       )}
+
+      <OwnerPhoneModal
+        show={!!phoneModal}
+        onClose={() => setPhoneModal(null)}
+        ownerName={phoneModal?.ownerName}
+        ownerPhone={phoneModal?.ownerPhone}
+        propertyTitle={phoneModal?.propertyTitle}
+      />
 
     </div>
   );

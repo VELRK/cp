@@ -73,38 +73,15 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 $active_group = 'default';
 $query_builder = TRUE;
 
-/*
-| Use environment variables: CI_DB_HOST, CI_DB_USER, CI_DB_PASS, CI_DB_NAME, CI_DB_PORT.
-| Loaded from FCPATH/.env via index.php (putenv). Defaults match XAMPP MariaDB.
-*/
-$_ci_db_host = getenv('CI_DB_HOST');
-$_ci_db_user = getenv('CI_DB_USER');
-$_ci_db_pass = getenv('CI_DB_PASS');
-$_ci_db_name = getenv('CI_DB_NAME');
-$_ci_db_port = getenv('CI_DB_PORT');
-if ($_ci_db_host === false || $_ci_db_host === '') {
-	$_ci_db_host = '127.0.0.1';
-}
-if ($_ci_db_user === false || $_ci_db_user === '') {
-	$_ci_db_user = 'root';
-}
-if ($_ci_db_pass === false) {
-	$_ci_db_pass = '';
-}
-if ($_ci_db_name === false || $_ci_db_name === '') {
-	$_ci_db_name = 'cp_web';
-}
-if ($_ci_db_port === false || $_ci_db_port === '') {
-	$_ci_db_port = '3306';
-}
+
 
 $db['default'] = array(
 	'dsn' => '',
-	'hostname' => $_ci_db_host,
-	'username' => $_ci_db_user,
-	'password' => $_ci_db_pass,
-	'database' => $_ci_db_name,
-	'port' => (int) $_ci_db_port,
+	'hostname' => 'localhost',
+	'username' => 'root',
+	'password' => '',
+	'database' => 'property',
+	'port' => 3306,
 	'dbdriver' => 'mysqli',
 	'dbprefix' => '',
 	'pconnect' => FALSE,

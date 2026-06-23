@@ -231,3 +231,49 @@ function nb_property_types_map()
     }
     return !empty($out) ? $out : $fallback;
 }
+
+/** Persist API token in an HttpOnly cookie so panel form POSTs can restore the PHP session. */
+function nb_set_api_token_cookie($token, $expire = 7200)
+{
+    if (!is_string($token) || $token === '') {
+        return;
+    }
+    $CI =& get_instance();
+    $secure = (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off');
+    $CI->input->set_cookie(array(
+        'name'     => 'nb_token',
+        'value'    => $token,
+        'expire'   => (int) $expire,
+        'path'     => '/',
+        'secure'   => $secure,
+        'httponly' => TRUE,
+    ));
+}
+
+/** Clear API token cookie on logout. */
+function nb_clear_api_token_cookie()
+{
+    $CI =& get_instance();
+    $secure = (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off');
+    $CI->input->set_cookie(array(
+        'name'     => 'nb_token',
+        'value'    => '',
+        'expire'   => 0,
+        'path'     => '/',
+        'secure'   => $secure,
+        'httponly' => TRUE,
+    ));
+}
+
+/**
+ * Redirect using a root-relative path so the browser stays on localhost:3000
+ * (avoids .env BASE_URL=http://localhost:8080/cp breaking panel saves).
+ */
+function nb_redirect_path($path, $code = 303)
+{
+    $path = '/' . ltrim((string) $path, '/');
+    $CI =& get_instance();
+    $CI->output->set_status_header((int) $code);
+    header('Location: ' . $path, true, (int) $code);
+    exit;
+}

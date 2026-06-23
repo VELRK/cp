@@ -1,8 +1,11 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed'); ?>
 <div class="nb-admin-page-head d-flex flex-wrap justify-content-between align-items-start gap-3">
   <div>
-    <h1 class="nb-admin-page-title">Banners</h1>
-    <p class="nb-admin-page-desc mb-0">Manage rows used by <code>/api/mobile/banners</code>.</p>
+    <h1 class="nb-admin-page-title">Site banners</h1>
+    <p class="nb-admin-page-desc mb-0">
+      Upload hero images for the homepage slideshow only (<code>/api/nb/site-banners</code>).
+      Each row is one image — no property link required.
+    </p>
   </div>
   <a class="btn btn-success rounded-pill px-3" href="<?php echo site_url('panel/banner/add'); ?>">
     <i class="bi bi-plus-lg me-1"></i> Add banner
@@ -11,7 +14,7 @@
 
 <div class="nb-admin-panel">
   <div class="nb-admin-panel-header">
-    <h2 class="nb-admin-panel-title mb-0">All banners</h2>
+    <h2 class="nb-admin-panel-title mb-0">Homepage banners</h2>
     <span class="badge bg-light text-dark border"><?php echo count($rows); ?> total</span>
   </div>
   <div class="nb-admin-panel-body">
@@ -27,17 +30,26 @@
       </thead>
       <tbody>
       <?php if (empty($rows)) : ?>
-        <tr><td colspan="4" class="text-center text-muted py-5">No banners found.</td></tr>
+        <tr>
+          <td colspan="4" class="text-center text-muted py-5">
+            No site banners yet. Click <strong>Add banner</strong> and upload a wide hero image (JPEG/PNG/WebP, max 2 MB).
+          </td>
+        </tr>
       <?php else : foreach ($rows as $r) : ?>
         <?php
-        $img = isset($r->image) ? (string) $r->image : '';
+        $img = '';
+        if (isset($r->imageUrl) && trim((string) $r->imageUrl) !== '') {
+            $img = trim((string) $r->imageUrl);
+        } elseif (isset($r->image) && trim((string) $r->image) !== '') {
+            $img = trim((string) $r->image);
+        }
         $imgUrl = $img !== '' ? (preg_match('/^https?:\/\//i', $img) ? $img : base_url($img)) : '';
         ?>
         <tr>
           <td class="text-muted font-monospace small">#<?php echo (int) $r->id; ?></td>
           <td>
             <?php if ($imgUrl !== '') : ?>
-              <img src="<?php echo html_escape($imgUrl); ?>" alt="" style="width:120px;height:64px;object-fit:cover;border-radius:8px;border:1px solid #dbe1ea;">
+              <img src="<?php echo html_escape($imgUrl); ?>" alt="" style="width:220px;height:92px;object-fit:cover;border-radius:8px;border:1px solid #dbe1ea;">
             <?php else : ?>
               <span class="text-muted">No image</span>
             <?php endif; ?>

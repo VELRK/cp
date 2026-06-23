@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import api from '../../lib/api';
+import { getBlogs } from '@/lib/frontendApi';
 import { BookOpen, User, Calendar, ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface Blog {
@@ -23,7 +23,7 @@ export default function BlogIndex() {
   const [activeCategory, setActiveCategory] = useState<'all' | 'news' | 'tax' | 'guide' | 'investment'>('all');
 
   useEffect(() => {
-    api.get('/api/blogs')
+    getBlogs()
       .then((res) => {
         if (Array.isArray(res.data)) {
           setBlogs(res.data);

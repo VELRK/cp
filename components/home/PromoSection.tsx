@@ -14,7 +14,7 @@ const PromoSection: React.FC<PromoSectionProps> = ({ user, setAuthModalOpen }) =
     <div className="nb-promo-section mb-5 fade-in-up">
       <div className="nb-promo-banner">
         <img
-          src="/promo_agent.png"
+          src="/assets/assets/img/nb-placeholder-property.svg"
           alt="Post Property Free Agent"
           className="nb-promo-banner-img"
         />

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
-import api from '@/lib/api';
+import { getNotifications } from '@/lib/frontendApi';
 import LiveUpdateModal from '@/components/common/LiveUpdateModal';
 import { Bell, ArrowLeft, Calendar, Video, Image as ImageIcon, Plus } from 'lucide-react';
 
@@ -36,7 +36,7 @@ export default function LiveUpdatesPage() {
   // Fetch notifications
   const fetchUpdates = () => {
     if (user) {
-      api.get('/api/nb/notifications')
+      getNotifications()
         .then((res) => {
           if (res.data?.success && Array.isArray(res.data.notifications)) {
             setUpdates(res.data.notifications);

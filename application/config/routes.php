@@ -127,142 +127,10 @@ $route['delete-account'] = 'Auth/delete_account';
 $route['auth/delete_account'] = 'Auth/delete_account';
 $route['auth/delete-account'] = 'Auth/delete_account';
 
-// API routes with /api/ prefix for mobile apps (same endpoints)
-$route['api/auth/send_otp'] = 'Auth/send_otp';
-$route['api/auth/send-otp'] = 'Auth/send_otp';
-$route['api/auth/verify_otp'] = 'Auth/verify_otp';
-$route['api/auth/verify-otp'] = 'Auth/verify_otp';
-$route['api/auth/resend_otp'] = 'Auth/resend_otp';
-$route['api/auth/resend-otp'] = 'Auth/resend_otp';
-$route['api/auth/save_profile'] = 'Auth/save_profile';
-$route['api/auth/save-profile'] = 'Auth/save_profile';
-$route['api/auth/update_profile'] = 'Auth/update_profile';
-$route['api/auth/update-profile'] = 'Auth/update_profile';
-$route['api/auth/profile'] = 'Auth/profile';
-$route['api/auth/check'] = 'Auth/check';
-$route['api/auth/check_auth'] = 'Auth/check';
-$route['api/auth/check-auth'] = 'Auth/check';
-$route['api/auth/refresh_session'] = 'Auth/refresh_session';
-$route['api/auth/refresh-session'] = 'Auth/refresh_session';
-$route['api/auth/logout'] = 'Auth/logout';
-$route['api/auth/check_phone_exists'] = 'Auth/check_phone_exists';
-$route['api/auth/check-phone-exists'] = 'Auth/check_phone_exists';
-$route['api/auth/check-phone'] = 'Auth/check_phone_exists';
-$route['api/auth/change_phone'] = 'Auth/change_phone';
-$route['api/auth/change-phone'] = 'Auth/change_phone';
-$route['api/auth/verify_phone_change'] = 'Auth/verify_phone_change';
-$route['api/auth/verify-phone-change'] = 'Auth/verify_phone_change';
-$route['api/auth/delete_account'] = 'Auth/delete_account';
-$route['api/auth/delete-account'] = 'Auth/delete_account';
-$route['test-update'] = 'TestUpdate/index';
-
-// Service Worker routes
-// $route['firebase-messaging-sw.js'] = 'ServiceWorker/firebase_messaging_sw'; // Removed - Firebase not used
-
-// API routes
+// API routes (legacy contact form + JSON helpers used by PHP views / Next.js proxy)
 $route['api/enquiry_store'] = 'Api/enquiry_store';
 $route['api/enquiry/store'] = 'Api/enquiry_store';
-$route['api/wishlist/store'] = 'Api/wishlist_store';
-$route['api/wishlist/check'] = 'Api/wishlist_check';
-$route['api/track_video_play'] = 'Api/track_video_play';
-$route['api/video/play'] = 'Api/track_video_play';
-$route['api/owner/listings'] = 'Api/owner_listings';
-$route['api/properties/(:any)'] = 'Api/properties/$1';
-
-// ==================== CRUD API Routes ====================
-// Properties
-$route['api/crud/properties'] = 'Api_crud/properties';
-$route['api/crud/properties/by-location'] = 'Api_crud/properties_by_location';
-$route['api/crud/properties/by-location/(:num)'] = 'Api_crud/properties_by_location/$1';
-$route['api/crud/properties/by-category'] = 'Api_crud/properties_by_category';
-$route['api/crud/properties/by-category/(:num)'] = 'Api_crud/properties_by_category/$1';
-$route['api/crud/properties/by-city'] = 'Api_crud/properties_by_city';
-$route['api/crud/properties/by-city/(:num)'] = 'Api_crud/properties_by_city/$1';
-$route['api/crud/properties/featured'] = 'Api_crud/properties_featured';
-$route['api/crud/properties/search'] = 'Api_crud/properties_search';
-$route['api/crud/properties/best-rated'] = 'Api_crud/properties_best_rated';
-$route['api/crud/properties/high-growth'] = 'Api_crud/properties_high_growth';
-$route['api/crud/properties/by-owner/(:num)'] = 'Api_crud/properties_by_owner/$1';
-$route['api/crud/properties/(:num)'] = 'Api_crud/property/$1';
-$route['api/crud/properties/(:num)/update'] = 'Api_crud/update_property/$1';
-$route['api/crud/properties/(:num)/delete'] = 'Api_crud/delete_property/$1';
-
-// Blogs
-$route['api/crud/blogs'] = 'Api_crud/blogs';
-$route['api/crud/blogs/(:num)'] = 'Api_crud/blog/$1';
-$route['api/crud/blogs/(:num)/update'] = 'Api_crud/update_blog/$1';
-$route['api/crud/blogs/(:num)/delete'] = 'Api_crud/delete_blog/$1';
-
-// Categories
-$route['api/crud/categories'] = 'Api_crud/categories';
-$route['api/crud/categories/(:num)'] = 'Api_crud/category/$1';
-$route['api/crud/categories/(:num)/update'] = 'Api_crud/update_category/$1';
-$route['api/crud/categories/(:num)/delete'] = 'Api_crud/delete_category/$1';
-
-// Cities
-$route['api/crud/cities'] = 'Api_crud/cities';
-$route['api/crud/cities/(:num)'] = 'Api_crud/city/$1';
-$route['api/crud/cities/(:num)/update'] = 'Api_crud/update_city/$1';
-$route['api/crud/cities/(:num)/delete'] = 'Api_crud/delete_city/$1';
-
-// Locations
-$route['api/crud/locations'] = 'Api_crud/locations';
-$route['api/crud/locations/(:num)'] = 'Api_crud/location/$1';
-$route['api/crud/locations/(:num)/update'] = 'Api_crud/update_location/$1';
-$route['api/crud/locations/(:num)/delete'] = 'Api_crud/delete_location/$1';
-
-// Banners
-$route['api/crud/banners'] = 'Api_crud/banners';
-$route['api/crud/banners/(:num)'] = 'Api_crud/banner/$1';
-$route['api/crud/banners/(:num)/update'] = 'Api_crud/update_banner/$1';
-$route['api/crud/banners/(:num)/delete'] = 'Api_crud/delete_banner/$1';
-$route['api/crud/mobile_banners'] = 'Api_crud/mobile_banners';
-$route['api/crud/mobile_banners/all'] = 'Api_crud/mobile_banners_all';
-$route['api/crud/mobile_banners/(:num)'] = 'Api_crud/mobile_banner/$1';
-
-// Offer Banners
-$route['api/crud/offer-banners'] = 'Api_crud/offer_banners';
-$route['api/crud/offer-banners/(:num)'] = 'Api_crud/offer_banner/$1';
-$route['api/crud/offer-banners/(:num)/update'] = 'Api_crud/update_offer_banner/$1';
-$route['api/crud/offer-banners/(:num)/delete'] = 'Api_crud/delete_offer_banner/$1';
-
-// Contacts
-$route['api/crud/contacts'] = 'Api_crud/contacts';
-$route['api/crud/contacts/(:num)'] = 'Api_crud/contact/$1';
-$route['api/crud/contacts/(:num)/update'] = 'Api_crud/update_contact/$1';
-$route['api/crud/contacts/(:num)/delete'] = 'Api_crud/delete_contact/$1';
-
-// Enquiries
-$route['api/crud/enquiries'] = 'Api_crud/enquiries';
-$route['api/crud/enquiries/create'] = 'Api_crud/create_enquiry';
-$route['api/crud/enquiries/user/(:num)'] = 'Api_crud/enquiries_by_user/$1';
-$route['api/crud/enquiries/(:num)'] = 'Api_crud/enquiry/$1';
-$route['api/crud/enquiries/(:num)/update'] = 'Api_crud/update_enquiry/$1';
-$route['api/crud/enquiries/(:num)/delete'] = 'Api_crud/delete_enquiry/$1';
-
-// Users
-$route['api/crud/users'] = 'Api_crud/users';
-$route['api/crud/users/(:num)'] = 'Api_crud/user/$1';
-$route['api/crud/users/(:num)/update'] = 'Api_crud/update_user/$1';
-$route['api/crud/users/(:num)/delete'] = 'Api_crud/delete_user/$1';
-
-// Notifications
-$route['api/crud/notifications'] = 'Api_crud/notifications';
-$route['api/crud/notifications/(:num)'] = 'Api_crud/notification/$1';
-$route['api/crud/notifications/(:num)/update'] = 'Api_crud/update_notification/$1';
-$route['api/crud/notifications/(:num)/delete'] = 'Api_crud/delete_notification/$1';
-
-// Reels Videos
-$route['api/crud/reels-videos'] = 'Api_crud/reels_videos';
-$route['api/crud/reels-videos/(:num)'] = 'Api_crud/reel_video/$1';
-$route['api/crud/reels-videos/(:num)/update'] = 'Api_crud/update_reel_video/$1';
-$route['api/crud/reels-videos/(:num)/delete'] = 'Api_crud/delete_reel_video/$1';
-
-// Videos
-$route['api/crud/videos'] = 'Api_crud/videos';
-$route['api/crud/videos/(:num)'] = 'Api_crud/video/$1';
-$route['api/crud/videos/(:num)/update'] = 'Api_crud/update_video/$1';
-$route['api/crud/videos/(:num)/delete'] = 'Api_crud/delete_video/$1';
+$route['api/enquiry/send'] = 'Api/enquiry/send';
 
 // Dashboard routes
 $route['dashboard/wishlist'] = 'Dashboard/wishlist';
@@ -487,6 +355,7 @@ $route['search/more'] = 'Nb_search/more';
 // Owner/tenant panel URLs use the same prefix; explicit routes below also map them to dashboards.
 $route['property/(?!owner$|tenant$)([^/]+)'] = 'Nb_property/view/$1';
 
+$route['panel/auth'] = 'broker_admin/auth';
 $route['panel'] = 'broker_admin/index';
 $route['panel/users'] = 'broker_admin/users';
 $route['panel/user/add'] = 'broker_admin/user_add';
@@ -500,6 +369,7 @@ $route['panel/properties'] = 'broker_admin/properties';
 $route['panel/properties/pending'] = 'broker_admin/properties_pending';
 $route['panel/property/add'] = 'broker_admin/property_add';
 $route['panel/property/edit/(:num)'] = 'broker_admin/property_edit/$1';
+$route['panel/property/save'] = 'nb_property_form/save';
 $route['panel/enquiries'] = 'broker_admin/enquiries';
 $route['panel/enquiry/(:num)'] = 'broker_admin/enquiry/$1';
 
@@ -514,8 +384,13 @@ $route['panel/amenity/edit/(:num)'] = 'broker_admin/amenity_edit/$1';
 $route['panel/amenity/delete/(:num)'] = 'broker_admin/amenity_delete/$1';
 $route['panel/property-types'] = 'broker_admin/property_types';
 $route['panel/property-type/add'] = 'broker_admin/property_type_add';
+$route['panel/property-type/add-sub/(:num)'] = 'broker_admin/property_type_add_sub/$1';
 $route['panel/property-type/edit/(:num)'] = 'broker_admin/property_type_edit/$1';
 $route['panel/property-type/delete/(:num)'] = 'broker_admin/property_type_delete/$1';
+$route['panel/property-type/toggle/(:num)'] = 'broker_admin/property_type_toggle/$1';
+$route['api/property-types'] = 'api_property_types/index';
+$route['api/property-types/flat'] = 'api_property_types/flat';
+$route['api/property-types/toggle'] = 'api_property_types/toggle';
 $route['panel/banners'] = 'broker_admin/banners';
 $route['panel/banner/add'] = 'broker_admin/banner_add';
 $route['panel/banner/edit/(:num)'] = 'broker_admin/banner_edit/$1';
@@ -546,39 +421,40 @@ $route['user/live-update/delete/(:num)'] = 'live_updates_user/delete/$1';
 $route['user/wishlist'] = 'wishlist_user/index';
 $route['user/wishlist/remove/(:num)'] = 'wishlist_user/remove/$1';
 
-$route['api/admin/approve-user'] = 'api/admin_api/approve_user';
-$route['api/admin/update-enquiry'] = 'api/admin_api/update_enquiry';
-$route['api/admin/delete-enquiry'] = 'api/admin_api/delete_enquiry';
-$route['api/admin/approve-property'] = 'api/admin_api/approve_property';
-
 // POST api/property/save — routed to Nb_property_form (Api.php blocks controllers/api/).
 $route['api/property/save'] = 'nb_property_form/save';
 
-// Coimbatore Properties mobile JSON API (Bearer token; base path api/nb/)
+// NoBroker JSON API (Bearer token; base path api/nb/) — used by Next.js frontend
 $route['api/nb/update-profile'] = 'api_nb_app/update_profile';
-$route['api/nb/property/update'] = 'api_nb_app/update_property';
 $route['api/nb/register'] = 'api_nb_app/register';
-$route['api/nb/upload-image'] = 'api_nb_app/upload_image';
 $route['api/nb/login'] = 'api_nb_app/login';
 $route['api/nb/logout'] = 'api_nb_app/logout';
 $route['api/nb/me'] = 'api_nb_app/me';
 $route['api/nb/delete-account'] = 'api_nb_app/delete_account';
 $route['api/nb/wishlist'] = 'api_nb_app/wishlist';
 $route['api/nb/wishlist/toggle'] = 'api_nb_app/wishlist_toggle';
-$route['api/nb/wishlist/remove'] = 'api_nb_app/wishlist_remove';
 $route['api/nb/wishlist/check'] = 'api_nb_app/wishlist_check';
 $route['api/nb/enquiry'] = 'api_nb_app/enquiry';
 $route['api/nb/search'] = 'api_nb_app/search';
-$route['api/nb/search/city'] = 'api_nb_app/search_city';
-$route['api/nb/search/type'] = 'api_nb_app/search_type';
+$route['api/nb/site-banners'] = 'api_nb_app/site_banners';
+$route['api/nb/home-banners'] = 'api_nb_app/home_banners';
 $route['api/nb/notifications'] = 'api_nb_app/notifications';
 $route['api/nb/notifications/(:num)'] = 'api_nb_app/notification/$1';
 $route['api/nb/cities'] = 'api_nb_app/cities';
-$route['api/nb/property-types'] = 'api_nb_app/property_types';
+$route['api/nb/explore-cities'] = 'api_nb_app/explore_cities';
+$route['api/nb/property-type-counts'] = 'api_nb_app/property_type_counts';
 
-/* NoBroker JSON helpers — explicit routes (avoid ambiguity with legacy api/* routes). */
-$route['api/cities'] = 'api/cities/index';
-$route['api/locations'] = 'api/locations/index';
+// Next.js web API (production on PHP-only hosting — same paths as app/api/*)
+$route['api/feedback'] = 'api_web/feedback';
+$route['api/owner/dashboard'] = 'api_web/owner_dashboard';
+$route['api/owner/listings'] = 'api_web/owner_listings';
+$route['api/owner/enquiries'] = 'api_web/owner_enquiries';
+$route['api/tenant/enquiries'] = 'api_web/tenant_enquiries';
+$route['api/properties/(:any)'] = 'api_web/property/$1';
+
+/* Legacy JSON helpers — explicit routes (avoid ambiguity with legacy api/* routes). */
+$route['api/cities'] = 'Api/cities';
+$route['api/blogs'] = 'Api/blogs';
 
 // Prepend owner/tenant routes so CodeIgniter tries them before hundreds of legacy routes.
 // Also supports an extra leading "property/" segment (e.g. /property/tenant/dashboard when base path is wrong).

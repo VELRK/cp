@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
-import api from '@/lib/api';
+import { getTenantEnquiries } from '@/lib/frontendApi';
 import { ArrowLeft, MessageSquare, Tag, Calendar } from 'lucide-react';
 
 interface Enquiry {
@@ -32,7 +32,7 @@ export default function TenantEnquiriesPage() {
   // Fetch enquiries
   useEffect(() => {
     if (user) {
-      api.get('/api/tenant/enquiries')
+      getTenantEnquiries()
         .then((res) => {
           if (res.data?.success && Array.isArray(res.data.enquiries)) {
             setEnquiries(res.data.enquiries);

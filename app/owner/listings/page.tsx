@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
-import api from '@/lib/api';
+import { getOwnerListings } from '@/lib/frontendApi';
 import { ArrowLeft, Plus, Eye, Edit, Home, Grid, MapPin, Layers, CheckCircle, Clock, BarChart2 } from 'lucide-react';
 
 interface Listing {
@@ -18,6 +18,8 @@ interface Listing {
   property_type: string;
   listing_type: string;
   image_urls?: string[];
+  images?: string[];
+  thumbnail_url?: string | null;
   location_image_url?: string;
 }
 
@@ -39,7 +41,7 @@ export default function OwnerListingsPage() {
   // Fetch listings
   useEffect(() => {
     if (user) {
-      api.get('/api/owner/listings')
+      getOwnerListings()
         .then((res) => {
           if (res.data?.success && Array.isArray(res.data.listings)) {
             setListings(res.data.listings);
@@ -166,9 +168,12 @@ export default function OwnerListingsPage() {
                 <div className="property-list-wrapper d-flex flex-column gap-3">
                   {listings.map((p) => {
                     const isPublished = Number(p.is_active) === 1;
-                    const mainImage = (p.image_urls && p.image_urls.length > 0) 
-                      ? p.image_urls[0] 
-                      : (p.location_image_url || '/images/property-placeholder.jpg');
+                    const mainImage =
+                      (p.image_urls && p.image_urls.length > 0 && p.image_urls[0]) ||
+                      (p.images && p.images.length > 0 && `/${p.images[0].replace(/^\//, '')}`) ||
+                      p.thumbnail_url ||
+                      p.location_image_url ||
+                      '/images/property-placeholder.jpg';
 
                     return (
                       <div key={p.id} className="property-item-card p-3 rounded-3 border bg-white d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 transition">

@@ -4,7 +4,7 @@ export const pool = mysql.createPool({
   host: process.env.CI_DB_HOST || '127.0.0.1',
   user: process.env.CI_DB_USER || 'root',
   password: process.env.CI_DB_PASS || '',
-  database: process.env.CI_DB_NAME || 'cp_web',
+  database: process.env.CI_DB_NAME || 'property',
   port: Number(process.env.CI_DB_PORT) || 3306,
   waitForConnections: true,
   connectionLimit: 10,

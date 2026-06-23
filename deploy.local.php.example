@@ -1,0 +1,14 @@
+<?php
+/**
+ * Deploy webhook config — copy to deploy.local.php on the server only.
+ * deploy.local.php is gitignored; never commit the real token.
+ */
+return [
+    // Same value as GitHub repo secret: DEPLOY_TOKEN
+    'deploy_token' => 'CHANGE_ME_TO_A_LONG_RANDOM_STRING',
+
+    // Optional: leave commented to pull in the same folder as hook.php
+    // 'target_path' => '/home/u221026474/domains/superfinelabels.in/public_html/cp',
+
+    // 'git_branch' => 'main',
+];

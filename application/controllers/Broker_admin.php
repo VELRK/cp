@@ -11,6 +11,21 @@ class Broker_admin extends MY_Controller {
         $this->load->model(array('Nb_user_model', 'Nb_property_model', 'Nb_enquiry_model', 'Nb_city_model', 'Nb_amenity_model', 'Nb_property_type_model', 'Wishlist_model', 'Live_update_model', 'Housing_news_model', 'Banner_model', 'Feedback_model', 'Notification_model', 'Nb_delete_request_model'));
     }
 
+    /**
+     * Bridge Next.js/API token login into a PHP session, then open the panel.
+     * GET /panel/auth?token=...
+     */
+    public function auth()
+    {
+        $this->load->library('nb_api_token');
+        $token = $this->nb_api_token->read_token_from_request();
+        $this->nb_api_token->try_attach_session();
+        if ($token !== '') {
+            nb_set_api_token_cookie($token);
+        }
+        redirect('panel');
+    }
+
     public function index()
     {
         $this->require_login();
@@ -140,6 +155,7 @@ class Broker_admin extends MY_Controller {
     {
         $this->require_login();
         $this->require_role('admin');
+        $this->_sync_admin_api_token_cookie();
         $data['page_title'] = 'Add property';
         $data['edit_id'] = 0;
         $data['row'] = null;
@@ -151,6 +167,7 @@ class Broker_admin extends MY_Controller {
         $data['load_maps'] = true;
         $data['admin_nav'] = 'properties';
         $data['nb_has_video_url_column'] = $this->db->field_exists('video_url', 'nb_properties');
+        $data['admin_property_token'] = $this->_issue_admin_property_token();
         $this->load->view('nobroker/admin/header', $data);
         $this->load->view('nobroker/admin/property_add', $data);
         $this->load->view('nobroker/admin/footer', $data);
@@ -160,6 +177,7 @@ class Broker_admin extends MY_Controller {
     {
         $this->require_login();
         $this->require_role('admin');
+        $this->_sync_admin_api_token_cookie();
         $id = (int) $id;
         if ($id < 1) {
             show_404();
@@ -191,9 +209,34 @@ class Broker_admin extends MY_Controller {
         $data['load_maps'] = true;
         $data['admin_nav'] = 'properties';
         $data['nb_has_video_url_column'] = $this->db->field_exists('video_url', 'nb_properties');
+        $data['admin_property_token'] = $this->_issue_admin_property_token();
         $this->load->view('nobroker/admin/header', $data);
         $this->load->view('nobroker/admin/property_edit', $data);
         $this->load->view('nobroker/admin/footer', $data);
+    }
+
+    /** One-time token bound to session for admin property form POST. */
+    private function _issue_admin_property_token()
+    {
+        $token = bin2hex(random_bytes(16));
+        $this->session->set_userdata('nb_admin_property_token', $token);
+        return $token;
+    }
+
+    /** Keep nb_token cookie in sync so panel form POST restores admin session on localhost:3000. */
+    private function _sync_admin_api_token_cookie()
+    {
+        if (!$this->db->field_exists('api_token', 'nb_users')) {
+            return;
+        }
+        $uid = (int) $this->session->userdata('nb_user_id');
+        if ($uid < 1) {
+            return;
+        }
+        $row = $this->Nb_user_model->get_by_id($uid);
+        if ($row && !empty($row->api_token)) {
+            nb_set_api_token_cookie((string) $row->api_token);
+        }
     }
 
     public function enquiries()
@@ -304,6 +347,9 @@ class Broker_admin extends MY_Controller {
         $this->require_login();
         $this->require_role('admin');
         $data['page_title'] = 'Property types';
+        $grouped = $this->Nb_property_type_model->admin_grouped_rows();
+        $data['main_rows'] = $grouped['mains'];
+        $data['sub_rows'] = $grouped['subs'];
         $data['rows'] = $this->Nb_property_type_model->admin_all();
         $data['admin_nav'] = 'property_types';
         $this->load->view('nobroker/admin/header', $data);
@@ -550,7 +596,7 @@ class Broker_admin extends MY_Controller {
     {
         $this->require_login();
         $this->require_role('admin');
-        $data['page_title'] = 'Banners';
+        $data['page_title'] = 'Site banners';
         $data['rows'] = $this->Banner_model->get_all_for_admin();
         $data['admin_nav'] = 'banners';
         $this->load->view('nobroker/admin/header', $data);
@@ -576,14 +622,14 @@ class Broker_admin extends MY_Controller {
             $payload = array('status' => $status);
 
             if (!empty($_FILES['image']['name'])) {
-                $uploadPath = './assets/images/banner/';
+                $uploadPath = FCPATH . 'assets/uploads/site_banners/';
                 if (!is_dir($uploadPath)) {
-                    @mkdir($uploadPath, 0777, true);
+                    @mkdir($uploadPath, 0755, true);
                 }
                 $config = array(
                     'upload_path' => $uploadPath,
-                    'allowed_types' => 'gif|jpg|png|jpeg|webp',
-                    'max_size' => 5120,
+                    'allowed_types' => 'jpg|jpeg|png|webp',
+                    'max_size' => 2048,
                     'encrypt_name' => true,
                 );
                 $this->load->library('upload', $config);
@@ -592,13 +638,19 @@ class Broker_admin extends MY_Controller {
                     redirect($id > 0 ? ('panel/banner/edit/' . $id) : 'panel/banner/add');
                     return;
                 }
-                $payload['image'] = 'assets/images/banner/' . $this->upload->data('file_name');
+                $payload['image'] = 'assets/uploads/site_banners/' . $this->upload->data('file_name');
             }
 
             if ($id > 0) {
                 $row = $this->Banner_model->get_by_id($id);
                 if (!$row) {
                     show_404();
+                }
+                if (!empty($payload['image'])) {
+                    $old = $this->Banner_model->row_image_path($row);
+                    if ($old !== '' && file_exists(FCPATH . ltrim($old, '/'))) {
+                        @unlink(FCPATH . ltrim($old, '/'));
+                    }
                 }
                 $this->Banner_model->update($id, $payload);
                 $this->session->set_flashdata('nb_ok', 'Banner updated.');
@@ -639,8 +691,13 @@ class Broker_admin extends MY_Controller {
         if ($id < 1 || $this->input->method() !== 'post') {
             show_404();
         }
-        if (!$this->Banner_model->get_by_id($id)) {
+        $row = $this->Banner_model->get_by_id($id);
+        if (!$row) {
             show_404();
+        }
+        $img = $this->Banner_model->row_image_path($row);
+        if ($img !== '' && file_exists(FCPATH . ltrim($img, '/'))) {
+            @unlink(FCPATH . ltrim($img, '/'));
         }
         $this->Banner_model->delete($id);
         $this->session->set_flashdata('nb_ok', 'Banner deleted.');
@@ -910,6 +967,20 @@ class Broker_admin extends MY_Controller {
         $this->property_type_edit(0);
     }
 
+    public function property_type_add_sub($parent_id = 0)
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        $parent_id = (int) $parent_id;
+        $parent = $this->Nb_property_type_model->get_by_id($parent_id);
+        if (!$parent || !$this->Nb_property_type_model->is_main_type($parent)) {
+            $this->session->set_flashdata('nb_err', 'Select a valid main type first.');
+            redirect('panel/property-types');
+            return;
+        }
+        redirect('panel/property-type/add?parent_id=' . $parent_id);
+    }
+
     public function property_type_edit($id = 0)
     {
         $this->require_login();
@@ -926,13 +997,62 @@ class Broker_admin extends MY_Controller {
                 show_404();
             }
         }
-        $data['page_title'] = $id > 0 ? 'Edit property type' : 'Add property type';
+        $parent_id = 0;
+        if ($id === 0) {
+            $parent_id = (int) $this->input->get('parent_id');
+        } elseif ($row && !$this->Nb_property_type_model->is_main_type($row)) {
+            $parent_id = (int) $row->parent_id;
+        }
+        $parent_row = null;
+        if ($parent_id > 0) {
+            $parent_row = $this->Nb_property_type_model->get_by_id($parent_id);
+            if (!$parent_row || !$this->Nb_property_type_model->is_main_type($parent_row)) {
+                $parent_id = 0;
+                $parent_row = null;
+            }
+        }
+        $is_sub = ($id > 0 && $row && !$this->Nb_property_type_model->is_main_type($row)) || ($id === 0 && $parent_id > 0);
+        $data['page_title'] = $id > 0
+            ? ($is_sub ? 'Edit sub type' : 'Edit main type')
+            : ($is_sub ? 'Add sub type' : 'Add main type');
         $data['row'] = $row;
         $data['edit_id'] = $id;
+        $data['parent_id'] = $parent_id;
+        $data['parent_row'] = $parent_row;
+        $data['is_sub_type'] = $is_sub;
+        $data['main_types'] = $this->Nb_property_type_model->main_types(false);
         $data['admin_nav'] = 'property_types';
         $this->load->view('nobroker/admin/header', $data);
         $this->load->view('nobroker/admin/property_type_form', $data);
         $this->load->view('nobroker/admin/footer', $data);
+    }
+
+    public function property_type_toggle($id = null)
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        $id = (int) $id;
+        if ($id < 1 || $this->input->method() !== 'post') {
+            show_404();
+        }
+        $result = $this->Nb_property_type_model->toggle_active($id);
+        if ($result === null) {
+            if ($this->input->is_ajax_request()) {
+                return $this->_panel_json(array('success' => false, 'message' => 'Not found'), 404);
+            }
+            $this->session->set_flashdata('nb_err', 'Property type not found.');
+            redirect('panel/property-types');
+            return;
+        }
+        if ($this->input->is_ajax_request() || $this->input->post('ajax')) {
+            return $this->_panel_json(array(
+                'success' => true,
+                'id' => $id,
+                'is_active' => (int) $result['is_active'],
+            ));
+        }
+        $this->session->set_flashdata('nb_ok', 'Property type status updated.');
+        redirect('panel/property-types');
     }
 
     public function property_type_delete($id = null)
@@ -948,7 +1068,12 @@ class Broker_admin extends MY_Controller {
             show_404();
         }
         if ($this->Nb_property_type_model->count_references($row->slug) > 0) {
-            $this->session->set_flashdata('nb_err', 'This property type is used by existing listings. Edit it or deactivate it instead.');
+            $this->session->set_flashdata('nb_err', 'This property type is used by existing listings. Deactivate it instead.');
+            redirect('panel/property-types');
+            return;
+        }
+        if ($this->Nb_property_type_model->count_children($id) > 0) {
+            $this->session->set_flashdata('nb_err', 'Delete sub types under this main type first.');
             redirect('panel/property-types');
             return;
         }
@@ -1191,18 +1316,45 @@ class Broker_admin extends MY_Controller {
             }
         }
 
+        $is_sub = $this->input->post('is_sub_type') ? 1 : 0;
+        $parent_id = null;
+        if ($is_sub) {
+            $parent_id = (int) $this->input->post('parent_id');
+            $parent = $this->Nb_property_type_model->get_by_id($parent_id);
+            if (!$parent || !$this->Nb_property_type_model->is_main_type($parent)) {
+                $this->session->set_flashdata('nb_err', 'Choose a valid main type for this sub type.');
+                redirect($id > 0 ? 'panel/property-type/edit/' . $id : 'panel/property-type/add');
+                return;
+            }
+        } elseif ($id > 0) {
+            $existing_row = $this->Nb_property_type_model->get_by_id($id);
+            if ($existing_row && !$this->Nb_property_type_model->is_main_type($existing_row)) {
+                $parent_id = (int) $existing_row->parent_id;
+                $is_sub = 1;
+            }
+        }
+
+        if ($id > 0 && $this->Nb_property_type_model->is_main_type($this->Nb_property_type_model->get_by_id($id)) && $is_sub) {
+            $this->session->set_flashdata('nb_err', 'A main type cannot be converted to a sub type while it has sub types.');
+            redirect('panel/property-type/edit/' . $id);
+            return;
+        }
+
         $data = array(
             'name'       => $name,
             'slug'       => $slug,
             'sort_order' => $this->input->post('sort_order') !== '' ? (int) $this->input->post('sort_order') : 0,
             'is_active'  => $this->input->post('is_active') ? 1 : 0,
         );
+        if ($this->Nb_property_type_model->has_parent_column()) {
+            $data['parent_id'] = $is_sub ? $parent_id : null;
+        }
         if ($id > 0) {
             $this->Nb_property_type_model->update($id, $data);
             $this->session->set_flashdata('nb_ok', 'Property type updated.');
         } else {
             $this->Nb_property_type_model->create($data);
-            $this->session->set_flashdata('nb_ok', 'Property type added.');
+            $this->session->set_flashdata('nb_ok', $is_sub ? 'Sub type added.' : 'Main type added.');
         }
         redirect('panel/property-types');
     }

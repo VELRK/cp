@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../components/AuthContext';
-import api from '../../../lib/api';
+import { getFeedbacks, submitFeedback } from '@/lib/frontendApi';
 import { ArrowLeft, MessageSquare, Send, CheckCircle2, AlertCircle, Calendar, Paperclip, X } from 'lucide-react';
 
 interface FeedbackItem {
@@ -49,7 +49,7 @@ export default function FeedbackPage() {
   const fetchFeedbacks = async () => {
     try {
       setLoadingList(true);
-      const res = await api.get('/api/feedback');
+      const res = await getFeedbacks();
       if (res.data?.success && Array.isArray(res.data.feedbacks)) {
         setFeedbacks(res.data.feedbacks);
       }
@@ -114,11 +114,7 @@ export default function FeedbackPage() {
       }
       formData.append('name', user?.name || '');
 
-      const res = await api.post('/api/feedback', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      const res = await submitFeedback(formData);
 
       if (res.data?.success) {
         setSuccessMessage(res.data.message || 'Feedback submitted successfully!');

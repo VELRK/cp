@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import api from '../lib/api';
+import { getMe, login as apiLogin, register as apiRegister, logout as apiLogout } from '../lib/frontendApi';
 
 interface User {
   id: number;
@@ -38,7 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUser = async () => {
     try {
-      const response = await api.get('/api/nb/me');
+      const response = await getMe();
       if (response.data?.success) {
         setUser(response.data.user);
       } else {
@@ -59,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const savedToken = localStorage.getItem('nb_token');
     if (savedToken) {
       setToken(savedToken);
-      api.get('/api/nb/me')
+      getMe()
         .then((response) => {
           if (response.data?.success) {
             setUser(response.data.user);
@@ -79,10 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (loginId: string, passwordStr: string) => {
-    const response = await api.post('/api/nb/login', {
-      login: loginId,
-      password: passwordStr,
-    });
+    const response = await apiLogin(loginId, passwordStr);
     if (response.data?.success) {
       const { token: receivedToken, user: receivedUser } = response.data;
       localStorage.setItem('nb_token', receivedToken);
@@ -95,11 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const registerUser = async (formData: FormData) => {
     // Note: register API accepts multipart/form-data directly
-    const response = await api.post('/api/nb/register', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response = await apiRegister(formData);
     if (response.data?.success) {
       const { token: receivedToken, user: receivedUser } = response.data;
       localStorage.setItem('nb_token', receivedToken);
@@ -111,8 +104,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    // Clear client state immediately so UI updates even if the API is slow
+    localStorage.removeItem('nb_token');
+    setToken(null);
+    setUser(null);
+    setAuthModalOpen(null);
+
     try {
-      await api.post('/api/nb/logout');
+      await apiLogout();
     } catch (e) {
       console.error('Logout request failed', e);
     } finally {
@@ -120,6 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setToken(null);
       setUser(null);
       setAuthModalOpen(null);
+      window.location.href = '/';
     }
   };
 

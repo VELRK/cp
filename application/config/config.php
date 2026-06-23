@@ -55,9 +55,34 @@ if ($base_url_override !== '') {
     $config['base_url'] = $protocol . $host . $script;
 }
 
-
-$config['base_url'] = 'http://localhost/cp/';
-
+// Next.js dev proxy (localhost:3000/3001): form actions, redirects, and links must stay on
+// the same host/port as the browser. BASE_URL in .env often points at :8080/cp — override when
+// the request came through the Next dev server (Host, X-Forwarded-Host, or Referer).
+$_http_host = isset($_SERVER['HTTP_HOST']) ? strtolower((string) $_SERVER['HTTP_HOST']) : '';
+$_forwarded_host = isset($_SERVER['HTTP_X_FORWARDED_HOST']) ? strtolower((string) $_SERVER['HTTP_X_FORWARDED_HOST']) : '';
+if (strpos($_forwarded_host, ',') !== false) {
+    $_forwarded_host = trim(strtok($_forwarded_host, ','));
+}
+$_referer_host = '';
+if (!empty($_SERVER['HTTP_REFERER'])) {
+    $_ref = @parse_url((string) $_SERVER['HTTP_REFERER']);
+    if (is_array($_ref) && !empty($_ref['host'])) {
+        $_referer_host = strtolower((string) $_ref['host']);
+        if (!empty($_ref['port'])) {
+            $_referer_host .= ':' . (int) $_ref['port'];
+        }
+    }
+}
+$_proxy_host = '';
+foreach (array($_http_host, $_forwarded_host, $_referer_host) as $_candidate) {
+    if ($_candidate !== '' && preg_match('/^(localhost|127\.0\.0\.1):300[01]$/', $_candidate)) {
+        $_proxy_host = $_candidate;
+        break;
+    }
+}
+if ($_proxy_host !== '') {
+    $config['base_url'] = $protocol . $_proxy_host . '/';
+}
 
 $config['google_client_id'] = getenv('GOOGLE_CLIENT_ID') ?: '';
 // Google Maps JS + Places. Use project root .env (see .env.example), getenv, $_SERVER, or google_maps_api_key.local.php (see .example).
@@ -439,7 +464,7 @@ $config['sess_driver'] = 'files';
 $config['sess_cookie_name'] = 'ci_session';
 $config['sess_samesite'] = 'Lax';
 $config['sess_expiration'] = 7200;
-$config['sess_save_path'] = NULL;
+$config['sess_save_path'] = APPPATH . 'cache/sessions';
 $config['sess_match_ip'] = FALSE;
 $config['sess_time_to_update'] = 300;
 $config['sess_regenerate_destroy'] = FALSE;

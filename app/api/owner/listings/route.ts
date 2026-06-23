@@ -24,20 +24,29 @@ export async function GET(request: Request) {
       [user.id]
     );
 
+    const toPublicImageUrl = (path: string): string => {
+      if (!path) return '';
+      if (/^https?:\/\//i.test(path)) return path;
+      return path.startsWith('/') ? path : `/${path}`;
+    };
+
     // Parse image JSON for each property
     const formattedListings = rows.map((p: any) => {
-      let imagesList = [];
+      let imagesList: string[] = [];
       if (p.images) {
         try {
-          imagesList = JSON.parse(p.images);
+          const parsed = JSON.parse(p.images);
+          imagesList = Array.isArray(parsed) ? parsed : [];
         } catch {
           imagesList = [];
         }
       }
+      const image_urls = imagesList.map(toPublicImageUrl).filter(Boolean);
       return {
         ...p,
         images: imagesList,
-        thumbnail_url: imagesList[0] ? `/${imagesList[0]}` : null,
+        image_urls,
+        thumbnail_url: image_urls[0] || null,
       };
     });
 

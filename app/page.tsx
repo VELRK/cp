@@ -2,17 +2,25 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api';
+import {
+  getCities,
+  getBlogs,
+  searchProperties,
+  getHomeBanners,
+  getWishlist,
+  toggleWishlist,
+} from '@/lib/frontendApi';
+import { usePropertyTypeFilters } from '@/hooks/usePropertyTypeFilters';
 import { useAuth } from '@/components/AuthContext';
 import ResearchTools from '@/components/common/ResearchTools';
 // import LiveUpdateModal from '@/components/common/LiveUpdateModal';
 
 // Homepage subcomponents (extracted for clean architecture & modularity)
-import HeroSlider from '../components/home/HeroSlider';
+import HeroSlider, { PropertyBannerSlide } from '../components/home/HeroSlider';
 import SearchPanel from '../components/home/SearchPanel';
 import RecommendedProperties from '../components/home/RecommendedProperties';
 import NewlyLaunchedProjects from '../components/home/NewlyLaunchedProjects';
-import RecommendedProjects from '../components/home/RecommendedProjects';
+import VerifiedProperties from '../components/home/VerifiedProperties';
 import PropertyCategories from '../components/home/PropertyCategories';
 import HandpickedProjects from '../components/home/HandpickedProjects';
 import MagicLoans from '../components/home/MagicLoans';
@@ -44,6 +52,8 @@ export interface Property {
   city_name?: string;
   city_id?: number;
   is_featured?: number;
+  is_home_banner?: number;
+  home_banner_image_url?: string;
   images?: string | string[];
   image_urls?: string[];
   thumbnail_url?: string;
@@ -66,8 +76,16 @@ export default function Home() {
   const { user, setAuthModalOpen } = useAuth();
 
   // Search parameters
-  const [listingType, setListingType] = useState<'sale' | 'rent'>('sale');
-  const [propertyType, setPropertyType] = useState('apartment');
+  const {
+    mainTypes,
+    mainTypeSlug,
+    subTypeSlug,
+    subTypes,
+    propertyType,
+    loading: typesLoading,
+    setMainTypeSlug,
+    setSubTypeSlug,
+  } = usePropertyTypeFilters('');
   const [cityId, setCityId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [minPrice, setMinPrice] = useState('');
@@ -76,20 +94,25 @@ export default function Home() {
   const [sortBy, setSortBy] = useState('new');
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-  // Data states
-  const [cities, setCities] = useState<City[]>([]);
+  // Homepage listing sections (each filtered by DB flags)
+  const [recommended, setRecommended] = useState<Property[]>([]);
+  const [loadingRecommended, setLoadingRecommended] = useState(true);
+  const [newlyLaunched, setNewlyLaunched] = useState<Property[]>([]);
+  const [loadingNewlyLaunched, setLoadingNewlyLaunched] = useState(true);
+  const [verified, setVerified] = useState<Property[]>([]);
+  const [loadingVerified, setLoadingVerified] = useState(true);
   const [featured, setFeatured] = useState<Property[]>([]);
   const [loadingFeatured, setLoadingFeatured] = useState(true);
-
-  // Dynamic City Name
+  // Data states
+  const [cities, setCities] = useState<City[]>([]);
   const activeCity = cities.find((c) => c.id.toString() === cityId);
   const cityName = activeCity ? activeCity.name : 'Coimbatore';
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
   const [activeBlogCategory, setActiveBlogCategory] = useState<'news' | 'tax' | 'guide' | 'investment'>('news');
 
-  // Hero slideshow states
-  const [heroSlides, setHeroSlides] = useState<Property[]>([]);
+  // Hero slideshow — properties with Home Banner enabled (property edit toggle)
+  const [heroSlides, setHeroSlides] = useState<PropertyBannerSlide[]>([]);
   const [loadingHero, setLoadingHero] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -105,7 +128,7 @@ export default function Home() {
   // Fetch Cities and Blogs once on mount
   useEffect(() => {
     // 1. Cities
-    api.get('/api/nb/cities')
+    getCities()
       .then((res) => {
         if (res.data?.success && Array.isArray(res.data.cities)) {
           setCities(res.data.cities);
@@ -121,7 +144,7 @@ export default function Home() {
       .catch((e) => console.warn('Could not fetch cities', e));
 
     // 2. Blogs/Articles
-    api.get('/api/blogs')
+    getBlogs()
       .then((res) => {
         if (Array.isArray(res.data)) {
           setBlogs(res.data);
@@ -131,38 +154,109 @@ export default function Home() {
       .finally(() => setLoadingBlogs(false));
   }, []);
 
-  // Fetch Recommended Properties & Hero Banner Slideshow whenever selected City changes
+  // Home banner hero — any property with is_home_banner + banner image
   useEffect(() => {
-    setLoadingFeatured(true);
     setLoadingHero(true);
+    setCurrentSlide(0);
+    getHomeBanners({ limit: 10 })
+      .then((res) => {
+        if (res.data?.success && Array.isArray(res.data.items)) {
+          setHeroSlides(
+            res.data.items
+              .map((item: Property & { price_formatted?: string }) => {
+                const imageUrl =
+                  item.home_banner_image_url ||
+                  item.thumbnail_url ||
+                  (Array.isArray(item.image_urls) ? item.image_urls[0] : '') ||
+                  '';
+                if (!imageUrl) return null;
+                return {
+                  id: item.id,
+                  image_url: imageUrl,
+                  title: item.title,
+                  slug: item.slug,
+                  property_type: item.property_type,
+                  bedrooms: item.bedrooms ?? 0,
+                  locality: item.locality,
+                  price_label:
+                    item.price_formatted ||
+                    (item.listing_type === 'rent'
+                      ? `₹${Number(item.price).toLocaleString('en-IN')} / month`
+                      : `₹${Number(item.price).toLocaleString('en-IN')}`),
+                };
+              })
+              .filter(Boolean) as PropertyBannerSlide[]
+          );
+        } else {
+          setHeroSlides([]);
+        }
+      })
+      .catch((e) => {
+        console.warn('Could not fetch home banners', e);
+        setHeroSlides([]);
+      })
+      .finally(() => setLoadingHero(false));
+  }, []);
 
-    const cityParam = cityId ? `&city_id=${cityId}` : '';
+  // Homepage sections — active listings filtered by DB flags
+  useEffect(() => {
+    const cityParams = cityId ? { city_id: cityId } : {};
+    const baseParams = { limit: 12, ...cityParams };
 
-    // Fetch Recommended Properties
-    api.get(`/api/nb/search?limit=8${cityParam}`)
+    setLoadingRecommended(true);
+    setLoadingNewlyLaunched(true);
+    setLoadingVerified(true);
+    setLoadingFeatured(true);
+
+    searchProperties({ ...baseParams, is_recommended: 1 })
+      .then((res) => {
+        if (res.data?.success && Array.isArray(res.data.items)) {
+          setRecommended(res.data.items);
+        } else {
+          setRecommended([]);
+        }
+      })
+      .catch((e) => console.warn('Could not fetch recommended listings', e))
+      .finally(() => setLoadingRecommended(false));
+
+    searchProperties({ ...baseParams, is_newly_launched: 1 })
+      .then((res) => {
+        if (res.data?.success && Array.isArray(res.data.items)) {
+          setNewlyLaunched(res.data.items);
+        } else {
+          setNewlyLaunched([]);
+        }
+      })
+      .catch((e) => console.warn('Could not fetch newly launched listings', e))
+      .finally(() => setLoadingNewlyLaunched(false));
+
+    searchProperties({ ...baseParams, is_verified_property: 1 })
+      .then((res) => {
+        if (res.data?.success && Array.isArray(res.data.items)) {
+          setVerified(res.data.items);
+        } else {
+          setVerified([]);
+        }
+      })
+      .catch((e) => console.warn('Could not fetch verified listings', e))
+      .finally(() => setLoadingVerified(false));
+
+    searchProperties({ ...baseParams, is_featured: 1 })
       .then((res) => {
         if (res.data?.success && Array.isArray(res.data.items)) {
           setFeatured(res.data.items);
+        } else {
+          setFeatured([]);
         }
       })
       .catch((e) => console.warn('Could not fetch featured listings', e))
       .finally(() => setLoadingFeatured(false));
-
-    // Fetch Hero Banner Slideshow
-    api.get(`/api/nb/search?limit=5&sort=featured${cityParam}`)
-      .then((res) => {
-        if (res.data?.success && Array.isArray(res.data.items)) {
-          setHeroSlides(res.data.items);
-        }
-      })
-      .catch((e) => console.warn('Could not fetch hero slides', e))
-      .finally(() => setLoadingHero(false));
   }, [cityId]);
 
   // Fetch wishlist IDs if logged in
   useEffect(() => {
     if (user) {
-      api.get(`/api/nb/wishlist?userId=${user.id}`)
+      getWishlist(user.id)
         .then((res) => {
           if (res.data?.success && Array.isArray(res.data.wishlist)) {
             setWishlistedIds(res.data.wishlist.map((item: any) => parseInt(item.propertyId, 10)));
@@ -176,9 +270,9 @@ export default function Home() {
 
   // Slideshow interval timer
   useEffect(() => {
-    const slidesCount = heroSlides.length > 0 ? heroSlides.length : 3; // fallback uses 3
+    if (heroSlides.length <= 1) return undefined;
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slidesCount);
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
     }, 5500);
     return () => clearInterval(interval);
   }, [heroSlides]);
@@ -265,51 +359,6 @@ export default function Home() {
     };
   }, [cities, featured]);
 
-  // Fallback Slides if heroSlides is loading/empty
-  const fallbackSlides: Property[] = [
-    {
-      id: -1,
-      title: "Step Into a World of Prime Living",
-      locality: "Nehru Nagar West, Sitra, Coimbatore",
-      price: 12000000,
-      image_urls: ["https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1920&q=80"],
-      slug: "search?q=Sitra",
-      property_type: "apartment",
-      listing_type: 'sale',
-      bedrooms: 3,
-      bathrooms: 3,
-      area_sqft: 1800
-    },
-    {
-      id: -2,
-      title: "Luxury Duplex Villas & Row Houses",
-      locality: "Avinashi Road, Civil Aerodrome, Coimbatore",
-      price: 18500000,
-      image_urls: ["https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1920&q=80"],
-      slug: "search?property_type=villa",
-      property_type: "villa",
-      listing_type: 'sale',
-      bedrooms: 4,
-      bathrooms: 4,
-      area_sqft: 2800
-    },
-    {
-      id: -3,
-      title: "Premium Plots & Commercial Land",
-      locality: "Saravanampatti, IT Corridor, Coimbatore",
-      price: 4500000,
-      image_urls: ["https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1920&q=80"],
-      slug: "search?property_type=plot",
-      property_type: "plot",
-      listing_type: 'sale',
-      bedrooms: 0,
-      bathrooms: 0,
-      area_sqft: 2400
-    }
-  ];
-
-  const activeSlides = heroSlides.length > 0 ? heroSlides : fallbackSlides;
-
   // Real Browser voice search helper using Speech Recognition API
   const handleVoiceSearch = () => {
     if (typeof window !== 'undefined') {
@@ -355,7 +404,7 @@ export default function Home() {
     }
 
     try {
-      const response = await api.post('/api/nb/wishlist/toggle', {
+      const response = await toggleWishlist({
         property_id: propertyId,
         userId: user.id,
       });
@@ -374,7 +423,6 @@ export default function Home() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const queryParams = new URLSearchParams();
-    queryParams.append('listing_type', listingType);
     if (propertyType) queryParams.append('property_type', propertyType);
     if (cityId) queryParams.append('city_id', cityId);
     if (searchQuery) queryParams.append('q', searchQuery);
@@ -411,26 +459,17 @@ export default function Home() {
     return labels[type] || type;
   };
 
-  // Helper search filters
-  function applySearchFilter(type: string) {
-    const queryParams = new URLSearchParams();
-    queryParams.append('listing_type', listingType);
-    queryParams.append('property_type', type);
-    if (cityId) queryParams.append('city_id', cityId);
-    router.push(`/search?${queryParams.toString()}`);
-  }
-
   function handleLocationSearch() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          router.push(`/search?lat=${latitude}&lng=${longitude}&radius_km=5&city_id=${cityId}&listing_type=${listingType}`);
+          router.push(`/search?lat=${latitude}&lng=${longitude}&radius_km=5${cityId ? `&city_id=${cityId}` : ''}`);
         },
         (error) => {
           console.warn('Geolocation error:', error);
           alert('Could not retrieve current location. Searching all areas.');
-          router.push(`/search?city_id=${cityId}&listing_type=${listingType}`);
+          router.push(cityId ? `/search?city_id=${cityId}` : '/search');
         }
       );
     } else {
@@ -441,26 +480,34 @@ export default function Home() {
   return (
     <div className="home-container" style={{ background: '#f8fafc', paddingBottom: '3rem' }}>
 
-      {/* 1. API-Called Slideshow Banner */}
-      <HeroSlider
-        activeSlides={activeSlides}
-        currentSlide={currentSlide}
-        formatPrice={formatPrice}
-        getPropertyTypeLabel={getPropertyTypeLabel}
-      />
+      {/* 1. Home banner hero — real properties only (no dummy fallback) */}
+      {loadingHero ? (
+        <section className="nb-hero-slider" aria-hidden="true" />
+      ) : heroSlides.length > 0 ? (
+        <HeroSlider
+          slides={heroSlides}
+          currentSlide={currentSlide}
+          getPropertyTypeLabel={getPropertyTypeLabel}
+        />
+      ) : (
+        <section className="nb-hero-slider" aria-hidden="true" />
+      )}
 
       {/* Main content grid */}
       <div className="container">
 
         {/* 2. Glassmorphic Overlapping Search Panel */}
         <SearchPanel
-          listingType={listingType}
-          setListingType={setListingType}
-          propertyType={propertyType}
-          setPropertyType={setPropertyType}
           cityId={cityId}
           setCityId={setCityId}
           cities={cities}
+          mainTypes={mainTypes}
+          mainTypeSlug={mainTypeSlug}
+          subTypeSlug={subTypeSlug}
+          subTypes={subTypes}
+          onMainTypeChange={setMainTypeSlug}
+          onSubTypeChange={setSubTypeSlug}
+          typesLoading={typesLoading}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           minPrice={minPrice}
@@ -477,7 +524,6 @@ export default function Home() {
           handleVoiceSearch={handleVoiceSearch}
           handleLocationSearch={handleLocationSearch}
           handleSearchSubmit={handleSearchSubmit}
-          applySearchFilter={applySearchFilter}
           user={user}
           setAuthModalOpen={setAuthModalOpen}
         />
@@ -490,8 +536,8 @@ export default function Home() {
 
             {/* Recommended Properties Horizontal Slider */}
             <RecommendedProperties
-              featured={featured}
-              loadingFeatured={loadingFeatured}
+              items={recommended}
+              loading={loadingRecommended}
               wishlistedIds={wishlistedIds}
               cityName={cityName}
               handleWishlistToggle={handleWishlistToggle}
@@ -499,18 +545,16 @@ export default function Home() {
               getPropertyTypeLabel={getPropertyTypeLabel}
             />
 
-            {/* Newly Launched Projects Section */}
             <NewlyLaunchedProjects
-              featured={featured}
-              loadingFeatured={loadingFeatured}
+              items={newlyLaunched}
+              loading={loadingNewlyLaunched}
               formatPrice={formatPrice}
               getPropertyTypeLabel={getPropertyTypeLabel}
             />
 
-            {/* Recommended Projects section */}
-            <RecommendedProjects
-              featured={featured}
-              loadingFeatured={loadingFeatured}
+            <VerifiedProperties
+              items={verified}
+              loading={loadingVerified}
               cityName={cityName}
               formatPrice={formatPrice}
               getPropertyTypeLabel={getPropertyTypeLabel}
@@ -538,9 +582,7 @@ export default function Home() {
             <ResearchTools />
 
             {/* Explore Cities */}
-            <ExploreCities
-              cities={cities}
-            />
+            <ExploreCities />
 
             {/* Featured Properties Grid View */}
             <FeaturedProperties

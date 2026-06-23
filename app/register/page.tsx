@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../components/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import api from '../../lib/api';
+import { getCities } from '@/lib/frontendApi';
 import { ShieldAlert, CheckCircle, User, Mail, Phone, Lock, FileText, Image as ImageIcon } from 'lucide-react';
 
 interface City {
@@ -53,7 +53,7 @@ export default function RegisterPage() {
 
   // Load cities list
   useEffect(() => {
-    api.get('/api/nb/cities')
+    getCities()
       .then((res) => {
         if (res.data?.success && Array.isArray(res.data.cities)) {
           setCities(res.data.cities);

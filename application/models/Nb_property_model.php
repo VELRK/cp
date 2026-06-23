@@ -7,7 +7,7 @@ class Nb_property_model extends CI_Model {
 
     public function get_by_id($id)
     {
-        $this->db->select('p.*, c.name AS city_name, u.name AS owner_name, u.phone AS owner_phone');
+        $this->db->select('p.*, c.name AS city_name, u.name AS owner_name, u.phone AS owner_phone, u.user_type AS owner_user_type');
         $this->db->from($this->table . ' p');
         $this->db->join('nb_cities c', 'c.id = p.city_id', 'left');
         $this->db->join('nb_users u', 'u.id = p.owner_id', 'left');
@@ -24,7 +24,7 @@ class Nb_property_model extends CI_Model {
         if ($slug === '') {
             return null;
         }
-        $this->db->select('p.*, c.name AS city_name, u.name AS owner_name, u.phone AS owner_phone');
+        $this->db->select('p.*, c.name AS city_name, u.name AS owner_name, u.phone AS owner_phone, u.user_type AS owner_user_type');
         $this->db->from($this->table . ' p');
         $this->db->join('nb_cities c', 'c.id = p.city_id', 'left');
         $this->db->join('nb_users u', 'u.id = p.owner_id', 'left');
@@ -137,7 +137,7 @@ class Nb_property_model extends CI_Model {
 
     public function get_best_rated($limit = 0, $offset = 0)
     {
-        $this->db->select('p.*, c.name AS city_name, u.name AS owner_name, u.phone AS owner_phone');
+        $this->db->select('p.*, c.name AS city_name, u.name AS owner_name, u.phone AS owner_phone, u.user_type AS owner_user_type');
         $this->db->from($this->table . ' p');
         $this->db->join('nb_cities c', 'c.id = p.city_id', 'left');
         $this->db->join('nb_users u', 'u.id = p.owner_id', 'left');
@@ -152,7 +152,7 @@ class Nb_property_model extends CI_Model {
 
     public function get_high_growth($limit = 0, $offset = 0)
     {
-        $this->db->select('p.*, c.name AS city_name, u.name AS owner_name, u.phone AS owner_phone');
+        $this->db->select('p.*, c.name AS city_name, u.name AS owner_name, u.phone AS owner_phone, u.user_type AS owner_user_type');
         $this->db->from($this->table . ' p');
         $this->db->join('nb_cities c', 'c.id = p.city_id', 'left');
         $this->db->join('nb_users u', 'u.id = p.owner_id', 'left');
@@ -167,7 +167,7 @@ class Nb_property_model extends CI_Model {
 
     public function get_all_active($limit = 0, $offset = 0)
     {
-        $this->db->select('p.*, c.name AS city_name, u.name AS owner_name, u.phone AS owner_phone');
+        $this->db->select('p.*, c.name AS city_name, u.name AS owner_name, u.phone AS owner_phone, u.user_type AS owner_user_type');
         $this->db->from($this->table . ' p');
         $this->db->join('nb_cities c', 'c.id = p.city_id', 'left');
         $this->db->join('nb_users u', 'u.id = p.owner_id', 'left');
@@ -181,7 +181,7 @@ class Nb_property_model extends CI_Model {
 
     public function featured($limit = 6, $offset = 0)
     {
-        $this->db->select('p.*, c.name AS city_name, u.name AS owner_name, u.phone AS owner_phone');
+        $this->db->select('p.*, c.name AS city_name, u.name AS owner_name, u.phone AS owner_phone, u.user_type AS owner_user_type');
         $this->db->from($this->table . ' p');
         $this->db->join('nb_cities c', 'c.id = p.city_id', 'left');
         $this->db->join('nb_users u', 'u.id = p.owner_id', 'left');
@@ -210,7 +210,7 @@ class Nb_property_model extends CI_Model {
 
     public function search($filters, $limit = 0, $offset = 0)
     {
-        $this->db->select('p.*, c.name AS city_name, u.name AS owner_name, u.phone AS owner_phone');
+        $this->db->select('p.*, c.name AS city_name, u.name AS owner_name, u.phone AS owner_phone, u.user_type AS owner_user_type');
         $this->db->from($this->table . ' p');
         $this->db->join('nb_cities c', 'c.id = p.city_id', 'left');
         $this->db->join('nb_users u', 'u.id = p.owner_id', 'left');
@@ -252,10 +252,55 @@ class Nb_property_model extends CI_Model {
         if (!empty($filters['is_featured'])) {
             $this->db->where('p.is_featured', 1);
         }
+        if (!empty($filters['is_recommended'])) {
+            $this->db->where('p.is_recommended', 1);
+        }
+        if (!empty($filters['is_newly_launched'])) {
+            $this->db->where('p.is_newly_launched', 1);
+        }
+        if (!empty($filters['is_verified_property']) || !empty($filters['verified'])) {
+            $this->db->where('p.is_verified_property', 1);
+        }
+        if (!empty($filters['is_premium'])) {
+            $this->db->where('p.is_premium', 1);
+        }
+        if (!empty($filters['is_home_banner'])) {
+            $this->db->where('p.is_home_banner', 1);
+            $this->db->where('p.home_banner_image IS NOT NULL', null, false);
+            $this->db->where('p.home_banner_image !=', '');
+        }
+        if (!empty($filters['has_video']) || !empty($filters['video'])) {
+            $this->db->where('p.video_url IS NOT NULL', null, false);
+            $this->db->where('p.video_url !=', '');
+        }
+        if (!empty($filters['posted_by_owner']) || !empty($filters['owner_only'])) {
+            $this->db->group_start();
+            $this->db->where('u.user_type !=', 'agent');
+            $this->db->or_where('u.user_type IS NULL', null, false);
+            $this->db->group_end();
+        }
+        if (!empty($filters['ready_to_move'])) {
+            $this->db->group_start();
+            $this->db->where('p.available_from IS NULL', null, false);
+            $this->db->or_where('p.available_from <=', date('Y-m-d'));
+            $this->db->group_end();
+        }
+        if (!empty($filters['under_construction'])) {
+            $this->db->where('p.available_from IS NOT NULL', null, false);
+            $this->db->where('p.available_from >', date('Y-m-d'));
+        }
         $this->apply_search_location_filter($filters);
 
         $sort = isset($filters['sort']) ? $filters['sort'] : 'new';
-        if ($sort === 'price_asc') {
+        if ($sort === 'home_banner') {
+            $this->db->where('p.is_home_banner', 1);
+            $this->db->where('p.home_banner_image IS NOT NULL', null, false);
+            $this->db->where('p.home_banner_image !=', '');
+            $this->db->order_by('p.updated_at', 'DESC');
+        } elseif ($sort === 'featured') {
+            $this->db->where('p.is_featured', 1);
+            $this->db->order_by('p.created_at', 'DESC');
+        } elseif ($sort === 'price_asc') {
             $this->db->order_by('p.price', 'ASC');
         } elseif ($sort === 'price_desc') {
             $this->db->order_by('p.price', 'DESC');
@@ -273,6 +318,9 @@ class Nb_property_model extends CI_Model {
     {
         $this->db->from($this->table . ' p');
         $this->db->where('p.is_active', 1);
+        if (!empty($filters['posted_by_owner']) || !empty($filters['owner_only'])) {
+            $this->db->join('nb_users u', 'u.id = p.owner_id', 'left');
+        }
         if (!empty($filters['city_id'])) {
             $this->db->where('p.city_id', (int) $filters['city_id']);
         }
@@ -300,8 +348,99 @@ class Nb_property_model extends CI_Model {
         if (!empty($filters['bedrooms'])) {
             $this->db->where('p.bedrooms', (int) $filters['bedrooms']);
         }
+        if (!empty($filters['tags_best_rate_localities'])) {
+            $this->db->where('p.tags_best_rate_localities', 1);
+        }
+        if (!empty($filters['tags_high_growth_localities'])) {
+            $this->db->where('p.tags_high_growth_localities', 1);
+        }
+        if (!empty($filters['is_featured'])) {
+            $this->db->where('p.is_featured', 1);
+        }
+        if (!empty($filters['is_recommended'])) {
+            $this->db->where('p.is_recommended', 1);
+        }
+        if (!empty($filters['is_newly_launched'])) {
+            $this->db->where('p.is_newly_launched', 1);
+        }
+        if (!empty($filters['is_verified_property']) || !empty($filters['verified'])) {
+            $this->db->where('p.is_verified_property', 1);
+        }
+        if (!empty($filters['is_premium'])) {
+            $this->db->where('p.is_premium', 1);
+        }
+        if (!empty($filters['is_home_banner'])) {
+            $this->db->where('p.is_home_banner', 1);
+            $this->db->where('p.home_banner_image IS NOT NULL', null, false);
+            $this->db->where('p.home_banner_image !=', '');
+        }
+        if (!empty($filters['has_video']) || !empty($filters['video'])) {
+            $this->db->where('p.video_url IS NOT NULL', null, false);
+            $this->db->where('p.video_url !=', '');
+        }
+        if (!empty($filters['posted_by_owner']) || !empty($filters['owner_only'])) {
+            $this->db->group_start();
+            $this->db->where('u.user_type !=', 'agent');
+            $this->db->or_where('u.user_type IS NULL', null, false);
+            $this->db->group_end();
+        }
+        if (!empty($filters['ready_to_move'])) {
+            $this->db->group_start();
+            $this->db->where('p.available_from IS NULL', null, false);
+            $this->db->or_where('p.available_from <=', date('Y-m-d'));
+            $this->db->group_end();
+        }
+        if (!empty($filters['under_construction'])) {
+            $this->db->where('p.available_from IS NOT NULL', null, false);
+            $this->db->where('p.available_from >', date('Y-m-d'));
+        }
         $this->apply_search_location_filter($filters);
         return (int) $this->db->count_all_results();
+    }
+
+    /**
+     * Active listing counts grouped by property_type slug.
+     *
+     * @param int|null $city_id
+     * @param string[]|null $slugs
+     * @return array<string,int>
+     */
+    public function count_active_by_property_type($city_id = null, $slugs = null)
+    {
+        $this->db->select('p.property_type, COUNT(*) AS cnt', false);
+        $this->db->from($this->table . ' p');
+        $this->db->where('p.is_active', 1);
+        if ($city_id) {
+            $this->db->where('p.city_id', (int) $city_id);
+        }
+        if (!empty($slugs) && is_array($slugs)) {
+            $this->db->where_in('p.property_type', $slugs);
+        }
+        $this->db->group_by('p.property_type');
+        $out = array();
+        foreach ($this->db->get()->result() as $row) {
+            $out[(string) $row->property_type] = (int) $row->cnt;
+        }
+        return $out;
+    }
+
+    /**
+     * Active listing counts grouped by city_id.
+     *
+     * @return array<int,int>
+     */
+    public function count_active_by_city()
+    {
+        $this->db->select('p.city_id, COUNT(*) AS cnt', false);
+        $this->db->from($this->table . ' p');
+        $this->db->where('p.is_active', 1);
+        $this->db->where('p.city_id IS NOT NULL', null, false);
+        $this->db->group_by('p.city_id');
+        $out = array();
+        foreach ($this->db->get()->result() as $row) {
+            $out[(int) $row->city_id] = (int) $row->cnt;
+        }
+        return $out;
     }
 
     /**
@@ -360,7 +499,7 @@ class Nb_property_model extends CI_Model {
 
     public function for_owner($owner_id)
     {
-        $this->db->select('p.*, c.name AS city_name, u.name AS owner_name, u.phone AS owner_phone');
+        $this->db->select('p.*, c.name AS city_name, u.name AS owner_name, u.phone AS owner_phone, u.user_type AS owner_user_type');
         $this->db->from($this->table . ' p');
         $this->db->join('nb_cities c', 'c.id = p.city_id', 'left');
         $this->db->join('nb_users u', 'u.id = p.owner_id', 'left');
@@ -372,7 +511,7 @@ class Nb_property_model extends CI_Model {
 
     public function for_owner_all($owner_id)
     {
-        $this->db->select('p.*, c.name AS city_name, u.name AS owner_name, u.phone AS owner_phone');
+        $this->db->select('p.*, c.name AS city_name, u.name AS owner_name, u.phone AS owner_phone, u.user_type AS owner_user_type');
         $this->db->from($this->table . ' p');
         $this->db->join('nb_cities c', 'c.id = p.city_id', 'left');
         $this->db->join('nb_users u', 'u.id = p.owner_id', 'left');
@@ -434,6 +573,26 @@ class Nb_property_model extends CI_Model {
         }
         $this->db->order_by('p.created_at', 'DESC');
         $this->db->limit($limit, $offset);
+        return $this->db->get()->result();
+    }
+
+    /**
+     * Admin panel: properties flagged for homepage hero slideshow.
+     */
+    public function admin_home_banners($limit = 100, $offset = 0)
+    {
+        if (!$this->db->field_exists('is_home_banner', $this->table)) {
+            return array();
+        }
+        $this->db->select('p.*, c.name AS city_name, u.name AS owner_name');
+        $this->db->from($this->table . ' p');
+        $this->db->join('nb_cities c', 'c.id = p.city_id', 'left');
+        $this->db->join('nb_users u', 'u.id = p.owner_id', 'left');
+        $this->db->where('p.is_home_banner', 1);
+        $this->db->order_by('p.updated_at', 'DESC');
+        if ($limit > 0) {
+            $this->db->limit($limit, $offset);
+        }
         return $this->db->get()->result();
     }
 }

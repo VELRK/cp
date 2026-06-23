@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import api from '@/lib/api';
+import { createLiveUpdate } from '@/lib/frontendApi';
 
 interface LiveUpdateModalProps {
   show: boolean;
@@ -25,9 +25,7 @@ export default function LiveUpdateModal({ show, onClose, onSuccess }: LiveUpdate
     if (liveUpdateImage) formData.append('image_file', liveUpdateImage);
 
     try {
-      const res = await api.post('/api/mobile/live-updates/create', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const res = await createLiveUpdate(formData);
       if (res.data?.success) {
         alert('Live Update created successfully!');
         setLiveUpdateData({ title: '', platform: 'app', status: 'upcoming', url: '', liveTime: '', description: '' });

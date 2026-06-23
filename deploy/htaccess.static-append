@@ -1,0 +1,21 @@
+# --- Static Next.js export: serve HTML/JS before CodeIgniter ---
+
+# Legacy property-detail URLs (Next redirects do not apply to static export)
+RewriteRule ^property-detail/(.+?)/?$ property/$1/ [R=301,L]
+
+RewriteCond %{REQUEST_URI} !^/index\.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^(.+?)/?$ $1.html [L]
+
+# SPA-style fallback for client-routed pages (optional; helps direct URL refresh)
+RewriteCond %{REQUEST_URI} !^/index\.php
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteCond %{REQUEST_URI} !^/assets/
+RewriteCond %{REQUEST_URI} !^/panel
+RewriteCond %{REQUEST_URI} !^/admin
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{DOCUMENT_ROOT}/index.html -f
+RewriteRule ^ index.html [L]

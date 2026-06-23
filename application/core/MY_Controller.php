@@ -19,8 +19,23 @@ class MY_Controller extends CI_Controller
         return $this->session->userdata('nb_user');
     }
 
+    protected function set_nb_session_from_user($user)
+    {
+        $this->session->set_userdata('nb_user_id', (int) $user->id);
+        $this->session->set_userdata('nb_user', array(
+            'id'     => (int) $user->id,
+            'name'   => $user->name,
+            'email'  => $user->email,
+            'phone'  => isset($user->phone) ? (string) $user->phone : '',
+            'role'   => $user->role,
+            'status' => $user->status,
+        ));
+    }
+
     protected function require_login()
     {
+        $this->load->library('nb_api_token');
+        $this->nb_api_token->try_attach_session();
         if (!$this->session->userdata('nb_user_id')) {
             redirect(base_url() . '?modal=login');
         }

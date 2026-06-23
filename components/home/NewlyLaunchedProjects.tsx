@@ -6,18 +6,22 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Property } from '@/components/property/PropertyCard';
 
 interface NewlyLaunchedProjectsProps {
-  featured: Property[];
-  loadingFeatured: boolean;
+  items: Property[];
+  loading: boolean;
   formatPrice: (price: number) => string;
   getPropertyTypeLabel: (type: string) => string;
 }
 
 const NewlyLaunchedProjects: React.FC<NewlyLaunchedProjectsProps> = ({
-  featured,
-  loadingFeatured,
+  items,
+  loading,
   formatPrice,
   getPropertyTypeLabel
 }) => {
+  if (!loading && items.length === 0) {
+    return null;
+  }
+
   return (
     <div className="mb-5 fade-in-up">
       <div className="p-4 rounded-4" style={{ backgroundColor: '#f0f7fb' }}>
@@ -37,10 +41,10 @@ const NewlyLaunchedProjects: React.FC<NewlyLaunchedProjectsProps> = ({
           <button className="nb-scroll-arrow nb-scroll-arrow-left" aria-label="Scroll left"><ChevronLeft size={24} /></button>
           <button className="nb-scroll-arrow nb-scroll-arrow-right" aria-label="Scroll right"><ChevronRight size={24} /></button>
           <div className="nb-horizontal-scroll pb-2" style={{ paddingLeft: '5px' }}>
-            {featured.slice(0, 5).map((proj, i) => {
+            {items.slice(0, 5).map((proj, i) => {
               const imgUrl = proj.thumbnail_url || (proj.image_urls && proj.image_urls.length > 0 ? proj.image_urls[0] : 'https://placehold.co/400x300?text=No+Image');
               return (
-                <Link key={`new-launch-${proj.id}`} href={`/property-detail/${proj.slug}`} className="text-decoration-none d-block flex-shrink-0" style={{ marginRight: '1rem' }}>
+                <Link key={`new-launch-${proj.id}`} href={`/property/${proj.slug}`} className="text-decoration-none d-block flex-shrink-0" style={{ marginRight: '1rem' }}>
                   <div className="card border-0 shadow-sm rounded-4 bg-white position-relative" style={{ width: '420px' }}>
 
                     {/* Top Tag */}
@@ -105,10 +109,7 @@ const NewlyLaunchedProjects: React.FC<NewlyLaunchedProjectsProps> = ({
                 </Link>
               );
             })}
-            {featured.length === 0 && !loadingFeatured && (
-              <div className="text-muted small py-3">No newly launched projects found.</div>
-            )}
-            {loadingFeatured && (
+            {loading && (
               <div className="text-muted small py-3">Loading projects...</div>
             )}
           </div>

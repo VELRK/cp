@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
-import api from '@/lib/api';
+import { getOwnerEnquiries } from '@/lib/frontendApi';
 import { ArrowLeft, MessageSquare, Calendar } from 'lucide-react';
 
 interface Enquiry {
@@ -34,7 +34,7 @@ export default function OwnerEnquiriesPage() {
   // Fetch enquiries
   useEffect(() => {
     if (user) {
-      api.get('/api/owner/enquiries')
+      getOwnerEnquiries()
         .then((res) => {
           if (res.data?.success && Array.isArray(res.data.enquiries)) {
             setEnquiries(res.data.enquiries);

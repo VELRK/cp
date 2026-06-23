@@ -6,8 +6,8 @@ import { ChevronRight, ChevronLeft, Heart, Bed, Bath, Grid, MapPin } from 'lucid
 import { Property } from '@/components/property/PropertyCard';
 
 interface RecommendedPropertiesProps {
-  featured: Property[];
-  loadingFeatured: boolean;
+  items: Property[];
+  loading: boolean;
   wishlistedIds: number[];
   cityName: string;
   handleWishlistToggle: (e: React.MouseEvent, id: number) => void;
@@ -16,14 +16,18 @@ interface RecommendedPropertiesProps {
 }
 
 const RecommendedProperties: React.FC<RecommendedPropertiesProps> = ({
-  featured,
-  loadingFeatured,
+  items,
+  loading,
   wishlistedIds,
   cityName,
   handleWishlistToggle,
   formatPrice,
   getPropertyTypeLabel
 }) => {
+  if (!loading && items.length === 0) {
+    return null;
+  }
+
   return (
     <div className="mb-5 fade-in-up">
       <div className="d-flex justify-content-between align-items-end mb-3">
@@ -31,13 +35,13 @@ const RecommendedProperties: React.FC<RecommendedPropertiesProps> = ({
           <h2 className="h4 fw-bold text-dark m-0">Recommended Properties</h2>
           <p className="text-muted small m-0">Curated premium properties in {cityName}</p>
         </div>
-        <Link href="/search" className="btn btn-link text-decoration-none nb-text-brand small p-0 d-flex align-items-center gap-1 fw-bold">
+        <Link href="/search?is_recommended=1" className="btn btn-link text-decoration-none nb-text-brand small p-0 d-flex align-items-center gap-1 fw-bold">
           <span>See All</span>
           <ChevronRight size={16} />
         </Link>
       </div>
 
-      {loadingFeatured ? (
+      {loading ? (
         <div className="text-center py-5 bg-white border rounded-4 shadow-sm">
           <div className="spinner-border nb-text-brand" role="status">
             <span className="visually-hidden">Loading properties...</span>
@@ -48,7 +52,7 @@ const RecommendedProperties: React.FC<RecommendedPropertiesProps> = ({
           <button className="nb-scroll-arrow nb-scroll-arrow-left" aria-label="Scroll left"><ChevronLeft size={24} /></button>
           <button className="nb-scroll-arrow nb-scroll-arrow-right" aria-label="Scroll right"><ChevronRight size={24} /></button>
           <div className="nb-horizontal-scroll">
-            {featured.map((p) => {
+            {items.map((p) => {
               const imagesList = Array.isArray(p.image_urls) ? p.image_urls : [];
               const thumbnail = p.thumbnail_url || imagesList[0] || '';
               const isLiked = wishlistedIds.includes(p.id);
@@ -56,7 +60,7 @@ const RecommendedProperties: React.FC<RecommendedPropertiesProps> = ({
                 <div key={p.id} className="nb-classic-property-card-wrap">
                   <div className="nb-classic-card">
                     <div className="nb-classic-card-img-container">
-                      <Link href={`/property-detail/${p.slug}`}>
+                      <Link href={`/property/${p.slug}`}>
                         {thumbnail ? (
                           <img
                             src={thumbnail}
@@ -97,7 +101,7 @@ const RecommendedProperties: React.FC<RecommendedPropertiesProps> = ({
                     <div className="nb-classic-card-body">
                       <div>
                         <h3 className="nb-classic-card-title text-truncate" title={p.title}>
-                          <Link href={`/property-detail/${p.slug}`} className="text-decoration-none text-dark fw-bold">
+                          <Link href={`/property/${p.slug}`} className="text-decoration-none text-dark fw-bold">
                             {p.bedrooms ? `${p.bedrooms} BHK ` : ''}{getPropertyTypeLabel(p.property_type)}
                           </Link>
                         </h3>
@@ -137,7 +141,7 @@ const RecommendedProperties: React.FC<RecommendedPropertiesProps> = ({
                 </div>
               );
             })}
-            {featured.length === 0 && (
+            {items.length === 0 && !loading && (
               <div className="w-100 text-center py-4 bg-white border text-muted">
                 No recommended properties available.
               </div>

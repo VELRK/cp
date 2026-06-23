@@ -14,6 +14,21 @@ $pt = isset($page_title) ? $page_title : 'Admin';
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link href="<?php echo base_url('assets/css/nb_admin.css'); ?>" rel="stylesheet">
+  <script>
+  (function () {
+    try {
+      var t = localStorage.getItem('nb_token');
+      if (!t || document.cookie.indexOf('nb_token=') !== -1) {
+        return;
+      }
+      if (sessionStorage.getItem('nb_panel_auth_sync') === '1') {
+        return;
+      }
+      sessionStorage.setItem('nb_panel_auth_sync', '1');
+      window.location.replace('/panel/auth?token=' + encodeURIComponent(t));
+    } catch (e) {}
+  })();
+  </script>
 </head>
 
 <body>

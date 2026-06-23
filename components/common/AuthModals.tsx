@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/components/AuthContext';
-import api from '@/lib/api';
+import { getCities } from '@/lib/frontendApi';
 import { X, Lock, Mail, User, Phone, CheckCircle, ShieldAlert } from 'lucide-react';
 
 interface City {
@@ -41,7 +41,7 @@ const AuthModals: React.FC = () => {
       setErrorMsg(null);
       setSuccessMsg(null);
       // Fetch cities
-      api.get('/api/nb/cities')
+      getCities()
         .then((res) => {
           if (res.data?.success && Array.isArray(res.data.cities)) {
             setCities(res.data.cities);

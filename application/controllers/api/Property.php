@@ -41,15 +41,42 @@ class Property extends CI_Controller
             ), 405);
         }
 
-        $respond_json = $this->input->is_ajax_request()
-            || stripos((string) $this->input->server('HTTP_ACCEPT'), 'application/json') !== false
-            || $this->nb_api_token->read_token_from_request() !== '';
-
         $input = $this->_input_json_or_post();
+        $content_type = (string) $this->input->server('CONTENT_TYPE');
+        $is_multipart_form = stripos($content_type, 'multipart/form-data') !== false;
+        $admin_save_request = !empty($input['admin_save']) || !empty($input['nb_admin_save']);
 
-        $u = $this->session->userdata('nb_user');
+        $respond_json = $this->input->is_ajax_request()
+            || stripos((string) $this->input->server('HTTP_ACCEPT'), 'application/json') !== false;
+        if ($admin_save_request) {
+            // Panel property form must redirect with flash messages, never return JSON.
+            $respond_json = false;
+        } elseif ($this->nb_api_token->read_token_from_request() !== '') {
+            $respond_json = true;
+        }
+
+        $is_admin = $this->_resolve_is_admin_user();
+        if (!$is_admin && (int) $this->session->userdata('nb_admin_property_save_verified') === 1) {
+            $this->session->unset_userdata('nb_admin_property_save_verified');
+            $this->_resolve_is_admin_user();
+            $is_admin = true;
+        }
+        if (!$is_admin && $admin_save_request) {
+            $is_admin = $this->_verify_admin_property_token($input);
+        }
         $session_uid = (int) $this->session->userdata('nb_user_id');
-        $is_admin = $u && isset($u['role']) && $u['role'] === 'admin' && isset($u['status']) && $u['status'] === 'approved';
+        if ($admin_save_request && !$is_admin) {
+            if ($respond_json) {
+                return $this->_json(array(
+                    'success' => false,
+                    'message' => 'Admin login required to save listing flags.',
+                ), 403);
+            }
+            $this->session->set_flashdata('nb_err', 'Admin login required. Open the panel from Admin Panel link after signing in.');
+            $fail_id = (int) ($input['property_id'] ?? 0);
+            nb_redirect_path($fail_id > 0 ? ('panel/property/edit/' . $fail_id) : 'panel/property/add');
+            return;
+        }
 
         // If not already JSON, force it for /api/ routes UNLESS it's an admin in the browser
         if (!$respond_json && stripos((string) $this->input->server('REQUEST_URI'), '/api/') !== false) {
@@ -123,9 +150,9 @@ class Property extends CI_Controller
             $this->session->set_flashdata('nb_err', trim($msg));
             // Redirect back to either edit or add form
             if ($id > 0) {
-                redirect($is_admin ? ('panel/property/edit/' . $id) : ('owner/listing/edit/' . $id));
+                nb_redirect_path($is_admin ? ('panel/property/edit/' . $id) : ('owner/listing/edit/' . $id));
             } else {
-                redirect($is_admin ? 'panel/property/add' : 'owner/listing/add');
+                nb_redirect_path($is_admin ? 'panel/property/add' : 'owner/listing/add');
             }
         }
 
@@ -190,6 +217,8 @@ class Property extends CI_Controller
             }
         }
 
+        $this->_apply_listing_media_uploads($row, $existing);
+
         if ($is_admin) {
             $post_owner_val = (int) ($input['owner_id'] ?? 0);
             if ($id > 0) {
@@ -201,20 +230,15 @@ class Property extends CI_Controller
             } else {
                 $row['owner_id'] = $post_owner_val > 0 ? $post_owner_val : $owner_id;
             }
-            if ($this->db->field_exists('is_active', 'nb_properties')) {
-                $row['is_active'] = !empty($input['is_active']) ? 1 : 0;
-            }
-            if ($this->db->field_exists('is_featured', 'nb_properties')) {
-                $row['is_featured'] = !empty($input['is_featured']) ? 1 : 0;
-            }
-            if ($this->db->field_exists('is_latest', 'nb_properties')) {
-                $row['is_latest'] = !empty($input['is_latest']) ? 1 : 0;
-            }
-            if ($this->db->field_exists('tags_best_rate_localities', 'nb_properties')) {
-                $row['tags_best_rate_localities'] = !empty($input['tags_best_rate_localities']) ? 1 : 0;
-            }
-            if ($this->db->field_exists('tags_high_growth_localities', 'nb_properties')) {
-                $row['tags_high_growth_localities'] = !empty($input['tags_high_growth_localities']) ? 1 : 0;
+            $this->_apply_admin_listing_flags($row, $input);
+            $hb_err = $this->_apply_home_banner($row, $input, $existing);
+            if ($hb_err !== null) {
+                if ($respond_json) {
+                    return $this->_json(array('success' => false, 'message' => $hb_err), 400);
+                }
+                $this->session->set_flashdata('nb_err', $hb_err);
+                nb_redirect_path($id > 0 ? ('panel/property/edit/' . $id) : 'panel/property/add');
+                return;
             }
         } else {
             $row['owner_id'] = $owner_id;
@@ -328,7 +352,7 @@ class Property extends CI_Controller
         }
         $this->session->set_flashdata('nb_ok', $flash_ok);
         if (!empty($input['admin_save'])) {
-            redirect('panel/properties');
+            nb_redirect_path('panel/property/edit/' . (int) $new_id);
             return;
         }
         redirect('owner/listings');
@@ -406,6 +430,79 @@ class Property extends CI_Controller
         return $paths;
     }
 
+    /** Upload brochure / audio notes and optionally remove existing files. */
+    private function _apply_listing_media_uploads(array &$row, $existing)
+    {
+        if ($this->db->field_exists('brochure_url', 'nb_properties')) {
+            if (!empty($this->input->post('remove_brochure'))) {
+                if ($existing && !empty($existing->brochure_url)) {
+                    $this->_unlink_uploaded_file($existing->brochure_url);
+                }
+                $row['brochure_url'] = null;
+            }
+            $brochure = $this->_upload_single_document('brochure', 'brochures', 'pdf|doc|docx|jpg|jpeg|png|webp', 10240);
+            if ($brochure !== null) {
+                if ($existing && !empty($existing->brochure_url)) {
+                    $this->_unlink_uploaded_file($existing->brochure_url);
+                }
+                $row['brochure_url'] = $brochure;
+            }
+        }
+
+        if ($this->db->field_exists('audio_notes_url', 'nb_properties')) {
+            if (!empty($this->input->post('remove_audio_notes'))) {
+                if ($existing && !empty($existing->audio_notes_url)) {
+                    $this->_unlink_uploaded_file($existing->audio_notes_url);
+                }
+                $row['audio_notes_url'] = null;
+            }
+            $audio = $this->_upload_single_document('audio_notes', 'audio', 'mp3|wav|m4a|ogg|webm|aac', 15360);
+            if ($audio !== null) {
+                if ($existing && !empty($existing->audio_notes_url)) {
+                    $this->_unlink_uploaded_file($existing->audio_notes_url);
+                }
+                $row['audio_notes_url'] = $audio;
+            }
+        }
+    }
+
+    /** @return string|null Relative path under assets/uploads/nb_properties/ */
+    private function _upload_single_document($field, $subdir, $allowed_types, $max_kb)
+    {
+        if (empty($_FILES[$field]['name'])) {
+            return null;
+        }
+        $upload_path = FCPATH . 'assets/uploads/nb_properties/' . trim($subdir, '/') . '/';
+        if (!is_dir($upload_path)) {
+            mkdir($upload_path, 0755, true);
+        }
+        $config = array(
+            'upload_path' => $upload_path,
+            'allowed_types' => $allowed_types,
+            'max_size' => (int) $max_kb,
+            'encrypt_name' => true,
+        );
+        $this->load->library('upload', $config);
+        $this->upload->initialize($config);
+        if (!$this->upload->do_upload($field)) {
+            return null;
+        }
+        $data = $this->upload->data();
+        return 'assets/uploads/nb_properties/' . trim($subdir, '/') . '/' . $data['file_name'];
+    }
+
+    private function _unlink_uploaded_file($relative_path)
+    {
+        $relative_path = trim((string) $relative_path);
+        if ($relative_path === '' || strpos($relative_path, 'assets/uploads/nb_properties/') !== 0) {
+            return;
+        }
+        $full = FCPATH . $relative_path;
+        if (is_file($full)) {
+            @unlink($full);
+        }
+    }
+
     private function _json($data, $code = 200)
     {
         $this->output->set_status_header($code);
@@ -431,6 +528,13 @@ class Property extends CI_Controller
         if (isset($out['location_image']) && !empty($out['location_image'])) {
             $li = $out['location_image'];
             $out['location_image_url'] = preg_match('#^https?://#i', $li) ? $li : base_url($li);
+        }
+
+        foreach (array('brochure_url', 'audio_notes_url', 'home_banner_image') as $mediaCol) {
+            if (isset($out[$mediaCol]) && !empty($out[$mediaCol])) {
+                $path = $out[$mediaCol];
+                $out[$mediaCol . '_url'] = preg_match('#^https?://#i', $path) ? $path : base_url($path);
+            }
         }
 
         if (isset($out['images']) && is_string($out['images']) && $out['images'] !== '') {
@@ -585,5 +689,230 @@ class Property extends CI_Controller
             $rows[] = array('category' => $cat, 'title' => $cat, 'name' => $name, 'distance' => $distance);
         }
         return json_encode($rows);
+    }
+
+    /** Whether the current request belongs to an approved admin (session or DB fallback). */
+    private function _resolve_is_admin_user()
+    {
+        $u = $this->session->userdata('nb_user');
+        if ($u && isset($u['role']) && $u['role'] === 'admin' && isset($u['status']) && $u['status'] === 'approved') {
+            return true;
+        }
+
+        $session_uid = (int) $this->session->userdata('nb_user_id');
+        if ($session_uid < 1) {
+            return false;
+        }
+
+        $admin_row = $this->Nb_user_model->get_by_id($session_uid);
+        if (!$admin_row || $admin_row->role !== 'admin' || $admin_row->status !== 'approved') {
+            return false;
+        }
+
+        $this->session->set_userdata('nb_user_id', (int) $admin_row->id);
+        $this->session->set_userdata('nb_user', array(
+            'id'     => (int) $admin_row->id,
+            'name'   => $admin_row->name,
+            'email'  => $admin_row->email,
+            'phone'  => isset($admin_row->phone) ? (string) $admin_row->phone : '',
+            'role'   => $admin_row->role,
+            'status' => $admin_row->status,
+        ));
+
+        return true;
+    }
+
+    /** Write all admin-only listing boolean flags from POST into $row. */
+    private function _apply_admin_listing_flags(array &$row, array $input)
+    {
+        if ($this->db->field_exists('is_active', 'nb_properties')) {
+            $row['is_active'] = $this->_post_flag($input, 'is_active');
+        }
+        if ($this->db->field_exists('is_featured', 'nb_properties')) {
+            $row['is_featured'] = $this->_post_flag($input, 'is_featured');
+        }
+        if ($this->db->field_exists('is_recommended', 'nb_properties')) {
+            $row['is_recommended'] = $this->_post_flag($input, 'is_recommended');
+        }
+        if ($this->db->field_exists('is_latest', 'nb_properties')) {
+            $row['is_latest'] = $this->_post_flag($input, 'is_latest');
+        }
+        if ($this->db->field_exists('tags_best_rate_localities', 'nb_properties')) {
+            $row['tags_best_rate_localities'] = $this->_post_flag($input, 'tags_best_rate_localities')
+                || $this->_post_flag($input, 'best_rate');
+        }
+        if ($this->db->field_exists('tags_high_growth_localities', 'nb_properties')) {
+            $row['tags_high_growth_localities'] = $this->_post_flag($input, 'tags_high_growth_localities');
+        }
+        if ($this->db->field_exists('is_newly_launched', 'nb_properties')) {
+            $row['is_newly_launched'] = $this->_post_flag($input, 'is_newly_launched');
+        }
+        if ($this->db->field_exists('is_verified_property', 'nb_properties')) {
+            $row['is_verified_property'] = $this->_post_flag($input, 'is_verified_property');
+        }
+        if ($this->db->field_exists('is_premium', 'nb_properties')) {
+            $row['is_premium'] = $this->_post_flag($input, 'is_premium');
+        }
+        if ($this->db->field_exists('is_home_banner', 'nb_properties')) {
+            $row['is_home_banner'] = $this->_post_flag($input, 'is_home_banner');
+        }
+    }
+
+    /**
+     * Admin home banner flag + image upload with strict validation.
+     *
+     * @return string|null Error message or null on success
+     */
+    private function _apply_home_banner(array &$row, array $input, $existing)
+    {
+        if (!$this->db->field_exists('is_home_banner', 'nb_properties')) {
+            return null;
+        }
+
+        $enabled = $this->_post_flag($input, 'is_home_banner');
+        $row['is_home_banner'] = $enabled;
+
+        $removed = !empty($this->input->post('remove_home_banner_image'));
+        if ($removed && $existing && !empty($existing->home_banner_image)) {
+            $this->_unlink_uploaded_file($existing->home_banner_image);
+            $row['home_banner_image'] = null;
+        }
+
+        $upload_err = null;
+        $new_path = $this->_upload_home_banner_image($upload_err);
+        if ($upload_err !== null) {
+            return $upload_err;
+        }
+        if ($new_path !== null) {
+            if ($existing && !empty($existing->home_banner_image)) {
+                $this->_unlink_uploaded_file($existing->home_banner_image);
+            }
+            $row['home_banner_image'] = $new_path;
+        }
+
+        if (!$enabled) {
+            return null;
+        }
+
+        $has_image = !empty($row['home_banner_image']);
+        if (!$has_image && $existing && !empty($existing->home_banner_image) && !$removed) {
+            $has_image = true;
+        }
+        if (!$has_image) {
+            return 'Home banner image is required when Home Banner is enabled. Upload JPEG, PNG or WebP (min 800×300 px, max 2 MB).';
+        }
+
+        return null;
+    }
+
+    /**
+     * Upload home banner hero image with strict MIME and dimension checks.
+     *
+     * @param string|null $error_msg Set on failure
+     * @return string|null Relative path or null if no file uploaded
+     */
+    private function _upload_home_banner_image(&$error_msg)
+    {
+        $error_msg = null;
+        if (empty($_FILES['home_banner_image']['name'])) {
+            return null;
+        }
+
+        $upload_path = FCPATH . 'assets/uploads/nb_properties/home_banners/';
+        if (!is_dir($upload_path)) {
+            mkdir($upload_path, 0755, true);
+        }
+
+        $config = array(
+            'upload_path' => $upload_path,
+            'allowed_types' => 'jpg|jpeg|png|webp',
+            'max_size' => 2048,
+            'encrypt_name' => true,
+        );
+        $this->load->library('upload', $config);
+        $this->upload->initialize($config);
+        if (!$this->upload->do_upload('home_banner_image')) {
+            $error_msg = trim(strip_tags($this->upload->display_errors('', '')));
+            if ($error_msg === '') {
+                $error_msg = 'Home banner image upload failed.';
+            }
+            return null;
+        }
+
+        $data = $this->upload->data();
+        $full = $data['full_path'];
+
+        if (function_exists('finfo_open')) {
+            $f = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_file($f, $full);
+            finfo_close($f);
+            if (!in_array($mime, array('image/jpeg', 'image/png', 'image/webp'), true)) {
+                @unlink($full);
+                $error_msg = 'Home banner must be JPEG, PNG or WebP.';
+                return null;
+            }
+        }
+
+        $size = @getimagesize($full);
+        if (!is_array($size) || empty($size[0]) || empty($size[1])) {
+            @unlink($full);
+            $error_msg = 'Home banner image is not a valid image file.';
+            return null;
+        }
+        $w = (int) $size[0];
+        $h = (int) $size[1];
+        if ($w < 800 || $h < 300) {
+            @unlink($full);
+            $error_msg = 'Home banner image must be at least 800×300 pixels.';
+            return null;
+        }
+        if ($w > 4000 || $h > 2000) {
+            @unlink($full);
+            $error_msg = 'Home banner image must not exceed 4000×2000 pixels.';
+            return null;
+        }
+
+        return 'assets/uploads/nb_properties/home_banners/' . $data['file_name'];
+    }
+
+    /** Parse checkbox / switch from multipart POST (reads raw $_POST first). */
+    private function _post_flag($input, $key)
+    {
+        $v = null;
+        if (isset($_POST[$key])) {
+            $v = $_POST[$key];
+        } elseif (is_array($input) && array_key_exists($key, $input)) {
+            $v = $input[$key];
+        } else {
+            return 0;
+        }
+
+        if (is_array($v)) {
+            foreach ($v as $item) {
+                if ((string) $item === '1') {
+                    return 1;
+                }
+            }
+            return 0;
+        }
+
+        $s = strtolower(trim((string) $v));
+        return ($s === '1' || $s === 'on' || $s === 'true' || $s === 'yes') ? 1 : 0;
+    }
+
+    /** Validate admin property form token + approved admin session. */
+    private function _verify_admin_property_token($input)
+    {
+        if ($this->_resolve_is_admin_user()) {
+            return true;
+        }
+
+        $posted = trim((string) ($input['admin_property_token'] ?? ''));
+        $expected = trim((string) $this->session->userdata('nb_admin_property_token'));
+        if ($posted === '' || $expected === '' || !hash_equals($expected, $posted)) {
+            return false;
+        }
+
+        return $this->_resolve_is_admin_user();
     }
 }

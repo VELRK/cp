@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
-import api from '@/lib/api';
+import { getWishlist } from '@/lib/frontendApi';
 import PropertyCard, { Property } from '@/components/property/PropertyCard';
 import { Heart, Search, ArrowLeft } from 'lucide-react';
 
@@ -33,7 +33,7 @@ export default function WishlistPage() {
   // Fetch wishlist
   useEffect(() => {
     if (user) {
-      api.get(`/api/nb/wishlist?userId=${user.id}`)
+      getWishlist(user.id)
         .then((res) => {
           if (res.data?.success && Array.isArray(res.data.wishlist)) {
             setWishlist(res.data.wishlist);

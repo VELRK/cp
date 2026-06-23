@@ -1530,6 +1530,23 @@ body,
   letter-spacing: 0.02em;
 }
 
+.nb-search-subtabs-premium-row {
+  padding-top: 0;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid rgba(11, 44, 86, 0.06);
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.nb-search-subtabs-premium-row .nb-search-tabs-premium-list {
+  gap: 1rem;
+}
+
+.nb-search-subtab-premium-btn {
+  padding: 0.65rem 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 .nb-search-tab-premium-btn:hover {
   color: var(--nb-primary);
 }

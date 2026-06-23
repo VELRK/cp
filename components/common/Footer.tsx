@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Home, Facebook, Twitter, Instagram, Linkedin, Mail } from 'lucide-react';
-import api from '@/lib/api';
+import { getCities } from '@/lib/frontendApi';
 
 interface City {
   id: number;
@@ -15,7 +15,7 @@ const Footer: React.FC = () => {
   const [cities, setCities] = useState<City[]>([]);
 
   useEffect(() => {
-    api.get('/api/nb/cities')
+    getCities()
       .then((res) => {
         if (res.data?.success && Array.isArray(res.data.cities)) {
           setCities(res.data.cities);

@@ -8,6 +8,9 @@ const isStaticExport = process.env.STATIC_EXPORT === '1';
 const nextConfig = {
   output: isStaticExport ? 'export' : undefined,
   trailingSlash: isStaticExport,
+  // Hostinger serves this app from /cp — assets must use /cp/_next/ not /_next/
+  basePath: isStaticExport ? '/cp' : undefined,
+  assetPrefix: isStaticExport ? '/cp' : undefined,
   images: {
     unoptimized: isStaticExport,
   },

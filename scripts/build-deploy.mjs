@@ -4,10 +4,10 @@
  *
  * Usage:
  *   node scripts/build-deploy.mjs
- *   BACKEND_URL=https://your-site.com/property node scripts/build-deploy.mjs
+ *   BACKEND_URL=https://your-site.com/cp node scripts/build-deploy.mjs --git
  *
  * Output: deploy/release/ (local preview)
- * With --git: also copies release files to repo root for git commit + deploy
+ * With --git: copies out/ + production .htaccess to repo root for git commit + deploy
  */
 
 import { execSync } from 'node:child_process';
@@ -90,19 +90,33 @@ function stashApiRoutes() {
   if (fs.existsSync(stashDir)) {
     fs.rmSync(stashDir, { recursive: true, force: true });
   }
-  if (fs.existsSync(apiDir)) {
-    fs.mkdirSync(stashDir, { recursive: true });
-    fs.renameSync(apiDir, path.join(stashDir, 'api'));
-    log('Stashed app/api (static export uses PHP /api/* instead)');
+  if (!fs.existsSync(apiDir)) return;
+  fs.mkdirSync(stashDir, { recursive: true });
+  const stashedApi = path.join(stashDir, 'api');
+  try {
+    fs.renameSync(apiDir, stashedApi);
+  } catch (err) {
+    if (err.code !== 'EPERM' && err.code !== 'EXDEV') throw err;
+    copyRecursive(apiDir, stashedApi);
+    fs.rmSync(apiDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   }
+  log('Stashed app/api (static export uses PHP /api/* instead)');
 }
 
 function restoreApiRoutes() {
   const stashed = path.join(stashDir, 'api');
-  if (fs.existsSync(stashed) && !fs.existsSync(apiDir)) {
-    fs.renameSync(stashed, apiDir);
-    log('Restored app/api');
+  if (!fs.existsSync(stashed)) return;
+  if (fs.existsSync(apiDir)) {
+    fs.rmSync(apiDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
   }
+  try {
+    fs.renameSync(stashed, apiDir);
+  } catch (err) {
+    if (err.code !== 'EPERM' && err.code !== 'EXDEV') throw err;
+    copyRecursive(stashed, apiDir);
+    fs.rmSync(stashed, { recursive: true, force: true });
+  }
+  log('Restored app/api');
 }
 
 function packageRelease() {
@@ -122,17 +136,6 @@ function packageRelease() {
   if (fs.existsSync(htaccessProd)) {
     fs.copyFileSync(htaccessProd, path.join(releaseDir, '.htaccess'));
     log('Applied production .htaccess (static Next + PHP API routes)');
-  } else {
-    const htaccessDeploy = path.join(root, 'deploy', 'htaccess.static-append');
-    const htaccessTarget = path.join(releaseDir, '.htaccess');
-    const base = path.join(root, '.htaccess');
-    if (fs.existsSync(base)) {
-      fs.copyFileSync(base, htaccessTarget);
-    }
-    if (fs.existsSync(htaccessDeploy) && fs.existsSync(htaccessTarget)) {
-      const extra = fs.readFileSync(htaccessDeploy, 'utf8');
-      fs.appendFileSync(htaccessTarget, `\n\n${extra}`, 'utf8');
-    }
   }
 
   const outDir = path.join(root, 'out');
@@ -146,16 +149,25 @@ function packageRelease() {
   log(`Release ready: ${releaseDir}`);
 }
 
-/** Copy built release to repo root so git push deploys static + PHP to server */
+/** Copy static Next export + production .htaccess to repo root (PHP/assets already tracked). */
 function stageReleaseToRoot() {
-  if (!fs.existsSync(releaseDir)) {
-    log('Nothing to stage — build failed?');
+  const outDir = path.join(root, 'out');
+  if (!fs.existsSync(outDir)) {
+    log('Nothing to stage — run build first (out/ missing)');
     return;
   }
-  for (const entry of fs.readdirSync(releaseDir)) {
-    copyRecursive(path.join(releaseDir, entry), path.join(root, entry));
+
+  const htaccessProd = path.join(root, 'deploy', 'htaccess.production');
+  if (fs.existsSync(htaccessProd)) {
+    fs.copyFileSync(htaccessProd, path.join(root, '.htaccess'));
+    log('Applied production .htaccess to repo root');
   }
-  log('Staged build to repo root → git add, commit, push, then: npm run deploy');
+
+  for (const entry of fs.readdirSync(outDir)) {
+    copyRecursive(path.join(outDir, entry), path.join(root, entry));
+  }
+
+  log('Staged static export from out/ → git add, commit, push, then: npm run deploy');
 }
 
 async function main() {

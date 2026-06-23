@@ -1,0 +1,31 @@
+RewriteEngine On
+DirectoryIndex index.html index.php
+
+# --- Legacy URLs ---
+RewriteRule ^property-detail/(.+?)/?$ property/$1/ [R=301,L]
+
+# --- Next.js static export (_next/, *.html, page folders) ---
+# Real files and directories are served as-is by Apache.
+
+# Add trailing slash when folder has index.html (Next export uses trailingSlash)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_URI} !/$
+RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI}/index.html -f
+RewriteRule ^(.+)$ $1/ [R=301,L]
+
+# Serve page folder index.html (e.g. /search/ -> /search/index.html)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI}index.html -f
+RewriteRule ^(.+?)/?$ $1/index.html [L]
+
+# Root Next homepage
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{DOCUMENT_ROOT}/index.html -f
+RewriteRule ^$ index.html [L]
+
+# --- CodeIgniter (API, panel, admin, uploads not matched above) ---
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php/$1 [L,QSA]

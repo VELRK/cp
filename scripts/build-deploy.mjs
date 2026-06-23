@@ -6,7 +6,8 @@
  *   node scripts/build-deploy.mjs
  *   BACKEND_URL=https://your-site.com/property node scripts/build-deploy.mjs
  *
- * Output: deploy/release/  (upload this folder contents to server document root)
+ * Output: deploy/release/ (local preview)
+ * With --git: also copies release files to repo root for git commit + deploy
  */
 
 import { execSync } from 'node:child_process';
@@ -110,19 +111,28 @@ function packageRelease() {
   }
   fs.mkdirSync(releaseDir, { recursive: true });
 
-  for (const item of ['application', 'system', 'assets', 'index.php', '.htaccess', 'promo_agent.png']) {
+  for (const item of ['application', 'system', 'assets', 'index.php', 'hook.php', 'promo_agent.png']) {
     const src = path.join(root, item);
     if (fs.existsSync(src)) {
       copyRecursive(src, path.join(releaseDir, item));
     }
   }
 
-  const htaccessDeploy = path.join(root, 'deploy', 'htaccess.static-append');
-  const htaccessTarget = path.join(releaseDir, '.htaccess');
-  if (fs.existsSync(htaccessDeploy) && fs.existsSync(htaccessTarget)) {
-    const base = fs.readFileSync(htaccessTarget, 'utf8');
-    const extra = fs.readFileSync(htaccessDeploy, 'utf8');
-    fs.writeFileSync(htaccessTarget, `${base}\n\n${extra}`, 'utf8');
+  const htaccessProd = path.join(root, 'deploy', 'htaccess.production');
+  if (fs.existsSync(htaccessProd)) {
+    fs.copyFileSync(htaccessProd, path.join(releaseDir, '.htaccess'));
+    log('Applied production .htaccess (static Next + PHP API routes)');
+  } else {
+    const htaccessDeploy = path.join(root, 'deploy', 'htaccess.static-append');
+    const htaccessTarget = path.join(releaseDir, '.htaccess');
+    const base = path.join(root, '.htaccess');
+    if (fs.existsSync(base)) {
+      fs.copyFileSync(base, htaccessTarget);
+    }
+    if (fs.existsSync(htaccessDeploy) && fs.existsSync(htaccessTarget)) {
+      const extra = fs.readFileSync(htaccessDeploy, 'utf8');
+      fs.appendFileSync(htaccessTarget, `\n\n${extra}`, 'utf8');
+    }
   }
 
   const outDir = path.join(root, 'out');
@@ -136,13 +146,29 @@ function packageRelease() {
   log(`Release ready: ${releaseDir}`);
 }
 
+/** Copy built release to repo root so git push deploys static + PHP to server */
+function stageReleaseToRoot() {
+  if (!fs.existsSync(releaseDir)) {
+    log('Nothing to stage — build failed?');
+    return;
+  }
+  for (const entry of fs.readdirSync(releaseDir)) {
+    copyRecursive(path.join(releaseDir, entry), path.join(root, entry));
+  }
+  log('Staged build to repo root → git add, commit, push, then: npm run deploy');
+}
+
 async function main() {
+  const stageForGit = process.argv.includes('--git') || process.env.STAGE_FOR_GIT === '1';
   const buildEnv = await loadBuildParams();
 
   stashApiRoutes();
   try {
     run('npm run build', buildEnv);
     packageRelease();
+    if (stageForGit) {
+      stageReleaseToRoot();
+    }
   } finally {
     restoreApiRoutes();
   }

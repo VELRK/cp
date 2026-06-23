@@ -21,7 +21,7 @@ tests/mocks/database/ci_test.sqlite
 tests/tests/
 tests/results/
 
-# --- Next.js / Node ---
+# --- Next.js / Node (source — not deployed to server) ---
 node_modules/
 .next/
 out/
@@ -44,6 +44,20 @@ public/uploads/*
 !public/uploads/.gitkeep
 assets/uploads/*
 !assets/uploads/.gitkeep
+uploads/*
+!uploads/.gitkeep
+
+# --- Dev / debug junk (never commit) ---
+build_log.txt
+lms.txt
+_curl_out.html
+_err.html
+_route_probe.php
+_uri_test.php
+_restore_*.py
+BOQ_*.xlsx
+property*.sql
+*.sql.bak
 
 # --- IDE ---
 /nbproject/

@@ -83,18 +83,12 @@ export const login = (loginId: string, password: string) =>
   api.post(API_PATHS.login, { login: loginId, password });
 
 export const register = (formData: FormData, config?: AxiosRequestConfig) =>
-  api.post(API_PATHS.register, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-    ...config,
-  });
+  api.post(API_PATHS.register, formData, config);
 
 export const logout = () => api.post(API_PATHS.logout);
 
 export const updateProfile = (formData: FormData, config?: AxiosRequestConfig) =>
-  api.post(API_PATHS.updateProfile, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-    ...config,
-  });
+  api.post(API_PATHS.updateProfile, formData, config);
 
 // ——— Cities, search, banners ———
 

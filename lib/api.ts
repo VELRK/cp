@@ -40,6 +40,13 @@ api.interceptors.request.use(
         config.headers['X-Api-Token'] = token;
       }
     }
+    // FormData must set its own multipart boundary — do not force application/json
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      if (config.headers) {
+        delete config.headers['Content-Type'];
+        delete config.headers['content-type'];
+      }
+    }
     return config;
   },
   (error) => {

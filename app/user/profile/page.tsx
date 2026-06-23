@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/AuthContext';
 import { getCities, updateProfile } from '@/lib/frontendApi';
+import { toFrontendAssetUrl } from '@/lib/cityImages';
 import {
   ArrowLeft,
   User,
@@ -64,7 +65,7 @@ export default function UserProfilePage() {
     setPhone(user.phone || '');
     setCityId(user.city_id ? String(user.city_id) : '');
     setAadharNo(user.aadhar_no || '');
-    setProfilePreview(user.profile_pic || null);
+    setProfilePreview(user.profile_pic ? toFrontendAssetUrl(user.profile_pic) : null);
   }, [user]);
 
   const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,6 +104,10 @@ export default function UserProfilePage() {
         setSuccessMsg(res.data.message || 'Profile updated successfully.');
         setProfilePic(null);
         setAadharFile(null);
+        const updatedUser = res.data.user;
+        if (updatedUser?.profile_pic) {
+          setProfilePreview(toFrontendAssetUrl(updatedUser.profile_pic));
+        }
         await refreshUser();
       } else {
         setErrorMsg(res.data?.message || 'Could not update profile.');

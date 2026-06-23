@@ -115,6 +115,12 @@ class Api_nb_app extends CI_Controller
     private function _input_json_or_post()
     {
         $ct = (string) $this->input->server('CONTENT_TYPE');
+
+        // Multipart uploads — use $_POST only; do not read php://input (breaks $_FILES)
+        if (stripos($ct, 'multipart/form-data') !== false) {
+            return array_merge($this->input->post(), $this->input->get());
+        }
+
         $raw = file_get_contents('php://input');
 
         // Try JSON if Content-Type says so, or if body looks like JSON

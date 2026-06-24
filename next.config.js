@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-const backendOrigin = process.env.BACKEND_URL || 'http://127.0.0.1:8080';
+const backendOrigin = process.env.BACKEND_URL || 'http://127.0.0.1';
 const phpBase = `${backendOrigin}/cp/index.php`;
 const cpBase = `${backendOrigin}/cp`;
 const isStaticExport = process.env.STATIC_EXPORT === '1';

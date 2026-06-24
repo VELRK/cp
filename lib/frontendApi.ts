@@ -77,7 +77,7 @@ export type SearchParams = {
 
 // ——— Auth ———
 
-export const getMe = () => api.get(API_PATHS.me);
+export const getMe = () => api.get(API_PATHS.me, { validateStatus: (status) => status < 500 });
 
 export const login = (loginId: string, password: string) =>
   api.post(API_PATHS.login, { login: loginId, password });

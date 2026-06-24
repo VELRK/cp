@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /**
@@ -244,11 +244,11 @@ class Api_nb_app extends CI_Controller
         if ($roleInput === '') {
             $roleInput = 'customer';
         }
-        if (!in_array($roleInput, array('customer', 'agent'), true)) {
-            return $this->_json(array('success' => false, 'message' => 'role (or user_type) must be customer or agent'), 400);
+        if (!in_array($roleInput, array('customer', 'owner', 'agent'), true)) {
+            return $this->_json(array('success' => false, 'message' => 'role (or user_type) must be customer, owner or agent'), 400);
         }
         $user_type = $roleInput;
-        $role = ($user_type === 'agent') ? 'owner' : 'tenant';
+        $role = ($user_type === 'customer') ? 'tenant' : 'owner';
         $aadhar_no = isset($input['aadhar_no']) ? preg_replace('/\D+/', '', (string) $input['aadhar_no']) : '';
         $experience_years = isset($input['experience_years']) && $input['experience_years'] !== '' ? (int) $input['experience_years'] : null;
         $aadhar_file = isset($input['aadhar_file']) ? trim((string) $input['aadhar_file']) : null;

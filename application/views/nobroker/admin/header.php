@@ -25,7 +25,8 @@ $pt = isset($page_title) ? $page_title : 'Admin';
         return;
       }
       sessionStorage.setItem('nb_panel_auth_sync', '1');
-      window.location.replace('/panel/auth?token=' + encodeURIComponent(t));
+      var authBase = (typeof window.NB_BASE_URL === 'string' && window.NB_BASE_URL) ? window.NB_BASE_URL : '/';
+      window.location.replace(authBase + 'panel/auth?token=' + encodeURIComponent(t));
     } catch (e) {}
   })();
   </script>

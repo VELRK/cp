@@ -69,11 +69,27 @@ export function formatApiErrorMessage(
   return msg;
 }
 
+const APP_BASE_PATH = '/cp';
+
+/** App subfolder prefix (empty on Next dev — rewrites proxy to PHP). */
+function getAppBasePath(): string {
+  if (typeof window === 'undefined') {
+    return APP_BASE_PATH;
+  }
+  if (window.location.port === '3000' || window.location.port === '3001') {
+    return '';
+  }
+  return APP_BASE_PATH;
+}
+
 /** Open the CodeIgniter broker admin panel (uses API token SSO when available). */
 export const getAdminPanelUrl = (): string => {
+  const base = getAppBasePath();
   if (typeof window === 'undefined') {
-    return '/panel';
+    return `${base}/panel`;
   }
   const token = localStorage.getItem('nb_token');
-  return token ? `/panel/auth?token=${encodeURIComponent(token)}` : '/panel';
+  return token
+    ? `${base}/panel/auth?token=${encodeURIComponent(token)}`
+    : `${base}/panel`;
 };

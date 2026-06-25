@@ -5,6 +5,11 @@ DirectoryIndex index.html index.php
 RewriteRule ^uploads/ - [L]
 RewriteRule ^assets/ - [L]
 
+# --- PHP app routes (panel, admin, API) — always CodeIgniter ---
+RewriteRule ^panel/ index.php [L,QSA]
+RewriteRule ^admin/ index.php [L,QSA]
+RewriteRule ^api/ index.php [L,QSA]
+
 # --- Legacy URLs ---
 RewriteRule ^property-detail/(.+?)/?$ property/$1/ [R=301,L]
 

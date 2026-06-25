@@ -49,7 +49,7 @@ $nearbyCategoryOptions = array(
   <?php
   if ($is_admin) {
     // Same-origin relative action so session cookies are always sent (localhost:3000 or :8080).
-    echo form_open_multipart('panel/property/save', array('action' => '/panel/property/save'));
+    echo form_open_multipart('panel/property/save', array('action' => site_url('panel/property/save')));
   } else {
     echo form_open_multipart('api/property/save');
   }

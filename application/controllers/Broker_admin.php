@@ -56,11 +56,75 @@ class Broker_admin extends MY_Controller {
     }
 
     /**
-     * Legacy /admin URL → same SSO as /panel/auth (site login, not separate admin login).
+     * Dedicated admin login at /admin (email/phone + password → /panel).
      */
-    public function admin_entry()
+    public function admin_login()
     {
-        $this->auth();
+        $u = $this->nb_user();
+        if ($u && isset($u['role'], $u['status']) && $u['role'] === 'admin' && $u['status'] === 'approved') {
+            redirect('panel');
+            return;
+        }
+
+        if ($this->input->method() === 'post') {
+            $this->load->library('form_validation');
+            $this->form_validation->set_rules('login', 'Email or phone', 'required|trim');
+            $this->form_validation->set_rules('password', 'Password', 'required');
+
+            if (!$this->form_validation->run()) {
+                $this->load->view('nobroker/admin/login', array(
+                    'page_title' => 'Admin Login',
+                    'error'      => trim(strip_tags(validation_errors(' ', ' '))),
+                ));
+                return;
+            }
+
+            $login = $this->input->post('login', true);
+            $password = $this->input->post('password');
+            $user = $this->Nb_user_model->get_by_email_or_phone($login);
+
+            if (!$user || !password_verify($password, $user->password)) {
+                $this->load->view('nobroker/admin/login', array(
+                    'page_title' => 'Admin Login',
+                    'error'      => 'Invalid email, phone, or password.',
+                ));
+                return;
+            }
+
+            if ((string) $user->role !== 'admin') {
+                $this->load->view('nobroker/admin/login', array(
+                    'page_title' => 'Admin Login',
+                    'error'      => 'Admin access only. This account is not an administrator.',
+                ));
+                return;
+            }
+
+            if (!isset($user->status) || (string) $user->status !== 'approved') {
+                $this->load->view('nobroker/admin/login', array(
+                    'page_title' => 'Admin Login',
+                    'error'      => 'Your admin account is not approved yet.',
+                ));
+                return;
+            }
+
+            $this->session->sess_regenerate(true);
+            $this->set_nb_session_from_user($user);
+
+            if ($this->db->field_exists('api_token', 'nb_users')) {
+                $token = bin2hex(random_bytes(32));
+                $this->Nb_user_model->set_api_token((int) $user->id, $token);
+                nb_set_api_token_cookie($token);
+            }
+
+            redirect('panel');
+            return;
+        }
+
+        $flash = $this->session->flashdata('nb_err');
+        $this->load->view('nobroker/admin/login', array(
+            'page_title' => 'Admin Login',
+            'error'      => is_string($flash) ? $flash : '',
+        ));
     }
 
     public function index()

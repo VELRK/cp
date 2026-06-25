@@ -136,9 +136,9 @@ $route['api/enquiry/send'] = 'Api/enquiry/send';
 $route['dashboard/wishlist'] = 'Dashboard/wishlist';
 $route['dashboard/enquiries'] = 'Dashboard/enquiries';
 
-// Admin entry — broker panel SSO (see also duplicate block below)
-$route['admin'] = 'broker_admin/admin_entry';
-$route['admin/login'] = 'broker_admin/admin_entry';
+// Admin login → broker panel (/panel) after nb_users admin auth
+$route['admin'] = 'broker_admin/admin_login';
+$route['admin/login'] = 'broker_admin/admin_login';
 $route['admin/dashboard'] = 'Admin/dashboard';
 $route['admin/enquiries'] = 'Admin/enquiries';
 $route['admin/contacts'] = 'Admin/contacts';
@@ -169,9 +169,9 @@ $route['testimonials'] = 'Home/testimonials';
 $route['admin/seo_settings'] = 'Admin/seo_settings';
 $route['admin/seo_settings_save'] = 'Admin/seo_settings_save';
 
-// Admin routes — /admin opens the broker panel (site login SSO), not legacy Admin/login
-$route['admin'] = 'broker_admin/admin_entry';
-$route['admin/login'] = 'broker_admin/admin_entry';
+// Admin login page (duplicate route block — keep in sync with top)
+$route['admin'] = 'broker_admin/admin_login';
+$route['admin/login'] = 'broker_admin/admin_login';
 $route['admin/logout'] = 'Admin/logout';
 $route['admin/dashboard'] = 'Admin/dashboard';
 $route['admin/properties'] = 'Admin/properties';

@@ -43,3 +43,16 @@ jobs:
             [ -f "$BACKUP_DIR/deploy.local.php" ] && cp "$BACKUP_DIR/deploy.local.php" deploy.local.php
 
             rm -rf "$BACKUP_DIR"
+
+            # Redirect /panel/* at site root → /cp/panel/* (old bookmarks without /cp)
+            PARENT="$(dirname "$TARGET")"
+            ROOT_HT="$PARENT/.htaccess"
+            if [ -f "$TARGET/deploy/htaccess.root-redirect" ] && { [ ! -f "$ROOT_HT" ] || ! grep -q 'cp-panel-redirect' "$ROOT_HT" 2>/dev/null; }; then
+              {
+                echo ""
+                echo "# cp-panel-redirect"
+                cat "$TARGET/deploy/htaccess.root-redirect"
+              } >> "$ROOT_HT"
+            fi
+
+            echo "Deployed: $(git rev-parse --short HEAD) at $TARGET"

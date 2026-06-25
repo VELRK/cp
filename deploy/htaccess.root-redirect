@@ -1,4 +1,4 @@
-# Optional: place in public_html/.htaccess (site root, above other rules)
+# cp-panel-redirect — optional site-root rules (appended by GitHub deploy)
 # Redirects old /panel URLs to the app under /cp/
 <IfModule mod_rewrite.c>
 RewriteEngine On

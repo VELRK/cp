@@ -18,11 +18,40 @@ class Broker_admin extends MY_Controller {
     public function auth()
     {
         $this->load->library('nb_api_token');
+        $this->load->model('Nb_user_model');
         $token = $this->nb_api_token->read_token_from_request();
-        $this->nb_api_token->try_attach_session();
-        if ($token !== '') {
-            nb_set_api_token_cookie($token);
+
+        if ($token === '') {
+            $this->session->set_flashdata('nb_err', 'Missing login token. Log in on the website first, then click Admin Panel.');
+            redirect(site_url() . '?modal=login');
+            return;
         }
+
+        if (!$this->db->field_exists('api_token', 'nb_users')) {
+            show_error('Server setup incomplete: api_token column is missing. Run database migrations.', 500);
+            return;
+        }
+
+        $user = $this->Nb_user_model->get_by_api_token($token);
+        if (!$user) {
+            $this->session->set_flashdata('nb_err', 'Invalid or expired login token. Please log in again, then open Admin Panel from the menu.');
+            redirect(site_url() . '?modal=login');
+            return;
+        }
+
+        $this->set_nb_session_from_user($user);
+        nb_set_api_token_cookie($token);
+
+        if ((string) $user->role !== 'admin') {
+            show_error('Admin access only. Your account role is: ' . html_escape((string) $user->role), 403);
+            return;
+        }
+
+        if (isset($user->status) && (string) $user->status !== 'approved') {
+            show_error('Your account is not approved yet. Contact support.', 403);
+            return;
+        }
+
         redirect('panel');
     }
 

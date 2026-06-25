@@ -29,23 +29,48 @@ export function isValidCityImage(image?: string | null): boolean {
   return value.includes('assets/') || value.includes('uploads/') || value.includes('/');
 }
 
-/** Convert PHP base_url paths to same-origin paths for Next.js (:3000). */
+const APP_BASE_PATH = '/cp';
+
+/** Next dev (:3000) rewrites /uploads and /assets to PHP; production static site needs /cp prefix. */
+function usesDevAssetProxy(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.location.port === '3000' || window.location.port === '3001';
+}
+
+/** Normalize uploads/assets paths for the current environment. */
+function normalizeAssetPath(pathname: string): string {
+  let path = pathname.startsWith('/') ? pathname : `/${pathname}`;
+
+  // Accept /cp/uploads/... or /uploads/... from API — use bare /assets|/uploads segment
+  const underCp = path.match(/^\/cp(\/(?:assets|uploads)\/.+)$/i);
+  if (underCp) {
+    path = underCp[1];
+  }
+
+  if (path.startsWith('/assets/') || path.startsWith('/uploads/')) {
+    if (usesDevAssetProxy()) {
+      return path;
+    }
+    return `${APP_BASE_PATH}${path}`;
+  }
+
+  return path;
+}
+
+/** Convert PHP base_url paths to browser-loadable paths (handles /cp on production). */
 export function toFrontendAssetUrl(image: string): string {
   const value = image.trim();
+  if (!value) return value;
+
   if (/^https?:\/\//i.test(value)) {
     try {
-      const pathname = new URL(value).pathname;
-      const proxied = pathname.match(/\/cp(\/(assets|uploads)\/.+)/i);
-      if (proxied) return proxied[1];
-      if (pathname.startsWith('/assets/') || pathname.startsWith('/uploads/')) {
-        return pathname;
-      }
+      return normalizeAssetPath(new URL(value).pathname);
     } catch {
       return value;
     }
-    return value;
   }
-  return value.startsWith('/') ? value : `/${value}`;
+
+  return normalizeAssetPath(value.startsWith('/') ? value : `/${value}`);
 }
 
 export function getCityFallbackImage(cityName: string): string {

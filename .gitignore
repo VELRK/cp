@@ -47,6 +47,7 @@ assets/uploads/*
 !assets/uploads/.gitkeep
 uploads/*
 !uploads/.gitkeep
+!uploads/.htaccess
 
 # --- Dev / debug junk (never commit) ---
 build_log.txt

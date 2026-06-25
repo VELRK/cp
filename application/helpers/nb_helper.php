@@ -32,6 +32,44 @@ function nb_upgrade_http_image_url($url)
 }
 
 /**
+ * Public URL for uploads/ or assets/ paths (handles /cp subdirectory on production).
+ *
+ * @param string|null $path Relative path e.g. uploads/profiles/x.jpg
+ * @return string|null
+ */
+function nb_public_asset_url($path)
+{
+    if ($path === null) {
+        return null;
+    }
+    $path = trim((string) $path);
+    if ($path === '') {
+        return null;
+    }
+    if (preg_match('#^https?://#i', $path)) {
+        return nb_fix_cp_asset_url($path);
+    }
+    $CI =& get_instance();
+    return nb_fix_cp_asset_url($CI->config->base_url($path));
+}
+
+/** Ensure asset URLs include /cp/ when the app is deployed under that folder. */
+function nb_fix_cp_asset_url($url)
+{
+    $url = trim((string) $url);
+    if ($url === '') {
+        return $url;
+    }
+    $url = nb_upgrade_http_image_url($url);
+    if (preg_match('#^https?://[^/]+/(uploads|assets)/#i', $url)
+        && stripos($url, '/cp/uploads/') === false
+        && stripos($url, '/cp/assets/') === false) {
+        $url = preg_replace('#^(https?://[^/]+)/(?=uploads|assets)#i', '$1/cp/', $url);
+    }
+    return $url;
+}
+
+/**
  * Canonical public URL for a listing: always `/property/{slug}` when slug is set.
  *
  * SEO: Prefer a non-empty `slug` on every row (see Nb_property_model::unique_slug on save,

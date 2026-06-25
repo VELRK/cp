@@ -1,10 +1,9 @@
 RewriteEngine On
-RewriteBase /cp/
 DirectoryIndex index.html index.php
 
 # --- User uploads & PHP static assets (never route to CodeIgniter) ---
-RewriteRule ^uploads/.+ - [L]
-RewriteRule ^assets/.+ - [L]
+RewriteRule ^uploads/ - [L]
+RewriteRule ^assets/ - [L]
 
 # --- Legacy URLs ---
 RewriteRule ^property-detail/(.+?)/?$ property/$1/ [R=301,L]

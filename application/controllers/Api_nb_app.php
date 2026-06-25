@@ -42,17 +42,7 @@ class Api_nb_app extends CI_Controller
 
     private function _asset_url_or_null($path)
     {
-        if ($path === null) {
-            return null;
-        }
-        $path = trim((string) $path);
-        if ($path === '') {
-            return null;
-        }
-        if (preg_match('#^https?://#i', $path)) {
-            return $path;
-        }
-        return base_url($path);
+        return nb_public_asset_url($path);
     }
 
     /** @param mixed $path Raw nb_cities.image value */
@@ -69,12 +59,12 @@ class Api_nb_app extends CI_Controller
             return null;
         }
         if (preg_match('#^https?://#i', $path)) {
-            return $path;
+            return nb_fix_cp_asset_url($path);
         }
         if (strpos($path, 'assets/') === false && strpos($path, 'uploads/') === false && strpos($path, '/') === false) {
             return null;
         }
-        return base_url($path);
+        return nb_public_asset_url($path);
     }
 
     private function _user_public($user)

@@ -33,17 +33,7 @@ class Api_mobile extends CI_Controller {
 
     private function _asset_url_or_null($path)
     {
-        if ($path === null) {
-            return null;
-        }
-        $path = trim((string) $path);
-        if ($path === '') {
-            return null;
-        }
-        if (preg_match('#^https?://#i', $path)) {
-            return $path;
-        }
-        return base_url($path);
+        return nb_public_asset_url($path);
     }
 
     private function _input_json_or_post()

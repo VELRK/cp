@@ -20,11 +20,26 @@ jobs:
           script: |
             TARGET=/home/u221026474/domains/superfinelabels.in/public_html/cp
             cd $TARGET
+
+            BACKUP_DIR="/tmp/cp-deploy-backup-$$"
+            mkdir -p "$BACKUP_DIR"
+            [ -f application/config/database.php ] && cp application/config/database.php "$BACKUP_DIR/database.php"
+            [ -f .env ] && cp .env "$BACKUP_DIR/.env"
+            [ -f deploy.local.php ] && cp deploy.local.php "$BACKUP_DIR/deploy.local.php"
+
             if [ ! -d ".git" ]; then
               git init
               git remote add origin https://github.com/VELRK/cp.git
-              git fetch origin main
-              git reset --hard origin/main
-            else
-              git pull origin main
             fi
+
+            git fetch origin main
+            git reset --hard origin/main
+
+            [ -f "$BACKUP_DIR/database.php" ] && cp "$BACKUP_DIR/database.php" application/config/database.php
+            if [ ! -f application/config/database.php ] && [ -f application/config/database.php.example ]; then
+              cp application/config/database.php.example application/config/database.php
+            fi
+            [ -f "$BACKUP_DIR/.env" ] && cp "$BACKUP_DIR/.env" .env
+            [ -f "$BACKUP_DIR/deploy.local.php" ] && cp "$BACKUP_DIR/deploy.local.php" deploy.local.php
+
+            rm -rf "$BACKUP_DIR"

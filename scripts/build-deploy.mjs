@@ -169,7 +169,7 @@ function stageReleaseToRoot() {
     copyRecursive(path.join(outDir, entry), path.join(root, entry));
   }
 
-  log('Staged static export from out/ → git add, commit, push, then: npm run deploy');
+  log('Staged static export from out/ → git add _next/ and HTML, commit, push, then deploy');
 }
 
 async function main() {

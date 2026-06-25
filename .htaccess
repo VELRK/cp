@@ -4,6 +4,7 @@ DirectoryIndex index.html index.php
 # --- User uploads & PHP static assets (never route to CodeIgniter) ---
 RewriteRule ^uploads/ - [L]
 RewriteRule ^assets/ - [L]
+RewriteRule ^_next/ - [L]
 
 # --- PHP app routes (panel, admin, API) — always CodeIgniter ---
 RewriteRule ^panel/?(.*)$ index.php/panel/$1 [L,QSA]

@@ -45,7 +45,8 @@ $eq_badge = function ($s) {
             <td><?php echo html_escape($e->city_name); ?></td>
             <td><span class="nb-admin-badge <?php echo $eq_badge($e->status); ?>"><?php echo html_escape($e->status); ?></span></td>
             <td class="text-end text-nowrap">
-              <a class="btn btn-sm btn-outline-dark rounded-pill px-3" href="<?php echo site_url('panel/enquiry/' . (int) $e->id); ?>">Edit</a>
+              <a class="btn btn-sm btn-outline-secondary rounded-pill px-3 me-1" href="<?php echo site_url('panel/enquiry/' . (int) $e->id); ?>">View</a>
+              <a class="btn btn-sm btn-outline-dark rounded-pill px-3 me-1" href="<?php echo site_url('panel/enquiry/' . (int) $e->id); ?>">Edit</a>
               <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2 nb-eq-del" data-id="<?php echo (int) $e->id; ?>" title="Delete">×</button>
             </td>
           </tr>

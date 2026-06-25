@@ -1,0 +1,283 @@
+/* Classic Premium Hero Slider Container */
+.nb-hero-slider-revamp {
+  position: relative;
+  height: 300px;
+  background-color: #0b111a;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  margin-bottom: 0;
+}
+
+@keyframes slowPan {
+  0% {
+    transform: scale(1.0);
+  }
+
+  100% {
+    transform: scale(1.1);
+  }
+}
+
+.nb-hero-slide-revamp {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  z-index: 1;
+  transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  /* Left aligned content */
+}
+
+.nb-hero-slide-revamp.active {
+  opacity: 1;
+  z-index: 2;
+  animation: slowPan 20s ease-out forwards;
+}
+
+/* Elegant Gradient Overlay: dark on the left to transparent on the right */
+.nb-hero-slide-overlay-rich {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right,
+      rgba(10, 15, 25, 0.95) 0%,
+      rgba(10, 15, 25, 0.75) 35%,
+      rgba(10, 15, 25, 0.2) 75%,
+      rgba(10, 15, 25, 0) 100%);
+  z-index: 3;
+}
+
+/* On mobile, gradient from bottom up */
+@media (max-width: 991.98px) {
+  .nb-hero-slide-overlay-rich {
+    background: linear-gradient(to top,
+        rgba(10, 15, 25, 0.95) 0%,
+        rgba(10, 15, 25, 0.75) 50%,
+        rgba(10, 15, 25, 0.3) 100%);
+  }
+}
+
+/* Classic Elegant Panel */
+.nb-hero-slide-content {
+  position: relative;
+  width: 50%;
+  padding: 0 4rem 0 9rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: #ffffff;
+  z-index: 10;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: all 1s cubic-bezier(0.16, 1, 0.3, 1) 0.4s;
+}
+
+.nb-hero-slide-revamp.active .nb-hero-slide-content {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+@media (max-width: 1200px) {
+  .nb-hero-slide-content {
+    width: 65%;
+    padding: 0 3rem 0 7rem;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .nb-hero-slider-revamp {
+    height: 250px;
+  }
+
+  .nb-hero-slide-revamp {
+    justify-content: center;
+    align-items: flex-end;
+  }
+
+  .nb-hero-slide-content {
+    width: 100%;
+    padding: 2rem 1.5rem 4rem 1.5rem;
+    text-align: center;
+    transform: translateY(15px);
+  }
+}
+
+/* Badges & Text */
+.slide-premium-badge {
+  display: inline-block;
+  align-self: flex-start;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #d4af37;
+  /* Classic Gold */
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #d4af37;
+  padding-bottom: 0.25rem;
+}
+
+@media (max-width: 991.98px) {
+  .slide-premium-badge {
+    align-self: center;
+  }
+}
+
+.slide-main-title {
+  font-size: 2.2rem;
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.75rem;
+  color: #ffffff;
+  font-family: 'Georgia', serif;
+  /* Classic serif touch */
+}
+
+@media (max-width: 1200px) {
+  .slide-main-title {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .slide-main-title {
+    font-size: 1.5rem;
+  }
+}
+
+.slide-location {
+  font-size: 0.95rem;
+  font-weight: 300;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 1.5rem;
+}
+
+.slide-location strong {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+/* Footer elements */
+.slide-footer-row {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 991.98px) {
+  .slide-footer-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+}
+
+.slide-price-tag {
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: #ffffff;
+}
+
+.slide-explore-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: transparent !important;
+  color: #ffffff !important;
+  border: 1px solid #ffffff;
+  padding: 0.75rem 2rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.slide-explore-btn:hover {
+  background-color: #ffffff !important;
+  color: #0b111a !important;
+}
+
+.slide-explore-btn .arrow-icon {
+  font-size: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.slide-explore-btn:hover .arrow-icon {
+  transform: translateX(4px);
+}
+
+/* Navigation Arrows - Minimalist */
+.nb-slider-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s ease;
+  opacity: 0.7;
+}
+
+.nb-slider-arrow:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: white;
+  opacity: 1;
+}
+
+.nb-slider-arrow-left {
+  left: 2rem;
+}
+
+.nb-slider-arrow-right {
+  right: 2rem;
+}
+
+@media (max-width: 991.98px) {
+  .nb-slider-arrow {
+    display: none;
+  }
+}
+
+/* Navigation Indicator Dots */
+.nb-slider-dots-container {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.75rem;
+  z-index: 10;
+}
+
+.nb-slider-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.nb-slider-dot.active {
+  background: #ffffff;
+  transform: scale(1.2);
+}

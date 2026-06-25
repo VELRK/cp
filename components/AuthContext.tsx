@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getMe, login as apiLogin, register as apiRegister, logout as apiLogout } from '../lib/frontendApi';
+import { getAppHomeUrl } from '../lib/api';
 
 interface User {
   id: number;
@@ -119,7 +120,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setToken(null);
       setUser(null);
       setAuthModalOpen(null);
-      window.location.href = '/';
+      window.location.href = getAppHomeUrl();
     }
   };
 

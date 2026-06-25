@@ -82,6 +82,12 @@ function getAppBasePath(): string {
   return APP_BASE_PATH;
 }
 
+/** App home URL after logout (respects /cp subfolder on production). */
+export function getAppHomeUrl(): string {
+  const base = getAppBasePath();
+  return base ? `${base}/` : '/';
+}
+
 /** Open the CodeIgniter broker admin panel (uses API token SSO when available). */
 export const getAdminPanelUrl = (): string => {
   const base = getAppBasePath();

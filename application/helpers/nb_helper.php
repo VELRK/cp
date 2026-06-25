@@ -304,12 +304,43 @@ function nb_clear_api_token_cookie()
 }
 
 /**
+ * URL path prefix when the app lives in a subfolder (e.g. /cp on Hostinger).
+ * Empty on Next.js dev (localhost:3000).
+ */
+function nb_app_base_path()
+{
+    static $cached = null;
+    if ($cached !== null) {
+        return $cached;
+    }
+    $host = isset($_SERVER['HTTP_HOST']) ? strtolower((string) $_SERVER['HTTP_HOST']) : '';
+    if ($host !== '' && preg_match('/^(localhost|127\.0\.0\.1):300[01]$/', $host)) {
+        $cached = '';
+        return $cached;
+    }
+    if (isset($_SERVER['SCRIPT_NAME'])) {
+        $dir = str_replace('\\', '/', dirname((string) $_SERVER['SCRIPT_NAME']));
+        if (preg_match('#(/cp)/?$#', $dir, $m)) {
+            $cached = $m[1];
+            return $cached;
+        }
+    }
+    $cached = '';
+    return $cached;
+}
+
+/**
  * Redirect using a root-relative path so the browser stays on localhost:3000
  * (avoids .env BASE_URL=http://localhost:8080/cp breaking panel saves).
+ * On production subfolder installs, prefixes /cp so logout/home links stay in the app.
  */
 function nb_redirect_path($path, $code = 303)
 {
     $path = '/' . ltrim((string) $path, '/');
+    $base = nb_app_base_path();
+    if ($base !== '' && $path !== $base && $path !== $base . '/' && strpos($path, $base . '/') !== 0) {
+        $path = $base . $path;
+    }
     $CI =& get_instance();
     $CI->output->set_status_header((int) $code);
     header('Location: ' . $path, true, (int) $code);

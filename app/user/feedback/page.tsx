@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../components/AuthContext';
 import { getFeedbacks, submitFeedback } from '@/lib/frontendApi';
+import { formatApiErrorMessage } from '@/lib/api';
 import { ArrowLeft, MessageSquare, Send, CheckCircle2, AlertCircle, Calendar, Paperclip, X } from 'lucide-react';
 
 interface FeedbackItem {
@@ -124,11 +125,11 @@ export default function FeedbackPage() {
         // Refresh list
         fetchFeedbacks();
       } else {
-        setErrorMessage(res.data?.message || 'Failed to submit feedback.');
+        setErrorMessage(formatApiErrorMessage(res.data, 'Failed to submit feedback.'));
       }
     } catch (err: any) {
       console.error('Error submitting feedback:', err);
-      setErrorMessage(err.response?.data?.message || 'An error occurred while submitting. Please try again.');
+      setErrorMessage(formatApiErrorMessage(err.response?.data, 'An error occurred while submitting. Please try again.'));
     } finally {
       setSubmitting(false);
     }

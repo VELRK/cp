@@ -21,6 +21,12 @@ class Property extends CI_Controller
     private function _input_json_or_post()
     {
         $contentType = (string) $this->input->server('CONTENT_TYPE');
+
+        // Multipart uploads — use $_POST only; do not read php://input (breaks $_FILES)
+        if (stripos($contentType, 'multipart/form-data') !== false) {
+            return array_merge($this->input->post(), $this->input->get());
+        }
+
         if (stripos($contentType, 'application/json') !== false) {
             $raw = file_get_contents('php://input');
             $json = json_decode($raw, true);
@@ -199,25 +205,37 @@ class Property extends CI_Controller
             $row['video_url'] = $this->security->xss_clean($input['video_url'] ?? $input['video'] ?? '');
         }
 
+        $upload_errors = array();
+
         if (!empty($_FILES['location_image']['name'])) {
-            $config = array(
-                'upload_path' => FCPATH . 'assets/uploads/nb_properties/',
-                'allowed_types' => 'jpg|jpeg|png|webp',
-                'max_size' => 5120,
-                'encrypt_name' => true,
-            );
-            $this->load->library('upload', $config);
-            $this->upload->initialize($config);
-            if ($this->upload->do_upload('location_image')) {
-                $upd_data = $this->upload->data();
-                $row['location_image'] = 'assets/uploads/nb_properties/' . $upd_data['file_name'];
-                if ($existing && !empty($existing->location_image) && file_exists(FCPATH . $existing->location_image)) {
-                    @unlink(FCPATH . $existing->location_image);
+            $upload_path = FCPATH . 'assets/uploads/nb_properties/';
+            $dir_err = $this->_ensure_upload_dir($upload_path);
+            if ($dir_err !== null) {
+                $upload_errors[] = 'Location image: ' . $dir_err;
+            } elseif (!empty($_FILES['location_image']['error']) && $_FILES['location_image']['error'] !== UPLOAD_ERR_OK) {
+                $upload_errors[] = 'Location image: ' . $this->_php_upload_error_message($_FILES['location_image']['error']);
+            } else {
+                $config = array(
+                    'upload_path' => $upload_path,
+                    'allowed_types' => 'jpg|jpeg|png|webp',
+                    'max_size' => 5120,
+                    'encrypt_name' => true,
+                );
+                $this->load->library('upload', $config);
+                $this->upload->initialize($config);
+                if (!$this->upload->do_upload('location_image')) {
+                    $upload_errors[] = 'Location image: ' . strip_tags($this->upload->display_errors('', ''));
+                } else {
+                    $upd_data = $this->upload->data();
+                    $row['location_image'] = 'assets/uploads/nb_properties/' . $upd_data['file_name'];
+                    if ($existing && !empty($existing->location_image) && file_exists(FCPATH . $existing->location_image)) {
+                        @unlink(FCPATH . $existing->location_image);
+                    }
                 }
             }
         }
 
-        $this->_apply_listing_media_uploads($row, $existing);
+        $upload_errors = array_merge($upload_errors, $this->_apply_listing_media_uploads($row, $existing));
 
         if ($is_admin) {
             $post_owner_val = (int) ($input['owner_id'] ?? 0);
@@ -272,12 +290,26 @@ class Property extends CI_Controller
             }
         }
 
-        $new_paths = $this->_upload_images($id > 0 ? $id : null);
-        if ($new_paths === false) {
-            return $this->_json(array('success' => false, 'message' => 'Image upload failed'), 400);
-        }
-        if (!is_array($new_paths)) {
-            $new_paths = array();
+        $image_result = $this->_upload_images($id > 0 ? $id : null);
+        $new_paths = $image_result['paths'];
+        $upload_errors = array_merge($upload_errors, $image_result['errors']);
+
+        if (!empty($upload_errors)) {
+            $this->_rollback_new_uploads($row, $existing, $new_paths);
+            if ($respond_json) {
+                return $this->_json(array(
+                    'success' => false,
+                    'message' => 'Upload failed. Please check the errors below.',
+                    'upload_errors' => $upload_errors,
+                ), 400);
+            }
+            $this->session->set_flashdata('nb_err', implode("\n", $upload_errors));
+            if ($id > 0) {
+                nb_redirect_path($is_admin ? ('panel/property/edit/' . $id) : ('owner/listing/edit/' . $id));
+            } else {
+                nb_redirect_path($is_admin ? 'panel/property/add' : 'owner/listing/add');
+            }
+            return;
         }
 
         $existing_paths = $input['existing_paths'] ?? array();
@@ -295,6 +327,7 @@ class Property extends CI_Controller
                 continue;
             }
             if (in_array($ep, $remove, true)) {
+                $this->_unlink_uploaded_file($ep);
                 continue;
             }
             if (strpos($ep, 'assets/uploads/nb_properties/') !== 0) {
@@ -381,19 +414,26 @@ class Property extends CI_Controller
 
     private function _upload_images($existing_id)
     {
+        $result = array('paths' => array(), 'errors' => array());
         if (empty($_FILES['images']['name']) || !is_array($_FILES['images']['name'])) {
-            return array();
+            return $result;
         }
-        $paths = array();
         $count = count($_FILES['images']['name']);
         $count = min($count, 10);
         $upload_path = FCPATH . 'assets/uploads/nb_properties/';
-        if (!is_dir($upload_path)) {
-            mkdir($upload_path, 0755, true);
+        $dir_err = $this->_ensure_upload_dir($upload_path);
+        if ($dir_err !== null) {
+            $result['errors'][] = 'Property images: ' . $dir_err;
+            return $result;
         }
         $this->load->library('upload');
         for ($i = 0; $i < $count; $i++) {
             if (empty($_FILES['images']['name'][$i])) {
+                continue;
+            }
+            $label = (string) $_FILES['images']['name'][$i];
+            if (!empty($_FILES['images']['error'][$i]) && $_FILES['images']['error'][$i] !== UPLOAD_ERR_OK) {
+                $result['errors'][] = $label . ': ' . $this->_php_upload_error_message($_FILES['images']['error'][$i]);
                 continue;
             }
             $_FILES['userfile'] = array(
@@ -411,6 +451,7 @@ class Property extends CI_Controller
             );
             $this->upload->initialize($config);
             if (!$this->upload->do_upload('userfile')) {
+                $result['errors'][] = $label . ': ' . strip_tags($this->upload->display_errors('', ''));
                 continue;
             }
             $data = $this->upload->data();
@@ -422,17 +463,20 @@ class Property extends CI_Controller
                 $ok = in_array($mime, array('image/jpeg', 'image/png', 'image/webp'), true);
                 if (!$ok) {
                     @unlink($full);
+                    $result['errors'][] = $label . ': invalid image type';
                     continue;
                 }
             }
-            $paths[] = 'assets/uploads/nb_properties/' . $data['file_name'];
+            $result['paths'][] = 'assets/uploads/nb_properties/' . $data['file_name'];
         }
-        return $paths;
+        return $result;
     }
 
-    /** Upload brochure / audio notes and optionally remove existing files. */
+    /** Upload brochure / audio notes and optionally remove existing files. @return string[] */
     private function _apply_listing_media_uploads(array &$row, $existing)
     {
+        $errors = array();
+
         if ($this->db->field_exists('brochure_url', 'nb_properties')) {
             if (!empty($this->input->post('remove_brochure'))) {
                 if ($existing && !empty($existing->brochure_url)) {
@@ -441,11 +485,13 @@ class Property extends CI_Controller
                 $row['brochure_url'] = null;
             }
             $brochure = $this->_upload_single_document('brochure', 'brochures', 'pdf|doc|docx|jpg|jpeg|png|webp', 10240);
-            if ($brochure !== null) {
+            if ($brochure['error'] !== null) {
+                $errors[] = $brochure['error'];
+            } elseif ($brochure['path'] !== null) {
                 if ($existing && !empty($existing->brochure_url)) {
                     $this->_unlink_uploaded_file($existing->brochure_url);
                 }
-                $row['brochure_url'] = $brochure;
+                $row['brochure_url'] = $brochure['path'];
             }
         }
 
@@ -457,24 +503,36 @@ class Property extends CI_Controller
                 $row['audio_notes_url'] = null;
             }
             $audio = $this->_upload_single_document('audio_notes', 'audio', 'mp3|wav|m4a|ogg|webm|aac', 15360);
-            if ($audio !== null) {
+            if ($audio['error'] !== null) {
+                $errors[] = $audio['error'];
+            } elseif ($audio['path'] !== null) {
                 if ($existing && !empty($existing->audio_notes_url)) {
                     $this->_unlink_uploaded_file($existing->audio_notes_url);
                 }
-                $row['audio_notes_url'] = $audio;
+                $row['audio_notes_url'] = $audio['path'];
             }
         }
+
+        return $errors;
     }
 
-    /** @return string|null Relative path under assets/uploads/nb_properties/ */
+    /** @return array{path: string|null, error: string|null} */
     private function _upload_single_document($field, $subdir, $allowed_types, $max_kb)
     {
         if (empty($_FILES[$field]['name'])) {
-            return null;
+            return array('path' => null, 'error' => null);
+        }
+        $label = ucfirst(str_replace('_', ' ', $field));
+        if (!empty($_FILES[$field]['error']) && $_FILES[$field]['error'] !== UPLOAD_ERR_OK) {
+            return array(
+                'path' => null,
+                'error' => $label . ': ' . $this->_php_upload_error_message($_FILES[$field]['error']),
+            );
         }
         $upload_path = FCPATH . 'assets/uploads/nb_properties/' . trim($subdir, '/') . '/';
-        if (!is_dir($upload_path)) {
-            mkdir($upload_path, 0755, true);
+        $dir_err = $this->_ensure_upload_dir($upload_path);
+        if ($dir_err !== null) {
+            return array('path' => null, 'error' => $label . ': ' . $dir_err);
         }
         $config = array(
             'upload_path' => $upload_path,
@@ -485,10 +543,64 @@ class Property extends CI_Controller
         $this->load->library('upload', $config);
         $this->upload->initialize($config);
         if (!$this->upload->do_upload($field)) {
-            return null;
+            return array(
+                'path' => null,
+                'error' => $label . ': ' . strip_tags($this->upload->display_errors('', '')),
+            );
         }
         $data = $this->upload->data();
-        return 'assets/uploads/nb_properties/' . trim($subdir, '/') . '/' . $data['file_name'];
+        return array(
+            'path' => 'assets/uploads/nb_properties/' . trim($subdir, '/') . '/' . $data['file_name'],
+            'error' => null,
+        );
+    }
+
+    private function _ensure_upload_dir($path)
+    {
+        if (is_dir($path)) {
+            return null;
+        }
+        if (@mkdir($path, 0755, true) || is_dir($path)) {
+            return null;
+        }
+        return 'Could not create upload directory.';
+    }
+
+    private function _php_upload_error_message($code)
+    {
+        switch ((int) $code) {
+            case UPLOAD_ERR_INI_SIZE:
+            case UPLOAD_ERR_FORM_SIZE:
+                return 'File exceeds maximum allowed size.';
+            case UPLOAD_ERR_PARTIAL:
+                return 'File was only partially uploaded.';
+            case UPLOAD_ERR_NO_FILE:
+                return 'No file was uploaded.';
+            case UPLOAD_ERR_NO_TMP_DIR:
+                return 'Server missing temporary folder.';
+            case UPLOAD_ERR_CANT_WRITE:
+                return 'Failed to write file to disk.';
+            case UPLOAD_ERR_EXTENSION:
+                return 'Upload blocked by server extension.';
+            default:
+                return 'Upload failed.';
+        }
+    }
+
+    private function _rollback_new_uploads(array $row, $existing, array $new_paths)
+    {
+        foreach ($new_paths as $p) {
+            $this->_unlink_uploaded_file($p);
+        }
+        if (!empty($row['location_image']) && (!$existing || ($existing->location_image ?? '') !== $row['location_image'])) {
+            $this->_unlink_uploaded_file($row['location_image']);
+        }
+        if (!empty($row['brochure_url']) && (!$existing || ($existing->brochure_url ?? '') !== $row['brochure_url'])) {
+            $this->_unlink_uploaded_file($row['brochure_url']);
+        }
+        if (!empty($row['audio_notes_url']) && (!$existing || ($existing->audio_notes_url ?? '') !== $row['audio_notes_url'])) {
+            $this->_unlink_uploaded_file($row['audio_notes_url']);
+        }
     }
 
     private function _unlink_uploaded_file($relative_path)

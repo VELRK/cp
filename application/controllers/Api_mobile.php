@@ -49,6 +49,11 @@ class Api_mobile extends CI_Controller {
     private function _input_json_or_post()
     {
         $contentType = (string) $this->input->server('CONTENT_TYPE');
+
+        if (stripos($contentType, 'multipart/form-data') !== false) {
+            return array_merge($this->input->post(), $this->input->get());
+        }
+
         if (stripos($contentType, 'application/json') !== false) {
             $raw = file_get_contents('php://input');
             $json = json_decode($raw, true);
@@ -635,9 +640,44 @@ class Api_mobile extends CI_Controller {
             'status' => trim((string) ($input['status'] ?? 'upcoming')),
             'createdAt' => date('Y-m-d H:i:s'),
         );
-        
+
         if ($this->Live_update_model->has_user_column()) {
-            $data['userId'] = trim((string) ($input['userId'] ?? ''));
+            $uid = trim((string) ($input['userId'] ?? $input['user_id'] ?? ''));
+            if ($uid === '') {
+                $uid = (string) (int) $this->session->userdata('nb_user_id');
+            }
+            if ($uid !== '') {
+                $data['userId'] = $uid;
+            }
+        }
+
+        if (!empty($_FILES['image_file']['name'])) {
+            $upload_dir = FCPATH . 'assets/uploads/live_updates/';
+            if (!is_dir($upload_dir) && !@mkdir($upload_dir, 0755, true) && !is_dir($upload_dir)) {
+                $this->_json(array('success' => false, 'message' => 'Could not prepare image upload directory'), 500);
+                return;
+            }
+            if (!empty($_FILES['image_file']['error']) && $_FILES['image_file']['error'] !== UPLOAD_ERR_OK) {
+                $this->_json(array('success' => false, 'message' => 'Image upload failed: file could not be received'), 400);
+                return;
+            }
+            $this->load->library('upload');
+            $cfg = array(
+                'upload_path' => $upload_dir,
+                'allowed_types' => 'jpg|jpeg|png|webp',
+                'max_size' => 5120,
+                'encrypt_name' => true,
+            );
+            $this->upload->initialize($cfg);
+            if (!$this->upload->do_upload('image_file')) {
+                $this->_json(array(
+                    'success' => false,
+                    'message' => 'Image upload failed: ' . strip_tags($this->upload->display_errors('', '')),
+                ), 400);
+                return;
+            }
+            $u = $this->upload->data();
+            $data['image'] = 'assets/uploads/live_updates/' . $u['file_name'];
         }
         
         $id = $this->Live_update_model->create($data);
@@ -680,6 +720,41 @@ class Api_mobile extends CI_Controller {
                     $update[$f] = trim((string) $input[$f]);
                 }
             }
+        }
+
+        if (!empty($_FILES['image_file']['name'])) {
+            $upload_dir = FCPATH . 'assets/uploads/live_updates/';
+            if (!is_dir($upload_dir) && !@mkdir($upload_dir, 0755, true) && !is_dir($upload_dir)) {
+                $this->_json(array('success' => false, 'message' => 'Could not prepare image upload directory'), 500);
+                return;
+            }
+            if (!empty($_FILES['image_file']['error']) && $_FILES['image_file']['error'] !== UPLOAD_ERR_OK) {
+                $this->_json(array('success' => false, 'message' => 'Image upload failed: file could not be received'), 400);
+                return;
+            }
+            $this->load->library('upload');
+            $cfg = array(
+                'upload_path' => $upload_dir,
+                'allowed_types' => 'jpg|jpeg|png|webp',
+                'max_size' => 5120,
+                'encrypt_name' => true,
+            );
+            $this->upload->initialize($cfg);
+            if (!$this->upload->do_upload('image_file')) {
+                $this->_json(array(
+                    'success' => false,
+                    'message' => 'Image upload failed: ' . strip_tags($this->upload->display_errors('', '')),
+                ), 400);
+                return;
+            }
+            if (!empty($row->image) && strpos((string) $row->image, 'assets/uploads/live_updates/') === 0) {
+                $old = FCPATH . $row->image;
+                if (is_file($old)) {
+                    @unlink($old);
+                }
+            }
+            $u = $this->upload->data();
+            $update['image'] = 'assets/uploads/live_updates/' . $u['file_name'];
         }
         
         if (empty($update)) {

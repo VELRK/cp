@@ -7,6 +7,7 @@ desktop.ini
 .env.*
 !.env.example
 deploy.local.php
+application/config/database.php
 application/config/google_maps_api_key.local.php
 
 # --- PHP / CodeIgniter ---

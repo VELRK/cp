@@ -56,6 +56,19 @@ api.interceptors.request.use(
 
 export default api;
 
+/** Combine API message with optional upload_errors array from PHP responses. */
+export function formatApiErrorMessage(
+  data: { message?: string; upload_errors?: string[] } | undefined,
+  fallback: string
+): string {
+  const msg = data?.message?.trim() || fallback;
+  const uploadErrors = data?.upload_errors;
+  if (Array.isArray(uploadErrors) && uploadErrors.length > 0) {
+    return [msg, ...uploadErrors].join('\n');
+  }
+  return msg;
+}
+
 /** Open the CodeIgniter broker admin panel (uses API token SSO when available). */
 export const getAdminPanelUrl = (): string => {
   if (typeof window === 'undefined') {

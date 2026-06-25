@@ -157,10 +157,7 @@ export const getProperty = (idOrSlug: string | number) =>
   api.get(API_PATHS.property(idOrSlug));
 
 export const saveProperty = (formData: FormData, config?: AxiosRequestConfig) =>
-  api.post(API_PATHS.propertySave, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-    ...config,
-  });
+  api.post(API_PATHS.propertySave, formData, config);
 
 // ——— Owner / tenant (Next.js routes) ———
 
@@ -177,15 +174,11 @@ export const getTenantEnquiries = () => api.get(API_PATHS.tenantEnquiries);
 export const getFeedbacks = () => api.get(API_PATHS.feedback);
 
 export const submitFeedback = (formData: FormData) =>
-  api.post(API_PATHS.feedback, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  api.post(API_PATHS.feedback, formData);
 
 // ——— Live updates ———
 
 export const createLiveUpdate = (formData: FormData) =>
-  api.post(API_PATHS.liveUpdateCreate, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  api.post(API_PATHS.liveUpdateCreate, formData);
 
 export default api;

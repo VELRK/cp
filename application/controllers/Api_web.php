@@ -104,8 +104,11 @@ class Api_web extends CI_Controller
 
         if ($this->db->field_exists('image', 'feedbacks') && !empty($_FILES['image_file']) && !empty($_FILES['image_file']['name'])) {
             $upload_dir = FCPATH . 'assets/uploads/feedbacks/';
-            if (!is_dir($upload_dir)) {
-                @mkdir($upload_dir, 0755, true);
+            if (!is_dir($upload_dir) && !@mkdir($upload_dir, 0755, true) && !is_dir($upload_dir)) {
+                return $this->_json(array('success' => false, 'message' => 'Could not prepare upload directory'), 500);
+            }
+            if (!empty($_FILES['image_file']['error']) && $_FILES['image_file']['error'] !== UPLOAD_ERR_OK) {
+                return $this->_json(array('success' => false, 'message' => 'Image upload failed: file could not be received'), 400);
             }
             $cfg = array(
                 'upload_path' => $upload_dir,

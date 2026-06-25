@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getCities, saveProperty } from '@/lib/frontendApi';
+import { formatApiErrorMessage } from '@/lib/api';
 import { usePropertyTypeFilters } from '@/hooks/usePropertyTypeFilters';
 import { PropertyTypeFilterFields } from '@/components/common/PropertyTypeSelects';
 import { useAuth } from '@/components/AuthContext';
@@ -306,10 +307,33 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
   };
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const filesArr = Array.from(e.target.files);
-      setNewImages([...newImages, ...filesArr].slice(0, 10)); // max 10 images total
+    if (!e.target.files) return;
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const maxBytes = 5 * 1024 * 1024;
+    const validationErrors: string[] = [];
+    const validFiles: File[] = [];
+
+    Array.from(e.target.files).forEach((file) => {
+      if (!allowedTypes.includes(file.type)) {
+        validationErrors.push(`${file.name}: only JPG, PNG, or WEBP allowed`);
+        return;
+      }
+      if (file.size > maxBytes) {
+        validationErrors.push(`${file.name}: max size is 5MB`);
+        return;
+      }
+      validFiles.push(file);
+    });
+
+    if (validationErrors.length > 0) {
+      setErrorMsg(validationErrors.join('\n'));
+    } else {
+      setErrorMsg(null);
     }
+    if (validFiles.length > 0) {
+      setNewImages([...newImages, ...validFiles].slice(0, 10));
+    }
+    e.target.value = '';
   };
 
   const removeNewImage = (idx: number) => {
@@ -615,10 +639,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
           router.push('/owner/listings');
         }, 2500);
       } else {
-        setErrorMsg(response.data?.message || 'Could not save listing.');
+        setErrorMsg(formatApiErrorMessage(response.data, 'Could not save listing.'));
       }
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || 'Error occurred while saving listing.');
+      setErrorMsg(formatApiErrorMessage(err.response?.data, 'Error occurred while saving listing.'));
     } finally {
       setLoading(false);
     }
@@ -957,7 +981,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
             {errorMsg && (
               <div className="alert alert-danger d-flex align-items-center gap-2 small py-2 mb-4 rounded-3">
                 <ShieldAlert size={16} />
-                <span>{errorMsg}</span>
+                <span style={{ whiteSpace: 'pre-line' }}>{errorMsg}</span>
               </div>
             )}
 
@@ -1505,7 +1529,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
           {errorMsg && (
             <div className="alert alert-danger d-flex align-items-center gap-2 small py-2 mb-4 rounded-3">
               <ShieldAlert size={16} />
-              <span>{errorMsg}</span>
+              <span style={{ whiteSpace: 'pre-line' }}>{errorMsg}</span>
             </div>
           )}
 

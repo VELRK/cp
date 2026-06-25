@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { createLiveUpdate } from '@/lib/frontendApi';
+import { formatApiErrorMessage } from '@/lib/api';
 
 interface LiveUpdateModalProps {
   show: boolean;
@@ -15,10 +16,15 @@ export default function LiveUpdateModal({ show, onClose, onSuccess }: LiveUpdate
   });
   const [liveUpdateImage, setLiveUpdateImage] = useState<File | null>(null);
   const [liveUpdateSubmitting, setLiveUpdateSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleLiveUpdateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!liveUpdateData.title) return alert('Title is required');
+    if (!liveUpdateData.title) {
+      setErrorMessage('Title is required');
+      return;
+    }
+    setErrorMessage(null);
     setLiveUpdateSubmitting(true);
     const formData = new FormData();
     Object.entries(liveUpdateData).forEach(([key, value]) => formData.append(key, value));
@@ -27,17 +33,16 @@ export default function LiveUpdateModal({ show, onClose, onSuccess }: LiveUpdate
     try {
       const res = await createLiveUpdate(formData);
       if (res.data?.success) {
-        alert('Live Update created successfully!');
         setLiveUpdateData({ title: '', platform: 'app', status: 'upcoming', url: '', liveTime: '', description: '' });
         setLiveUpdateImage(null);
+        setErrorMessage(null);
         if (onSuccess) onSuccess();
         onClose();
       } else {
-        alert(res.data?.message || 'Failed to create live update.');
+        setErrorMessage(formatApiErrorMessage(res.data, 'Failed to create live update.'));
       }
-    } catch (err) {
-      console.error(err);
-      alert('Error creating live update.');
+    } catch (err: any) {
+      setErrorMessage(formatApiErrorMessage(err.response?.data, 'Error creating live update.'));
     } finally {
       setLiveUpdateSubmitting(false);
     }
@@ -54,6 +59,11 @@ export default function LiveUpdateModal({ show, onClose, onSuccess }: LiveUpdate
             <button type="button" className="btn-close" onClick={onClose}></button>
           </div>
           <div className="modal-body">
+            {errorMessage && (
+              <div className="alert alert-danger small py-2 mb-3" style={{ whiteSpace: 'pre-line' }}>
+                {errorMessage}
+              </div>
+            )}
             <form onSubmit={handleLiveUpdateSubmit}>
               <div className="mb-3">
                 <label className="form-label small fw-semibold text-secondary">Title *</label>

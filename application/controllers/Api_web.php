@@ -218,9 +218,15 @@ class Api_web extends CI_Controller
             return $this->_json(array('success' => false, 'message' => 'Unauthorized'), 401);
         }
 
-        $this->db->select('e.*, p.title AS property_title, u.name AS tenant_name');
+        $this->db->select(
+            'e.id, e.tenant_id, e.property_id, e.message, e.phone, e.email, e.status, e.created_at, e.updated_at, '
+            . 'p.title AS property_title, p.slug AS property_slug, p.locality, p.price, p.listing_type, p.property_type, '
+            . 'c.name AS city_name, '
+            . 'u.name AS tenant_name, u.email AS tenant_email, u.phone AS tenant_phone'
+        );
         $this->db->from('nb_enquiries e');
         $this->db->join('nb_properties p', 'p.id = e.property_id');
+        $this->db->join('nb_cities c', 'c.id = p.city_id', 'left');
         $this->db->join('nb_users u', 'u.id = e.tenant_id');
         $this->db->where('p.owner_id', (int) $user->id);
         $this->db->order_by('e.created_at', 'DESC');

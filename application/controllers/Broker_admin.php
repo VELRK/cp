@@ -864,6 +864,29 @@ class Broker_admin extends MY_Controller {
         $this->load->view('nobroker/admin/footer', $data);
     }
 
+    /** GET /panel/api-collection — Postman-style API tester (admin layout). */
+    public function api_collection()
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        $this->load->config('api_catalog');
+        $catalog = $this->config->item('api_catalog');
+        if (!is_array($catalog)) {
+            $catalog = array('groups' => array());
+        }
+        $data = array(
+            'page_title'   => 'API Collection',
+            'admin_nav'    => 'api_collection',
+            'base_api_url' => rtrim(base_url(), '/'),
+            'catalog'      => $catalog,
+            'catalog_json' => json_encode($catalog, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'embed_admin'  => true,
+        );
+        $this->load->view('nobroker/admin/header', $data);
+        $this->load->view('nobroker/developer/api_tester', $data);
+        $this->load->view('nobroker/admin/footer', $data);
+    }
+
     private function _feedback_users_map($rows)
     {
         $map = array();

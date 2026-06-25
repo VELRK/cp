@@ -127,6 +127,12 @@ $route['delete-account'] = 'Auth/delete_account';
 $route['auth/delete_account'] = 'Auth/delete_account';
 $route['auth/delete-account'] = 'Auth/delete_account';
 
+// Developer API console (Postman-style tester for mobile/web devs)
+$route['developer'] = 'api_developer/index';
+$route['developer/catalog'] = 'api_developer/catalog';
+$route['panel/api-collection'] = 'broker_admin/api_collection';
+$route['panel/api-tester'] = 'broker_admin/api_collection';
+
 // API routes (legacy contact form + JSON helpers used by PHP views / Next.js proxy)
 $route['api/enquiry_store'] = 'Api/enquiry_store';
 $route['api/enquiry/store'] = 'Api/enquiry_store';
@@ -406,6 +412,8 @@ $route['panel/housing-news/add'] = 'broker_admin/housing_news_add';
 $route['panel/housing-news/edit/(:num)'] = 'broker_admin/housing_news_edit/$1';
 $route['panel/housing-news/delete/(:num)'] = 'broker_admin/housing_news_delete/$1';
 $route['panel/feedbacks'] = 'broker_admin/feedbacks';
+$route['panel/api-collection'] = 'broker_admin/api_collection';
+$route['panel/api-tester'] = 'broker_admin/api_collection';
 $route['panel/delete-requests'] = 'broker_admin/delete_requests';
 $route['panel/delete-request/status/(:num)'] = 'broker_admin/delete_request_update_status/$1';
 $route['panel/notifications'] = 'broker_admin/notifications';

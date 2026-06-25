@@ -102,6 +102,10 @@ $pt = isset($page_title) ? $page_title : 'Admin';
           href="<?php echo site_url('panel/notifications'); ?>">
           <i class="bi bi-bell"></i> Notifications
         </a>
+        <a class="nb-admin-nav-link<?php echo $nav === 'api_collection' ? ' active' : ''; ?>"
+          href="<?php echo site_url('panel/api-collection'); ?>">
+          <i class="bi bi-collection"></i> API Collection
+        </a>
         <a class="nb-admin-nav-link<?php echo $nav === 'delete_requests' ? ' active' : ''; ?>"
           href="<?php echo site_url('panel/delete-requests'); ?>">
           <i class="bi bi-person-x"></i> Delete Requests
@@ -180,6 +184,10 @@ $pt = isset($page_title) ? $page_title : 'Admin';
           <a class="nb-admin-nav-link<?php echo $nav === 'notifications' ? ' active' : ''; ?>"
             href="<?php echo site_url('panel/notifications'); ?>" data-bs-dismiss="offcanvas">
             <i class="bi bi-bell"></i> Notifications
+          </a>
+          <a class="nb-admin-nav-link<?php echo $nav === 'api_collection' ? ' active' : ''; ?>"
+            href="<?php echo site_url('panel/api-collection'); ?>" data-bs-dismiss="offcanvas">
+            <i class="bi bi-collection"></i> API Collection
           </a>
           <a class="nb-admin-nav-link<?php echo $nav === 'delete_requests' ? ' active' : ''; ?>"
             href="<?php echo site_url('panel/delete-requests'); ?>" data-bs-dismiss="offcanvas">

@@ -1,0 +1,6 @@
+# Optional: place in public_html/.htaccess (site root, above other rules)
+# Redirects old /panel URLs to the app under /cp/
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule ^panel/?(.*)$ /cp/panel/$1 [R=302,L,QSA]
+</IfModule>

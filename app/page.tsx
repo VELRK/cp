@@ -482,15 +482,16 @@ export default function Home() {
 
       {/* 1. Home banner hero — real properties only (no dummy fallback) */}
       {loadingHero ? (
-        <section className="nb-hero-slider" aria-hidden="true" />
+        <section className="nb-hero-slider-revamp" aria-hidden="true" />
       ) : heroSlides.length > 0 ? (
         <HeroSlider
           slides={heroSlides}
           currentSlide={currentSlide}
           getPropertyTypeLabel={getPropertyTypeLabel}
+          onSlideSelect={setCurrentSlide}
         />
       ) : (
-        <section className="nb-hero-slider" aria-hidden="true" />
+        <section className="nb-hero-slider-revamp" aria-hidden="true" />
       )}
 
       {/* Main content grid */}

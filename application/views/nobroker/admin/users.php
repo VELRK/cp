@@ -106,6 +106,7 @@ $status_badge = function ($s) {
               <?php if (!isset($u->is_verified) || (int) $u->is_verified !== 1) : ?>
                 <button type="button" class="btn btn-sm btn-success rounded-pill nb-verify me-1" data-id="<?php echo (int) $u->id; ?>">Set verified</button>
               <?php endif; ?>
+              <a href="<?php echo site_url('panel/user/view/' . (int) $u->id); ?>" class="btn btn-sm btn-outline-secondary rounded-pill me-1">View</a>
               <a href="<?php echo site_url('panel/user/edit/' . (int) $u->id); ?>" class="btn btn-sm btn-outline-primary rounded-pill me-1">Edit</a>
               <button type="button" class="btn btn-sm btn-outline-danger rounded-pill nb-delete-user" data-id="<?php echo (int) $u->id; ?>" data-name="<?php echo html_escape($u->name); ?>">Delete</button>
             </td>

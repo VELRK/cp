@@ -366,6 +366,7 @@ $route['panel'] = 'broker_admin/index';
 $route['panel/users'] = 'broker_admin/users';
 $route['panel/user/add'] = 'broker_admin/user_add';
 $route['panel/user/edit/(:num)'] = 'broker_admin/user_edit/$1';
+$route['panel/user/view/(:num)'] = 'broker_admin/user_view/$1';
 $route['panel/user/delete/(:num)'] = 'broker_admin/user_delete/$1';
 $route['panel/approve-user'] = 'broker_admin/approve_user';
 $route['panel/approve-property'] = 'broker_admin/approve_property';

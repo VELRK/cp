@@ -207,6 +207,31 @@ class Broker_admin extends MY_Controller {
         $this->load->view('nobroker/admin/footer', $data);
     }
 
+    public function user_view($id = null)
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        $id = (int) $id;
+        if ($id < 1) { show_404(); }
+        $row = $this->Nb_user_model->get_by_id($id);
+        if (!$row) { show_404(); }
+        $city_name = '';
+        if (!empty($row->city_id)) {
+            $city = $this->Nb_city_model->get_by_id((int) $row->city_id);
+            if ($city) {
+                $city_name = $city->name;
+            }
+        }
+        $data['page_title'] = 'User #' . $id;
+        $data['user_row'] = $row;
+        $data['city_name'] = $city_name;
+        $data['property_count'] = count($this->Nb_property_model->for_owner_all($id));
+        $data['admin_nav'] = 'users';
+        $this->load->view('nobroker/admin/header', $data);
+        $this->load->view('nobroker/admin/user_view', $data);
+        $this->load->view('nobroker/admin/footer', $data);
+    }
+
     public function user_delete($id = null)
     {
         $this->require_login();
@@ -232,7 +257,14 @@ class Broker_admin extends MY_Controller {
         $this->require_login();
         $this->require_role('admin');
         $data['page_title'] = 'Properties';
-        $data['rows'] = $this->Nb_property_model->admin_list(array(), 100, 0);
+        $filters = array();
+        $owner_id = (int) $this->input->get('owner_id');
+        if ($owner_id > 0) {
+            $filters['owner_id'] = $owner_id;
+            $owner = $this->Nb_user_model->get_by_id($owner_id);
+            $data['filter_owner'] = $owner;
+        }
+        $data['rows'] = $this->Nb_property_model->admin_list($filters, 100, 0);
         $data['pending_count'] = $this->Nb_property_model->count_pending_publication();
         $data['admin_nav'] = 'properties';
         $this->load->view('nobroker/admin/header', $data);

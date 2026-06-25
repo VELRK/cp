@@ -571,6 +571,9 @@ class Nb_property_model extends CI_Model {
         if (isset($filters['is_active']) && $filters['is_active'] !== '') {
             $this->db->where('p.is_active', (int) $filters['is_active']);
         }
+        if (isset($filters['owner_id']) && (int) $filters['owner_id'] > 0) {
+            $this->db->where('p.owner_id', (int) $filters['owner_id']);
+        }
         $this->db->order_by('p.created_at', 'DESC');
         $this->db->limit($limit, $offset);
         return $this->db->get()->result();

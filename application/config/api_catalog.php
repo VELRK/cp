@@ -311,6 +311,7 @@ $config['api_catalog'] = array(
                         'listing_type' => 'rent',
                         'property_type' => 'apartment',
                         'price' => '25000',
+                        'address' => '123 Main Street, Peelamedu',
                         'city_id' => '1',
                         'locality' => 'Peelamedu',
                         'bedrooms' => '2',

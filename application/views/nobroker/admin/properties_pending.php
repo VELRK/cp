@@ -41,6 +41,9 @@
             <td class="text-end text-nowrap">
               <button type="button" class="btn btn-sm btn-success rounded-pill px-3 nb-pub-approve" data-id="<?php echo (int) $p->id; ?>">Publish</button>
               <a class="btn btn-sm btn-outline-dark rounded-pill px-3" href="<?php echo site_url('panel/property/edit/' . (int) $p->id); ?>">Edit</a>
+              <?php echo form_open(site_url('panel/property/delete/' . (int) $p->id), array('class' => 'd-inline', 'onsubmit' => "return confirm('Delete this property permanently?');")); ?>
+              <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">Delete</button>
+              <?php echo form_close(); ?>
             </td>
           </tr>
           <?php endforeach; ?>

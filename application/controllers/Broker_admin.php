@@ -244,6 +244,24 @@ class Broker_admin extends MY_Controller {
         $this->load->view('nobroker/admin/footer', $data);
     }
 
+    public function property_delete($id = null)
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        if ($this->input->method() !== 'post') {
+            show_404();
+        }
+        $id = (int) $id;
+        $row = $this->Nb_property_model->get_by_id($id);
+        if (!$row) {
+            show_404();
+        }
+        $this->_delete_property_upload_files($row);
+        $this->Nb_property_model->delete($id);
+        $this->session->set_flashdata('nb_ok', 'Property deleted.');
+        redirect('panel/properties');
+    }
+
     /** One-time token bound to session for admin property form POST. */
     private function _issue_admin_property_token()
     {
@@ -1638,5 +1656,36 @@ class Broker_admin extends MY_Controller {
         $this->Nb_delete_request_model->update_status($id, $status);
         $this->session->set_flashdata('nb_ok', 'Status updated successfully.');
         redirect('panel/delete-requests');
+    }
+
+    /** Remove uploaded files for a listing before DB delete. */
+    private function _delete_property_upload_files($row)
+    {
+        $paths = array();
+        foreach (array('location_image', 'brochure_url', 'audio_notes_url', 'home_banner_image') as $field) {
+            if (!empty($row->$field)) {
+                $paths[] = trim((string) $row->$field);
+            }
+        }
+        if (!empty($row->images)) {
+            $imgs = json_decode((string) $row->images, true);
+            if (is_array($imgs)) {
+                foreach ($imgs as $img) {
+                    $img = trim((string) $img);
+                    if ($img !== '') {
+                        $paths[] = $img;
+                    }
+                }
+            }
+        }
+        foreach ($paths as $rel) {
+            if (strpos($rel, 'assets/uploads/nb_properties/') !== 0) {
+                continue;
+            }
+            $full = FCPATH . $rel;
+            if (is_file($full)) {
+                @unlink($full);
+            }
+        }
     }
 }

@@ -369,6 +369,7 @@ $route['panel/properties'] = 'broker_admin/properties';
 $route['panel/properties/pending'] = 'broker_admin/properties_pending';
 $route['panel/property/add'] = 'broker_admin/property_add';
 $route['panel/property/edit/(:num)'] = 'broker_admin/property_edit/$1';
+$route['panel/property/delete/(:num)'] = 'broker_admin/property_delete/$1';
 $route['panel/property/save'] = 'nb_property_form/save';
 $route['panel/enquiries'] = 'broker_admin/enquiries';
 $route['panel/enquiry/(:num)'] = 'broker_admin/enquiry/$1';

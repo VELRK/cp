@@ -30,6 +30,12 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{DOCUMENT_ROOT}%{REQUEST_URI}index.html -f
 RewriteRule ^(.+?)/?$ $1/index.html [L]
 
+# Property detail without a pre-built static page → Next.js client shell
+RewriteCond %{REQUEST_URI} !/(panel|admin|api)(/|$) [NC]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^property/(?!owner/?$|tenant/?$|__build_placeholder__/?$)([^/]+)/?$ property/__build_placeholder__/index.html [L]
+
 # Root Next homepage
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

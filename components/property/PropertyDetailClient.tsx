@@ -6,6 +6,7 @@ import api from '@/lib/api';
 import PropertyCard, { Property } from '@/components/property/PropertyCard';
 import { useAuth } from '@/hooks/useAuth';
 import { toFrontendAssetUrl } from '@/lib/cityImages';
+import { getPropertySlugFromPath, PROPERTY_PLACEHOLDER_SLUG } from '@/lib/propertySlug';
 
 import { MapPin, Bed, Bath, Grid, Calendar, ShieldCheck, Heart, Eye, Play, ArrowLeft, Mail, Phone, ChevronLeft, ChevronRight, Check, Key, Star, Image as ImageIcon, Compass, Info, Tag, ExternalLink } from 'lucide-react';
 
@@ -13,9 +14,10 @@ interface PropertyDetailClientProps {
   slug: string;
 }
 
-export default function PropertyDetailClient({ slug }: PropertyDetailClientProps) {
+export default function PropertyDetailClient({ slug: slugProp }: PropertyDetailClientProps) {
   const { user, setAuthModalOpen } = useAuth();
 
+  const [slug, setSlug] = useState(slugProp);
   const [property, setProperty] = useState<any>(null);
   const [similar, setSimilar] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,6 +33,16 @@ export default function PropertyDetailClient({ slug }: PropertyDetailClientProps
   const [pageReady, setPageReady] = useState(false);
 
   useEffect(() => {
+    const fromPath = getPropertySlugFromPath();
+    if (fromPath) {
+      setSlug(fromPath);
+    } else if (slugProp && slugProp !== PROPERTY_PLACEHOLDER_SLUG) {
+      setSlug(slugProp);
+    }
+  }, [slugProp]);
+
+  useEffect(() => {
+    if (!slug || slug === PROPERTY_PLACEHOLDER_SLUG) return;
     setLoading(true);
     setError(null);
     api.get(`/api/properties/${slug}`)

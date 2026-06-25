@@ -1,7 +1,7 @@
 /**
  * Slugs/ids fetched at build time for static export (see scripts/build-deploy.mjs).
  */
-const PLACEHOLDER_SLUG = '__build_placeholder__';
+import { PROPERTY_PLACEHOLDER_SLUG } from './propertySlug';
 
 export function getBuildPropertySlugs(): { slug: string }[] {
   const raw = process.env.BUILD_PROPERTY_SLUGS || '';
@@ -10,7 +10,7 @@ export function getBuildPropertySlugs(): { slug: string }[] {
     .map((s) => s.trim())
     .filter(Boolean)
     .map((slug) => ({ slug }));
-  return slugs.length > 0 ? slugs : [{ slug: PLACEHOLDER_SLUG }];
+  return slugs.length > 0 ? slugs : [{ slug: PROPERTY_PLACEHOLDER_SLUG }];
 }
 
 export function getBuildBlogIds(): { id: string }[] {

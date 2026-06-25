@@ -127,6 +127,23 @@ class Api_nb_app extends CI_Controller
         return array_merge($this->input->post(), $this->input->get());
     }
 
+    /** Accept terms flag from JSON/form (true, 1, "1", "true", "yes", "on"). */
+    private function _parse_accept_terms(array $input)
+    {
+        if (!array_key_exists('accept_terms', $input)) {
+            return false;
+        }
+        $v = $input['accept_terms'];
+        if (is_bool($v)) {
+            return $v;
+        }
+        if (is_int($v) || is_float($v)) {
+            return (int) $v === 1;
+        }
+        $s = strtolower(trim((string) $v));
+        return in_array($s, array('1', 'true', 'yes', 'on'), true);
+    }
+
     private function _looks_like_base64_payload($value)
     {
         $v = trim((string) $value);
@@ -223,7 +240,7 @@ class Api_nb_app extends CI_Controller
         $phone = isset($input['phone']) ? trim((string) $input['phone']) : '';
         $password = isset($input['password']) ? (string) $input['password'] : '';
         $password2 = isset($input['password_confirm']) ? (string) $input['password_confirm'] : $password;
-        $accept = !empty($input['accept_terms']);
+        $accept = $this->_parse_accept_terms($input);
         // Accept user_type or role from app payload, but only customer/agent values.
         $roleInput = '';
         if (isset($input['user_type'])) {

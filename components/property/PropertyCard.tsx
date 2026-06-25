@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/components/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { checkWishlist, toggleWishlist } from '@/lib/frontendApi';
 import { Heart, Image as ImageIcon, MapPin, Bed, Bath, Grid, ArrowRight } from 'lucide-react';
 

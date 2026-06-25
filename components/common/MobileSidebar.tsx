@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/components/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { getAdminPanelUrl } from '@/lib/frontendApi';
 import { 
   X, 

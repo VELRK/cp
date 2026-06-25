@@ -12,7 +12,7 @@ import { usePropertyTypeFilters } from '@/hooks/usePropertyTypeFilters';
 import { effectivePropertyTypeSlug } from '@/lib/propertyTypes';
 import { PropertyTypeFilterFields } from '@/components/common/PropertyTypeSelects';
 import OwnerPhoneModal from '@/components/common/OwnerPhoneModal';
-import { useAuth } from '@/components/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   Filter, 
   Sliders, 

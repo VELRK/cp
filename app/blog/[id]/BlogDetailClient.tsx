@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getBlogs, getBlogById } from '@/lib/frontendApi';
-import { useAuth } from '../../../components/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import {
   ArrowLeft,
   User,

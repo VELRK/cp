@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/components/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { getTenantEnquiries } from '@/lib/frontendApi';
 import { ArrowLeft, MessageSquare, Tag, Calendar } from 'lucide-react';
 

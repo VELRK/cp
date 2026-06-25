@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/components/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { getNotifications } from '@/lib/frontendApi';
 import LiveUpdateModal from '@/components/common/LiveUpdateModal';
 import { Bell, ArrowLeft, Calendar, Video, Image as ImageIcon, Plus } from 'lucide-react';

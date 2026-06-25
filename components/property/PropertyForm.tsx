@@ -5,7 +5,7 @@ import { getCities, saveProperty } from '@/lib/frontendApi';
 import { formatApiErrorMessage } from '@/lib/api';
 import { usePropertyTypeFilters } from '@/hooks/usePropertyTypeFilters';
 import { PropertyTypeFilterFields } from '@/components/common/PropertyTypeSelects';
-import { useAuth } from '@/components/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import {
   ArrowLeft,
   Save,

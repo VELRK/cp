@@ -1,38 +1,14 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getMe, login as apiLogin, register as apiRegister, logout as apiLogout } from '../lib/frontendApi';
 import { getAppHomeUrl } from '../lib/api';
+import { AuthContext, type AuthUser } from '../lib/auth-context-store';
 
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  role: 'tenant' | 'customer' | 'owner' | 'admin';
-  status: 'pending' | 'approved' | 'rejected';
-  city_id: number;
-  profile_pic?: string;
-  aadhar_no?: string;
-  aadhar_file?: string;
-}
-
-interface AuthContextType {
-  user: User | null;
-  token: string | null;
-  loading: boolean;
-  isAuthModalOpen: 'login' | 'register' | null;
-  setAuthModalOpen: (modal: 'login' | 'register' | null) => void;
-  login: (login: string, password: string) => Promise<any>;
-  registerUser: (formData: FormData) => Promise<any>;
-  logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export type { AuthUser };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthModalOpen, setAuthModalOpen] = useState<'login' | 'register' | null>(null);
@@ -43,7 +19,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (response.data?.success) {
         setUser(response.data.user);
       } else {
-        // Token invalid
         localStorage.removeItem('nb_token');
         setUser(null);
         setToken(null);
@@ -92,7 +67,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const registerUser = async (formData: FormData) => {
-    // Note: register API accepts multipart/form-data directly
     const response = await apiRegister(formData);
     if (response.data?.success) {
       const { token: receivedToken, user: receivedUser } = response.data;
@@ -105,7 +79,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    // Clear client state immediately so UI updates even if the API is slow
     localStorage.removeItem('nb_token');
     setToken(null);
     setUser(null);
@@ -141,12 +114,4 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       {children}
     </AuthContext.Provider>
   );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 };

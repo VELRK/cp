@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useAuth } from '../../../components/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import {
   User, Calendar, Eye, Share2, ThumbsUp, ChevronDown, ChevronUp
 } from 'lucide-react';

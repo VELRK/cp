@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import api from '@/lib/api';
 import PropertyCard, { Property } from '@/components/property/PropertyCard';
-import { useAuth } from '@/components/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
+import { toFrontendAssetUrl } from '@/lib/cityImages';
 
 import { MapPin, Bed, Bath, Grid, Calendar, ShieldCheck, Heart, Eye, Play, ArrowLeft, Mail, Phone, ChevronLeft, ChevronRight, Check, Key, Star, Image as ImageIcon, Compass, Info, Tag, ExternalLink } from 'lucide-react';
 
@@ -162,12 +163,18 @@ export default function PropertyDetailClient({ slug }: PropertyDetailClientProps
     );
   }
 
-  const images = property.image_urls || [];
-  const amenities = property.amenities || [];
+  const images = (Array.isArray(property.image_urls) ? property.image_urls : [])
+    .filter((url: unknown): url is string => typeof url === 'string' && url.trim() !== '')
+    .map((url: string) => toFrontendAssetUrl(url));
+  const amenities = Array.isArray(property.amenities) ? property.amenities : [];
   const isOwner = user && Number(user.id) === Number(property.owner_id);
   const isApproved = user && user.status === 'approved';
 
-  const formatPrice = (price: number) => property.price_formatted || `₹${price.toLocaleString('en-IN')}`;
+  const formatPrice = (price: unknown) => {
+    if (property.price_formatted) return property.price_formatted;
+    const amount = Number(price);
+    return Number.isFinite(amount) ? `₹${amount.toLocaleString('en-IN')}` : 'Price on request';
+  };
 
   const getYoutubeEmbed = (url: string) => {
     if (!url) return null;
@@ -192,14 +199,15 @@ export default function PropertyDetailClient({ slug }: PropertyDetailClientProps
     : `${property.address || property.locality || ''}, ${property.city_name || ''}`;
   const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
 
-  const locationImageUrl = property.location_image 
-    ? (property.location_image.startsWith('http') ? property.location_image : `/${property.location_image}`)
+  const locationImageUrl = property.location_image
+    ? toFrontendAssetUrl(String(property.location_image))
     : null;
 
   const nearbyList = (() => {
     if (!property.nearby) return [];
     try {
-      return typeof property.nearby === 'string' ? JSON.parse(property.nearby) : property.nearby;
+      const parsed = typeof property.nearby === 'string' ? JSON.parse(property.nearby) : property.nearby;
+      return Array.isArray(parsed) ? parsed : [];
     } catch (e) {
       console.warn('Error parsing nearby list:', e);
       return [];
@@ -350,7 +358,7 @@ export default function PropertyDetailClient({ slug }: PropertyDetailClientProps
                   {property.rate_per_sqft && (
                     <div className="pd-stat">
                       <div className="pd-stat__label">Rate / sqft</div>
-                      <div className="pd-stat__value">₹{property.rate_per_sqft.toLocaleString('en-IN')}</div>
+                      <div className="pd-stat__value">₹{Number(property.rate_per_sqft).toLocaleString('en-IN')}</div>
                     </div>
                   )}
                   {property.area_sqft && (
@@ -502,7 +510,7 @@ export default function PropertyDetailClient({ slug }: PropertyDetailClientProps
                     <ExternalLink size={14} />
                     <span>Open in Google Maps</span>
                   </a>
-                  {property.location && property.location.startsWith('http') && (
+                  {property.location && typeof property.location === 'string' && property.location.startsWith('http') && (
                     <a href={property.location}
                       target="_blank"
                       rel="noopener noreferrer"

@@ -56,14 +56,8 @@ class Api_web extends CI_Controller
 
     private function _public_image_url($path)
     {
-        $path = trim((string) $path);
-        if ($path === '') {
-            return '';
-        }
-        if (preg_match('#^https?://#i', $path)) {
-            return $path;
-        }
-        return $path[0] === '/' ? $path : '/' . $path;
+        $url = nb_public_asset_url($path);
+        return $url !== null ? $url : '';
     }
 
     /** GET|POST /api/feedback */

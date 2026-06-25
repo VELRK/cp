@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/components/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import PropertyForm from '@/components/property/PropertyForm';
 import { getProperty } from '@/lib/frontendApi';
 import Link from 'next/link';

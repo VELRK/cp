@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/components/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { getCities, updateProfile } from '@/lib/frontendApi';
 import { toFrontendAssetUrl } from '@/lib/cityImages';
 import {

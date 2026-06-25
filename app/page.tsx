@@ -11,7 +11,7 @@ import {
   toggleWishlist,
 } from '@/lib/frontendApi';
 import { usePropertyTypeFilters } from '@/hooks/usePropertyTypeFilters';
-import { useAuth } from '@/components/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import ResearchTools from '@/components/common/ResearchTools';
 // import LiveUpdateModal from '@/components/common/LiveUpdateModal';
 

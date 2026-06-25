@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/components/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { getWishlist } from '@/lib/frontendApi';
 import PropertyCard, { Property } from '@/components/property/PropertyCard';
 import { Heart, Search, ArrowLeft } from 'lucide-react';

@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/components/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import PropertyForm from '@/components/property/PropertyForm';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';

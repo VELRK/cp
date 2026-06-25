@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/components/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { getCities } from '@/lib/frontendApi';
 import { X, Lock, Mail, User, Phone, CheckCircle, ShieldAlert } from 'lucide-react';
 

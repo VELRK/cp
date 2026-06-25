@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/components/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { getOwnerDashboard } from '@/lib/frontendApi';
 import { Home, Eye, MessageSquare, Plus, FileText, ClipboardList, CheckCircle } from 'lucide-react';
 

@@ -18,6 +18,19 @@ const nextConfig = {
     middlewareClientMaxBodySize: '50mb',
   },
   reactStrictMode: true,
+  webpack: (config, { isServer }) => {
+    // Keep auth context singleton — duplicate bundles break useAuth on property/search pages.
+    if (!isServer) {
+      config.optimization.splitChunks.cacheGroups.authContextStore = {
+        test: /[\\/]lib[\\/]auth-context-store(\.|$)/,
+        name: 'auth-context-store',
+        chunks: 'all',
+        enforce: true,
+        priority: 40,
+      };
+    }
+    return config;
+  },
 };
 
 if (!isStaticExport) {

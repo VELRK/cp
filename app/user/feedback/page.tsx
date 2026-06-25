@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../../components/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { getFeedbacks, submitFeedback } from '@/lib/frontendApi';
 import { formatApiErrorMessage } from '@/lib/api';
 import { ArrowLeft, MessageSquare, Send, CheckCircle2, AlertCircle, Calendar, Paperclip, X } from 'lucide-react';

@@ -39,6 +39,7 @@
             <td><?php echo html_escape($p->city_name); ?></td>
             <td class="text-end">₹<?php echo number_format((float) $p->price); ?></td>
             <td class="text-end text-nowrap">
+              <a class="btn btn-sm btn-outline-secondary rounded-pill px-3 me-1" href="<?php echo site_url('panel/property/view/' . (int) $p->id); ?>">View</a>
               <button type="button" class="btn btn-sm btn-success rounded-pill px-3 nb-pub-approve" data-id="<?php echo (int) $p->id; ?>">Publish</button>
               <a class="btn btn-sm btn-outline-dark rounded-pill px-3" href="<?php echo site_url('panel/property/edit/' . (int) $p->id); ?>">Edit</a>
               <?php echo form_open(site_url('panel/property/delete/' . (int) $p->id), array('class' => 'd-inline', 'onsubmit' => "return confirm('Delete this property permanently?');")); ?>

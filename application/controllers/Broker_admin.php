@@ -348,6 +348,26 @@ class Broker_admin extends MY_Controller {
         $this->load->view('nobroker/admin/footer', $data);
     }
 
+    public function property_view($id = null)
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        $id = (int) $id;
+        if ($id < 1) {
+            show_404();
+        }
+        $row = $this->Nb_property_model->get_by_id($id);
+        if (!$row) {
+            show_404();
+        }
+        $data['page_title'] = 'Property #' . $id;
+        $data['p'] = $row;
+        $data['admin_nav'] = 'properties';
+        $this->load->view('nobroker/admin/header', $data);
+        $this->load->view('nobroker/admin/property_view', $data);
+        $this->load->view('nobroker/admin/footer', $data);
+    }
+
     public function property_delete($id = null)
     {
         $this->require_login();

@@ -30,13 +30,16 @@ $eq_badge = function ($s) {
           <dl class="nb-admin-dl mb-0">
             <dt>Listing</dt>
             <dd class="mb-3">
-              <?php if (!empty($property->is_active)) : ?>
-              <a href="<?php echo html_escape(nb_property_url($property)); ?>" target="_blank" rel="noopener"><?php echo html_escape($property->title); ?></a>
-              <?php else : ?>
-              <span class="text-dark"><?php echo html_escape($property->title); ?></span>
+              <a href="<?php echo site_url('panel/property/view/' . (int) $property->id); ?>" class="text-decoration-none fw-medium">
+                <?php echo html_escape($property->title); ?>
+              </a>
+              <?php if (empty($property->is_active)) : ?>
               <span class="badge bg-secondary ms-1">Draft</span>
-              <a class="small ms-2" href="<?php echo site_url('panel/property/edit/' . (int) $property->id); ?>">Edit listing</a>
               <?php endif; ?>
+              <?php if (!empty($property->is_active)) : ?>
+              <a class="small ms-2" href="<?php echo html_escape(nb_property_url($property)); ?>" target="_blank" rel="noopener">View on site</a>
+              <?php endif; ?>
+              <a class="small ms-2" href="<?php echo site_url('panel/property/edit/' . (int) $property->id); ?>">Edit listing</a>
             </dd>
             <dt>Owner</dt>
             <dd class="mb-0"><?php echo html_escape($property->owner_name); ?></dd>

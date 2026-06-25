@@ -50,10 +50,8 @@
           <tr>
             <td class="text-muted font-monospace small"><?php echo (int) $p->id; ?></td>
             <td>
-              <?php if ($pub) : ?>
-              <a href="<?php echo html_escape(nb_property_url($p)); ?>" target="_blank" rel="noopener"><?php echo html_escape($p->title); ?></a>
-              <?php else : ?>
-              <span class="text-dark"><?php echo html_escape($p->title); ?></span>
+              <a href="<?php echo site_url('panel/property/view/' . (int) $p->id); ?>" class="text-dark fw-medium text-decoration-none"><?php echo html_escape($p->title); ?></a>
+              <?php if (!$pub) : ?>
               <span class="badge rounded-pill bg-secondary ms-1">Draft</span>
               <?php endif; ?>
             </td>
@@ -70,11 +68,7 @@
             <td class="text-end fw-medium">₹<?php echo number_format((float) $p->price); ?></td>
             <td class="text-end text-muted"><?php echo number_format((int) $p->views); ?></td>
             <td class="text-end text-nowrap">
-              <?php if ($pub) : ?>
-              <a class="btn btn-sm btn-outline-secondary rounded-pill px-3 me-1" href="<?php echo html_escape(nb_property_url($p)); ?>" target="_blank" rel="noopener">View</a>
-              <?php else : ?>
-              <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 me-1" disabled title="Publish the listing to view on the public site">View</button>
-              <?php endif; ?>
+              <a class="btn btn-sm btn-outline-secondary rounded-pill px-3 me-1" href="<?php echo site_url('panel/property/view/' . (int) $p->id); ?>">View</a>
               <a class="btn btn-sm btn-outline-dark rounded-pill px-3" href="<?php echo site_url('panel/property/edit/' . (int) $p->id); ?>">Edit</a>
               <?php echo form_open(site_url('panel/property/delete/' . (int) $p->id), array('class' => 'd-inline', 'onsubmit' => "return confirm('Delete this property permanently?');")); ?>
               <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">Delete</button>

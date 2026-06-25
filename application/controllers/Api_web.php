@@ -275,6 +275,9 @@ class Api_web extends CI_Controller
         if (!$prop) {
             return $this->_json(array('success' => false, 'message' => 'Property not found'), 404);
         }
+        if (empty($prop->is_active)) {
+            return $this->_json(array('success' => false, 'message' => 'Property not found'), 404);
+        }
 
         $images_list = array();
         if (!empty($prop->images)) {

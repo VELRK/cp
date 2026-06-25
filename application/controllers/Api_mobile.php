@@ -1013,7 +1013,7 @@ class Api_mobile extends CI_Controller {
         } else {
             $row['owner_id'] = $owner_id;
             if ($this->db->field_exists('is_active', 'nb_properties')) {
-                if ($id < 1) { $row['is_active'] = 0; }
+                $row['is_active'] = 0;
             }
         }
 
@@ -1058,6 +1058,12 @@ class Api_mobile extends CI_Controller {
         $payload = array('success' => true, 'property_id' => (int) $new_id);
         if ($saved) {
             $payload['property'] = $this->_property_response_payload($saved);
+            if (!$is_admin && empty($saved->is_active)) {
+                $payload['pending_review'] = true;
+                $payload['message'] = $id > 0
+                    ? 'Changes saved. Listing is pending admin approval.'
+                    : 'Listing submitted for admin approval.';
+            }
         }
         return $this->_json($payload);
     }

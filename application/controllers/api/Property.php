@@ -260,10 +260,9 @@ class Property extends CI_Controller
             }
         } else {
             $row['owner_id'] = $owner_id;
+            // Owner/agent listings require admin approval before public visibility.
             if ($this->db->field_exists('is_active', 'nb_properties')) {
-                if ($id < 1) {
-                    $row['is_active'] = 0;
-                }
+                $row['is_active'] = 0;
             }
             if ($this->db->field_exists('is_latest', 'nb_properties')) {
                 $row['is_latest'] = !empty($input['is_latest']) ? 1 : 0;
@@ -373,9 +372,11 @@ class Property extends CI_Controller
                 $payload['property'] = $this->_property_response_payload($saved);
                 if (!empty($saved->is_active)) {
                     $payload['property_url'] = nb_property_url($saved);
-                } elseif ($id < 1 && !$is_admin) {
+                } elseif (!$is_admin) {
                     $payload['pending_review'] = true;
-                    $payload['message'] = 'Listing submitted for admin verification. It will be published after approval.';
+                    $payload['message'] = $id > 0
+                        ? 'Changes saved. Listing is pending admin approval before it appears on the site.'
+                        : 'Listing submitted for admin verification. It will be published after approval.';
                 }
             }
             return $this->_json($payload);
@@ -383,8 +384,10 @@ class Property extends CI_Controller
         $flash_ok = 'Property saved.';
         if ($is_admin && $id < 1) {
             $flash_ok = 'Listing created.';
-        } elseif (!$is_admin && $id < 1) {
-            $flash_ok = 'Listing submitted for admin verification. It will appear on the site after approval.';
+        } elseif (!$is_admin) {
+            $flash_ok = $id > 0
+                ? 'Changes saved. Admin must approve before the listing appears on the site.'
+                : 'Listing submitted for admin verification. It will appear on the site after approval.';
         }
         $this->session->set_flashdata('nb_ok', $flash_ok);
         if (!empty($input['admin_save'])) {

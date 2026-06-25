@@ -635,7 +635,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
       if (response.data?.success) {
         localStorage.removeItem('nb_draft_property');
         setShowSuccess(true);
-        setSuccessPendingReview(!isEdit && !!response.data?.pending_review);
+        setSuccessPendingReview(!!response.data?.pending_review);
         setTimeout(() => {
           router.push('/owner/listings');
         }, 2500);
@@ -696,11 +696,13 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
             </div>
           </div>
           <h2 className="fw-bold text-dark mb-2 animate-fade-in-up">
-            {successPendingReview ? 'Submitted for Verification!' : 'Property Added Successfully!'}
+            {successPendingReview
+              ? (isEdit ? 'Updated — Pending Approval!' : 'Submitted for Verification!')
+              : 'Property Added Successfully!'}
           </h2>
           <p className="text-muted animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
             {successPendingReview
-              ? 'Our team will review your listing. It will go live after admin approval.'
+              ? 'Our team will review your listing. It will go live on the website only after admin approval.'
               : 'Redirecting you to your listings...'}
           </p>
           <style>{`
@@ -711,6 +713,12 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
             @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
             .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; opacity: 0; }
           `}</style>
+        </div>
+      )}
+
+      {ownerMode && (
+        <div className="alert alert-info border-0 shadow-sm small mb-4">
+          Listings from owners and agents are saved as <strong>Pending</strong>. An admin must approve before your property appears in search and on the public site.
         </div>
       )}
 

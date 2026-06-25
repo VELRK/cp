@@ -1,0 +1,6 @@
+# cp-admin-redirect — app lives under /cp/ (managed by GitHub deploy)
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /admin/
+RewriteRule ^(.*)$ /cp/admin/$1 [R=302,L,QSA]
+</IfModule>

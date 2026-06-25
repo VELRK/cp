@@ -1,0 +1,6 @@
+# cp-panel-redirect — app lives under /cp/ (managed by GitHub deploy)
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /panel/
+RewriteRule ^(.*)$ /cp/panel/$1 [R=302,L,QSA]
+</IfModule>

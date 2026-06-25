@@ -44,8 +44,15 @@ jobs:
 
             rm -rf "$BACKUP_DIR"
 
-            # Redirect /panel/* at site root → /cp/panel/* (old bookmarks without /cp)
+            # Redirect /panel/* and /admin/* at site root → /cp/ (bookmarks/links without /cp)
             PARENT="$(dirname "$TARGET")"
+            for SUB in panel admin; do
+              SRC="$TARGET/deploy/htaccess.${SUB}-redirect"
+              if [ -f "$SRC" ]; then
+                mkdir -p "$PARENT/$SUB"
+                cp "$SRC" "$PARENT/$SUB/.htaccess"
+              fi
+            done
             ROOT_HT="$PARENT/.htaccess"
             if [ -f "$TARGET/deploy/htaccess.root-redirect" ] && { [ ! -f "$ROOT_HT" ] || ! grep -q 'cp-panel-redirect' "$ROOT_HT" 2>/dev/null; }; then
               {

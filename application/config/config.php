@@ -84,6 +84,22 @@ if ($_proxy_host !== '') {
     $config['base_url'] = $protocol . $_proxy_host . '/';
 }
 
+// Production subfolder (public_html/cp): keep site_url() / panel links under /cp even when .env BASE_URL omits it.
+if ($_proxy_host === '' && isset($_SERVER['SCRIPT_NAME'])) {
+    $_sn_dir = str_replace('\\', '/', dirname((string) $_SERVER['SCRIPT_NAME']));
+    if (preg_match('#(/cp)/?$#', $_sn_dir, $_cp_m)) {
+        $_cp_subdir = $_cp_m[1];
+        $_bu = @parse_url($config['base_url']);
+        $_bu_path = isset($_bu['path']) ? rtrim((string) $_bu['path'], '/') : '';
+        if ($_bu_path !== $_cp_subdir) {
+            $_bu_host = !empty($_bu['host']) ? (string) $_bu['host'] : $host;
+            $_bu_scheme = !empty($_bu['scheme']) ? strtolower((string) $_bu['scheme']) . '://' : $protocol;
+            $_bu_port = !empty($_bu['port']) ? ':' . (int) $_bu['port'] : '';
+            $config['base_url'] = $_bu_scheme . $_bu_host . $_bu_port . $_cp_subdir . '/';
+        }
+    }
+}
+
 $config['google_client_id'] = getenv('GOOGLE_CLIENT_ID') ?: '';
 // Google Maps JS + Places. Use project root .env (see .env.example), getenv, $_SERVER, or google_maps_api_key.local.php (see .example).
 $google_maps_api_key = getenv('GOOGLE_MAPS_API_KEY');

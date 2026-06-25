@@ -123,6 +123,7 @@ $embed_admin = !empty($embed_admin);
             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabParams" type="button">Params</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabHeaders" type="button">Headers</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabBody" type="button">Body</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSampleRequest" type="button">Sample request</button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSample" type="button">Sample response</button></li>
           </ul>
 
@@ -139,6 +140,13 @@ $embed_admin = !empty($embed_admin);
               <div class="mb-2 small text-secondary">Body type: <span id="bodyTypeLabel">none</span></div>
               <div id="bodyFormFields"></div>
               <textarea id="bodyJson" class="dev-textarea d-none" placeholder='{"key": "value"}'></textarea>
+            </div>
+            <div class="tab-pane fade" id="tabSampleRequest">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="small text-secondary">Copy this into Postman or use Params/Body tabs above (pre-filled on Send).</span>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnCopySampleRequest">Copy</button>
+              </div>
+              <div class="dev-sample-box" id="sampleRequest">Select an endpoint to view sample request.</div>
             </div>
             <div class="tab-pane fade" id="tabSample">
               <div class="dev-sample-box" id="sampleResponse">Select an endpoint to view sample JSON response.</div>
@@ -211,6 +219,57 @@ $embed_admin = !empty($embed_admin);
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
     }
 
+    function kvDisplay(val) {
+      if (val === true || val === false) return String(val);
+      if (val === 0) return '0';
+      return val == null ? '' : String(val);
+    }
+
+    function buildSampleRequest(ep) {
+      var path = (ep.path || '').replace(/^\//, '');
+      var url = baseUrl + '/' + path;
+      var query = ep.query || {};
+      var qs = new URLSearchParams();
+      Object.keys(query).forEach(function (k) {
+        if (k && query[k] !== undefined && query[k] !== null && String(query[k]) !== '') {
+          qs.set(k, String(query[k]));
+        }
+      });
+      var qsStr = qs.toString();
+      if (qsStr) url += (url.indexOf('?') >= 0 ? '&' : '?') + qsStr;
+
+      var headers = { Accept: 'application/json' };
+      if (ep.auth) {
+        headers['X-Api-Token'] = '<paste token from Login response>';
+      }
+      if (ep.body_type === 'json') {
+        headers['Content-Type'] = 'application/json';
+      } else if (ep.body_type === 'form') {
+        headers['Content-Type'] = 'multipart/form-data';
+      }
+
+      var sample = {
+        method: ep.method || 'GET',
+        url: url,
+        headers: headers,
+      };
+      if (Object.keys(query).length) {
+        sample.query = query;
+      }
+      if (ep.body && Object.keys(ep.body).length) {
+        sample.body = ep.body;
+      }
+      if (ep.sample_request && typeof ep.sample_request === 'object') {
+        Object.keys(ep.sample_request).forEach(function (k) {
+          sample[k] = ep.sample_request[k];
+        });
+      }
+      if (ep.auth) {
+        sample.note = 'Requires X-Api-Token header (run Login first).';
+      }
+      return sample;
+    }
+
     function selectEndpoint(id) {
       var ep = findEndpoint(id);
       if (!ep) return;
@@ -249,6 +308,7 @@ $embed_admin = !empty($embed_admin);
         fillKeyValue('bodyFormFields', ep.body || {}, true);
       }
 
+      document.getElementById('sampleRequest').textContent = JSON.stringify(buildSampleRequest(ep), null, 2);
       document.getElementById('sampleResponse').textContent = JSON.stringify(ep.sample_response || {}, null, 2);
       document.getElementById('responseBody').textContent = 'Click Send to call the live API.';
       document.getElementById('respStatus').textContent = '—';
@@ -270,7 +330,7 @@ $embed_admin = !empty($embed_admin);
       row.className = 'dev-field-row';
       row.innerHTML =
         '<input type="text" class="kv-key" placeholder="key" value="' + esc(key) + '">' +
-        '<input type="text" class="kv-val" placeholder="value" value="' + esc(val) + '">' +
+        '<input type="text" class="kv-val" placeholder="value" value="' + esc(kvDisplay(val)) + '">' +
         '<button type="button" class="btn btn-sm btn-outline-danger kv-remove"><i class="bi bi-x"></i></button>';
       row.querySelector('.kv-remove').addEventListener('click', function () { row.remove(); });
       return row;
@@ -353,6 +413,11 @@ $embed_admin = !empty($embed_admin);
     document.getElementById('btnCopyResponse').addEventListener('click', function () {
       var t = document.getElementById('responseBody').textContent;
       navigator.clipboard.writeText(t).then(function () { alert('Copied'); });
+    });
+
+    document.getElementById('btnCopySampleRequest').addEventListener('click', function () {
+      var t = document.getElementById('sampleRequest').textContent;
+      navigator.clipboard.writeText(t).then(function () { alert('Copied sample request'); });
     });
 
     buildSidebar();

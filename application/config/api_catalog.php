@@ -117,7 +117,8 @@ $config['api_catalog'] = array(
                     'path' => 'api/nb/logout',
                     'auth' => true,
                     'body_type' => 'none',
-                    'description' => 'Invalidates token and session.',
+                    'query' => array(),
+                    'description' => 'Invalidates token and session. Send X-Api-Token header only.',
                     'sample_response' => array('success' => true, 'message' => 'Logged out.'),
                 ),
                 array(
@@ -286,7 +287,12 @@ $config['api_catalog'] = array(
                     'path' => 'api/properties/demo-premium-3bhk-near-omr',
                     'auth' => false,
                     'body_type' => 'none',
-                    'description' => 'Public active listing only. Replace slug in path.',
+                    'query' => array(),
+                    'description' => 'Public active listing only. Replace slug in URL path.',
+                    'sample_request' => array(
+                        'path' => 'api/properties/{slug-or-id}',
+                        'path_example' => 'api/properties/demo-premium-3bhk-near-omr',
+                    ),
                     'sample_response' => array(
                         'success' => true,
                         'property' => array_merge($sample_property_card, array(
@@ -401,6 +407,8 @@ $config['api_catalog'] = array(
                     'path' => 'api/owner/dashboard',
                     'auth' => true,
                     'body_type' => 'none',
+                    'query' => array(),
+                    'description' => 'Owner stats. Requires approved owner account token.',
                     'sample_response' => array(
                         'success' => true,
                         'stats' => array(
@@ -421,6 +429,7 @@ $config['api_catalog'] = array(
                     'path' => 'api/owner/listings',
                     'auth' => true,
                     'body_type' => 'none',
+                    'query' => array(),
                     'sample_response' => array(
                         'success' => true,
                         'listings' => array(array_merge($sample_property_card, array('is_active' => 1))),
@@ -433,6 +442,7 @@ $config['api_catalog'] = array(
                     'path' => 'api/owner/enquiries',
                     'auth' => true,
                     'body_type' => 'none',
+                    'query' => array(),
                     'sample_response' => array(
                         'success' => true,
                         'enquiries' => array(
@@ -447,6 +457,7 @@ $config['api_catalog'] = array(
                     'path' => 'api/tenant/enquiries',
                     'auth' => true,
                     'body_type' => 'none',
+                    'query' => array(),
                     'sample_response' => array(
                         'success' => true,
                         'enquiries' => array(
@@ -468,6 +479,7 @@ $config['api_catalog'] = array(
                     'path' => 'api/blogs',
                     'auth' => false,
                     'body_type' => 'none',
+                    'query' => array(),
                     'sample_response' => array(
                         'success' => true,
                         'blogs' => array(
@@ -495,6 +507,7 @@ $config['api_catalog'] = array(
                     'path' => 'api/feedback',
                     'auth' => true,
                     'body_type' => 'none',
+                    'query' => array(),
                     'sample_response' => array(
                         'success' => true,
                         'feedbacks' => array(
@@ -529,6 +542,7 @@ $config['api_catalog'] = array(
                     'path' => 'api/nb/notifications',
                     'auth' => true,
                     'body_type' => 'none',
+                    'query' => array('status' => 'active', 'limit' => '20'),
                     'sample_response' => array(
                         'success' => true,
                         'notifications' => array(
@@ -550,6 +564,7 @@ $config['api_catalog'] = array(
                     'path' => 'api/mobile/home',
                     'auth' => false,
                     'body_type' => 'none',
+                    'query' => array(),
                     'sample_response' => array(
                         'success' => true,
                         'banners' => array(),
@@ -584,6 +599,11 @@ $config['api_catalog'] = array(
                     'path' => 'api/mobile/properties/2',
                     'auth' => false,
                     'body_type' => 'none',
+                    'query' => array(),
+                    'sample_request' => array(
+                        'path' => 'api/mobile/properties/{id}',
+                        'path_example' => 'api/mobile/properties/2',
+                    ),
                     'sample_response' => array('success' => true, 'data' => $sample_property_card),
                 ),
                 array(
@@ -593,6 +613,7 @@ $config['api_catalog'] = array(
                     'path' => 'api/mobile/cities',
                     'auth' => false,
                     'body_type' => 'none',
+                    'query' => array(),
                     'sample_response' => array('success' => true, 'data' => array($sample_city)),
                 ),
                 array(
@@ -602,7 +623,7 @@ $config['api_catalog'] = array(
                     'path' => 'api/mobile/send_otp',
                     'auth' => false,
                     'body_type' => 'json',
-                    'body' => array('phone' => '9876543210'),
+                    'body' => array('phone' => '9876543210', 'country_code' => '+91'),
                     'sample_response' => array('success' => true, 'message' => 'OTP sent', 'otp' => '123456'),
                 ),
                 array(
@@ -612,7 +633,7 @@ $config['api_catalog'] = array(
                     'path' => 'api/mobile/verify_otp',
                     'auth' => false,
                     'body_type' => 'json',
-                    'body' => array('phone' => '9876543210', 'otp' => '123456'),
+                    'body' => array('phone' => '9876543210', 'country_code' => '+91', 'otp' => '123456'),
                     'sample_response' => array('success' => true, 'token' => 'mobile_session_token', 'user' => $sample_user),
                 ),
                 array(
@@ -642,7 +663,14 @@ $config['api_catalog'] = array(
                     'path' => 'api/mobile/enquiry',
                     'auth' => true,
                     'body_type' => 'json',
-                    'body' => array('property_id' => 2, 'user_id' => 3, 'message' => 'Interested'),
+                    'body' => array(
+                        'property_id' => 2,
+                        'user_id' => 3,
+                        'name' => 'Buyer Name',
+                        'email' => 'buyer@test.com',
+                        'phone' => '9123456789',
+                        'message' => 'Interested in this property.',
+                    ),
                     'sample_response' => array('success' => true, 'message' => 'Enquiry submitted'),
                 ),
                 array(
@@ -652,6 +680,7 @@ $config['api_catalog'] = array(
                     'path' => 'api/mobile/blogs',
                     'auth' => false,
                     'body_type' => 'none',
+                    'query' => array('page' => '1', 'limit' => '20'),
                     'sample_response' => array('success' => true, 'data' => array(array('id' => 1, 'title' => 'News article'))),
                 ),
             ),

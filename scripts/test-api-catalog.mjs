@@ -62,7 +62,6 @@ async function testOne(ep) {
       json.success === false &&
       res.status < 400;
     const allowSampleNotFound = ep.id === 'blog_detail';
-    const allowSampleNotFound = ep.id === 'blog_detail';
     const ok =
       (res.status !== 404 || allowSampleNotFound) &&
       !text.includes('<!DOCTYPE html>') &&

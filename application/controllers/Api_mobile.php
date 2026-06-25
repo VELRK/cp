@@ -1013,7 +1013,7 @@ class Api_mobile extends CI_Controller {
         } else {
             $row['owner_id'] = $owner_id;
             if ($this->db->field_exists('is_active', 'nb_properties')) {
-                if ($id < 1) { $row['is_active'] = 1; }
+                if ($id < 1) { $row['is_active'] = 0; }
             }
         }
 

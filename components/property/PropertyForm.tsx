@@ -150,6 +150,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
   const [loading, setLoading] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [successPendingReview, setSuccessPendingReview] = useState(false);
 
   // Fetch Cities on mount
   useEffect(() => {
@@ -632,9 +633,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
       const response = await saveProperty(formData);
 
       if (response.data?.success) {
-        // Clear local storage draft
         localStorage.removeItem('nb_draft_property');
         setShowSuccess(true);
+        setSuccessPendingReview(!isEdit && !!response.data?.pending_review);
         setTimeout(() => {
           router.push('/owner/listings');
         }, 2500);
@@ -694,8 +695,14 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
               <CheckCircle size={70} className="text-success animate-pulse" />
             </div>
           </div>
-          <h2 className="fw-bold text-dark mb-2 animate-fade-in-up">Property Added Successfully!</h2>
-          <p className="text-muted animate-fade-in-up" style={{ animationDelay: '0.2s' }}>Redirecting you to your listings...</p>
+          <h2 className="fw-bold text-dark mb-2 animate-fade-in-up">
+            {successPendingReview ? 'Submitted for Verification!' : 'Property Added Successfully!'}
+          </h2>
+          <p className="text-muted animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            {successPendingReview
+              ? 'Our team will review your listing. It will go live after admin approval.'
+              : 'Redirecting you to your listings...'}
+          </p>
           <style>{`
             @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
             .animate-bounce { animation: bounce 2s infinite ease-in-out; }

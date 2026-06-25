@@ -136,9 +136,9 @@ $route['api/enquiry/send'] = 'Api/enquiry/send';
 $route['dashboard/wishlist'] = 'Dashboard/wishlist';
 $route['dashboard/enquiries'] = 'Dashboard/enquiries';
 
-// Admin routes
-$route['admin'] = 'Admin/index';
-$route['admin/login'] = 'Admin/login';
+// Admin entry — broker panel SSO (see also duplicate block below)
+$route['admin'] = 'broker_admin/admin_entry';
+$route['admin/login'] = 'broker_admin/admin_entry';
 $route['admin/dashboard'] = 'Admin/dashboard';
 $route['admin/enquiries'] = 'Admin/enquiries';
 $route['admin/contacts'] = 'Admin/contacts';
@@ -169,9 +169,9 @@ $route['testimonials'] = 'Home/testimonials';
 $route['admin/seo_settings'] = 'Admin/seo_settings';
 $route['admin/seo_settings_save'] = 'Admin/seo_settings_save';
 
-// Admin routes
-$route['admin'] = 'Admin/login';
-$route['admin/login'] = 'Admin/login';
+// Admin routes — /admin opens the broker panel (site login SSO), not legacy Admin/login
+$route['admin'] = 'broker_admin/admin_entry';
+$route['admin/login'] = 'broker_admin/admin_entry';
 $route['admin/logout'] = 'Admin/logout';
 $route['admin/dashboard'] = 'Admin/dashboard';
 $route['admin/properties'] = 'Admin/properties';

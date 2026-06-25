@@ -55,6 +55,14 @@ class Broker_admin extends MY_Controller {
         redirect('panel');
     }
 
+    /**
+     * Legacy /admin URL → same SSO as /panel/auth (site login, not separate admin login).
+     */
+    public function admin_entry()
+    {
+        $this->auth();
+    }
+
     public function index()
     {
         $this->require_login();

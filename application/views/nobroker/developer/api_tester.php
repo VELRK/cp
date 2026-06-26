@@ -265,7 +265,7 @@ $embed_admin = !empty($embed_admin);
         });
       }
       if (ep.auth) {
-        sample.note = 'Requires X-Api-Token header (run Login first).';
+        sample.note = 'Requires X-Api-Token header (run Verify OTP or Login first).';
       }
       return sample;
     }
@@ -402,6 +402,12 @@ $embed_admin = !empty($embed_admin);
         document.getElementById('respStatus').className = res.ok ? 'status-ok' : 'status-err';
         document.getElementById('respTime').textContent = elapsed + ' ms';
         document.getElementById('responseBody').textContent = display;
+        try {
+          var parsed = JSON.parse(text);
+          if (parsed && parsed.success && parsed.token) {
+            document.getElementById('globalToken').value = parsed.token;
+          }
+        } catch (e) {}
       } catch (err) {
         document.getElementById('respStatus').textContent = 'Error';
         document.getElementById('respStatus').className = 'status-err';

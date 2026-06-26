@@ -116,6 +116,13 @@ class Broker_admin extends MY_Controller {
                 nb_set_api_token_cookie($token);
             }
 
+            $return = $this->session->userdata('panel_return');
+            $this->session->unset_userdata('panel_return');
+            if (is_string($return) && $return !== '' && strpos($return, '/panel') !== false) {
+                redirect($return);
+                return;
+            }
+
             redirect('panel');
             return;
         }
@@ -467,6 +474,7 @@ class Broker_admin extends MY_Controller {
         }
         $data['page_title'] = 'City #' . $id;
         $data['row'] = $row;
+        $data['city_image_url'] = nb_city_image_url(isset($row->image) ? $row->image : null);
         $data['property_count'] = $this->Nb_city_model->count_properties($id);
         $data['user_count'] = $this->Nb_city_model->count_users($id);
         $data['locality_count'] = $this->Nb_city_model->count_localities($id);
@@ -620,7 +628,7 @@ class Broker_admin extends MY_Controller {
     {
         $this->require_login();
         $this->require_role('admin');
-        $data['page_title'] = 'Housing news';
+        $data['page_title'] = 'Blogs';
         $data['rows'] = $this->Housing_news_model->get_all();
         $data['admin_nav'] = 'housing_news';
         $this->load->view('nobroker/admin/header', $data);
@@ -690,7 +698,7 @@ class Broker_admin extends MY_Controller {
             return;
         }
 
-        $data['page_title'] = $id > 0 ? 'Edit housing news' : 'Add housing news';
+        $data['page_title'] = $id > 0 ? 'Edit blog' : 'Add blog';
         $data['row'] = $row;
         $data['multi_images'] = $row && isset($row->multiImages) ? $this->_decode_housing_news_images($row->multiImages) : array();
         $data['edit_id'] = $id;
@@ -1430,22 +1438,30 @@ class Broker_admin extends MY_Controller {
             redirect($id > 0 ? 'panel/city/edit/' . $id : 'panel/city/add');
             return;
         }
+
+        $hasImageField = $this->db->field_exists('image', 'nb_cities');
+        $hasExistingImage = $existing && !empty($existing->image);
+        $imageUploaded = !empty($_FILES['image']['name']);
+        if ($hasImageField && !$hasExistingImage && !$imageUploaded) {
+            $this->session->set_flashdata('nb_err', 'City image is required.');
+            redirect($id > 0 ? 'panel/city/edit/' . $id : 'panel/city/add');
+            return;
+        }
+
         $data = array(
             'name'       => $this->security->xss_clean($this->input->post('name', true)),
             'state'      => $this->security->xss_clean($this->input->post('state', true)),
             'sort_order' => $this->input->post('sort_order') !== '' ? (int) $this->input->post('sort_order') : 0,
             'is_active'  => $this->input->post('is_active') ? 1 : 0,
         );
-        if (!empty($_FILES['image']['name']) && $this->db->field_exists('image', 'nb_cities')) {
+        if ($imageUploaded && $hasImageField) {
+            $cityDir = nb_city_image_upload_dir();
             $config = array(
-                'upload_path' => './assets/images/city/',
+                'upload_path' => $cityDir['absolute'] . DIRECTORY_SEPARATOR,
                 'allowed_types' => 'gif|jpg|jpeg|png|webp',
-                'max_size' => 2048,
+                'max_size' => nb_upload_max_kb('image'),
                 'encrypt_name' => true,
             );
-            if (!is_dir($config['upload_path'])) {
-                @mkdir($config['upload_path'], 0777, true);
-            }
             $this->load->library('upload', $config);
             if (!$this->upload->do_upload('image')) {
                 $this->session->set_flashdata('nb_err', 'Image upload failed: ' . strip_tags($this->upload->display_errors('', '')));
@@ -1453,9 +1469,12 @@ class Broker_admin extends MY_Controller {
                 return;
             }
             $uploaded = $this->upload->data();
-            $data['image'] = 'assets/images/city/' . $uploaded['file_name'];
-            if ($existing && !empty($existing->image) && file_exists(FCPATH . $existing->image)) {
-                @unlink(FCPATH . $existing->image);
+            $data['image'] = $cityDir['relative'] . $uploaded['file_name'];
+            if ($existing && !empty($existing->image)) {
+                $old = nb_ensure_city_image_on_disk($existing->image);
+                if ($old && is_file(FCPATH . str_replace('/', DIRECTORY_SEPARATOR, $old))) {
+                    @unlink(FCPATH . str_replace('/', DIRECTORY_SEPARATOR, $old));
+                }
             }
         }
         if ($id > 0) {

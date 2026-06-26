@@ -58,13 +58,7 @@ class Api_nb_app extends CI_Controller
         if (preg_match('/^x+$/i', $path)) {
             return null;
         }
-        if (preg_match('#^https?://#i', $path)) {
-            return nb_fix_cp_asset_url($path);
-        }
-        if (strpos($path, 'assets/') === false && strpos($path, 'uploads/') === false && strpos($path, '/') === false) {
-            return null;
-        }
-        return nb_public_asset_url($path);
+        return nb_city_image_url($path);
     }
 
     private function _user_public($user)

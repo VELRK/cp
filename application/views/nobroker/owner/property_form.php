@@ -56,6 +56,7 @@ $nearbyCategoryOptions = array(
   ?>
     <?php if ($is_admin) : ?>
       <input type="hidden" name="admin_save" value="1">
+      <input type="hidden" name="nb_admin_save" value="1">
       <input type="hidden" name="admin_property_token" value="<?php echo html_escape(isset($admin_property_token) ? $admin_property_token : ''); ?>">
     <?php endif; ?>
     <input type="hidden" name="image_action" value="replace">

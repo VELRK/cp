@@ -2,8 +2,8 @@
 <?php $isEdit = !empty($edit_id); ?>
 <div class="nb-admin-page-head d-flex flex-wrap justify-content-between align-items-start gap-3">
   <div>
-    <h1 class="nb-admin-page-title"><?php echo $isEdit ? 'Edit housing news' : 'Add housing news'; ?></h1>
-    <p class="nb-admin-page-desc mb-0">Create or update items shown in <code>/api/mobile/housing-news</code>.</p>
+    <h1 class="nb-admin-page-title"><?php echo $isEdit ? 'Edit blog' : 'Add blog'; ?></h1>
+    <p class="nb-admin-page-desc mb-0">Published via <code>/api/blogs</code>, <code>/api/mobile/blogs</code>, and <code>/api/mobile/housing-news</code>.</p>
   </div>
   <a class="btn btn-outline-secondary rounded-pill px-3" href="<?php echo site_url('panel/housing-news'); ?>">
     <i class="bi bi-arrow-left me-1"></i> Back
@@ -39,16 +39,18 @@
       <textarea class="form-control" name="description" rows="8"><?php echo html_escape(isset($row->description) ? $row->description : ''); ?></textarea>
     </div>
     <div class="col-12">
-      <label class="form-label">Housing news images (multiple)</label>
+      <label class="form-label">Blog images (multiple)</label>
       <input type="file" class="form-control" id="multi_images" name="multi_images[]" multiple accept=".jpg,.jpeg,.png,.gif,.webp,image/*">
       <div class="form-text">You can select multiple images. On edit, new uploads are added to existing images.</div>
       <div id="new-image-preview" class="d-flex flex-wrap gap-2 mt-3"></div>
       <?php if (!empty($multi_images) && is_array($multi_images)) : ?>
         <div class="d-flex flex-wrap gap-2 mt-3">
-          <?php foreach ($multi_images as $img) : ?>
+          <?php foreach ($multi_images as $img) :
+            $imgUrl = nb_public_asset_url($img);
+          ?>
             <div class="border rounded p-2">
-              <a href="<?php echo base_url($img); ?>" target="_blank" rel="noopener" class="text-decoration-none d-inline-block mb-2">
-                <img src="<?php echo base_url($img); ?>" alt="Housing news image" style="width:84px;height:84px;object-fit:cover;border-radius:8px;border:1px solid #dee2e6;">
+              <a href="<?php echo html_escape($imgUrl); ?>" target="_blank" rel="noopener" class="text-decoration-none d-inline-block mb-2">
+                <img src="<?php echo html_escape($imgUrl); ?>" alt="Blog image" style="width:84px;height:84px;object-fit:cover;border-radius:8px;border:1px solid #dee2e6;">
               </a>
               <?php if ($isEdit) : ?>
                 <div class="form-check mt-1">

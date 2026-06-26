@@ -82,33 +82,8 @@ class Api_mobile extends CI_Controller {
 
     private function _format_housing_news($row)
     {
-        $rawImages = isset($row->multiImages) ? $row->multiImages : null;
-        $images = $this->_normalize_multi_images($rawImages) ?: array();
-        $imageUrls = array();
-        foreach ($images as $img) {
-            $url = $this->_asset_url_or_null($img);
-            if ($url !== null) {
-                $imageUrls[] = $url;
-            }
-        }
-        $createdAt = isset($row->createdAt) ? (string) $row->createdAt : '';
-        $publishedAt = null;
-        if ($createdAt !== '') {
-            $ts = strtotime($createdAt);
-            $publishedAt = $ts ? date(DATE_ATOM, $ts) : $createdAt;
-        }
-        return array(
-            'id' => isset($row->id) ? (int) $row->id : 0,
-            'title' => isset($row->title) ? (string) $row->title : '',
-            'subtitle' => isset($row->subtitle) && $row->subtitle !== null ? (string) $row->subtitle : '',
-            'description' => isset($row->description) && $row->description !== null ? (string) $row->description : '',
-            'authorName' => isset($row->authorName) && $row->authorName !== null ? (string) $row->authorName : '',
-            'category' => isset($row->category) ? (string) $row->category : 'market',
-            'slug' => isset($row->title) ? url_title((string) $row->title, '-', true) : '',
-            'multiImages' => $imageUrls,
-            'publishedAt' => $publishedAt,
-            'createdAt' => $createdAt !== '' ? $createdAt : null,
-        );
+        $formatted = nb_housing_news_to_blog($row);
+        return is_array($formatted) ? $formatted : array();
     }
 
     public function banners()
@@ -1390,55 +1365,57 @@ class Api_mobile extends CI_Controller {
         ));
     }
 
-    private function _format_blog_row($r)
-    {
-        $gallery = array();
-        if (!empty($r->gallery)) {
-            $decoded = json_decode($r->gallery, true);
-            if (is_array($decoded)) {
-                foreach ($decoded as $img) {
-                    $gallery[] = preg_match('#^https?://#i', $img) ? $img : base_url($img);
-                }
-            }
-        }
-        return array(
-            'id' => (int) $r->id,
-            'title' => (string) $r->name,
-            'name' => (string) $r->name,
-            'author' => isset($r->author) ? (string) $r->author : '',
-            'date' => isset($r->date) ? (string) $r->date : '',
-            'excerpt' => isset($r->short_notes) ? (string) $r->short_notes : '',
-            'short_notes' => isset($r->short_notes) ? (string) $r->short_notes : '',
-            'description' => isset($r->description) ? (string) $r->description : '',
-            'gallery' => $gallery,
-            'image' => count($gallery) > 0 ? $gallery[0] : null,
-        );
-    }
-
     public function blogs()
     {
         if ($this->input->method() !== 'get') {
             return $this->_json(array('success' => false, 'message' => 'GET only'), 405);
         }
-        $rows = $this->Blog_model->get_all('active');
+
+        // Same rows as /api/mobile/housing-news (panel → Blogs / housing_news table).
+        $params = $this->_input_json_or_post();
+        $category = isset($params['category']) ? trim((string) $params['category']) : trim((string) $this->input->get('category'));
+        if ($category === '') {
+            $category = null;
+        }
+        $limitRaw = isset($params['limit']) ? $params['limit'] : $this->input->get('limit');
+        $limit = ($limitRaw !== null && trim((string) $limitRaw) !== '') ? (int) $limitRaw : null;
+        $offsetRaw = isset($params['offset']) ? $params['offset'] : $this->input->get('offset');
+        $offset = ($offsetRaw !== null && trim((string) $offsetRaw) !== '') ? (int) $offsetRaw : 0;
+
+        $rows = $this->Housing_news_model->get_all($category, $limit, $offset);
+        $count = $this->Housing_news_model->count_all($category);
         $out = array();
         foreach ($rows as $r) {
-            $out[] = $this->_format_blog_row($r);
+            $item = nb_housing_news_to_blog($r);
+            if ($item !== null) {
+                $out[] = $item;
+            }
         }
-        $this->_json(array('success' => true, 'data' => $out));
+        $this->_json(array(
+            'success' => true,
+            'data' => $out,
+            'count' => count($out),
+            'total' => (int) $count,
+            'limit' => $limit,
+            'offset' => $offset,
+        ));
     }
 
+    /** GET /api/mobile/blogs/{id} — detail from housing_news (same id as housing-news/{id}). */
     public function blog($id = null)
     {
+        if ($this->input->method() !== 'get') {
+            return $this->_json(array('success' => false, 'message' => 'GET only'), 405);
+        }
         $id = (int) ($id ?: $this->input->get('id'));
         if ($id <= 0) {
             return $this->_json(array('success' => false, 'message' => 'Invalid blog ID'), 400);
         }
-        $r = $this->Blog_model->get_by_id($id);
-        if (!$r || $r->status !== 'active') {
+        $r = $this->Housing_news_model->get_by_id($id);
+        if (!$r) {
             return $this->_json(array('success' => false, 'message' => 'Blog not found'), 404);
         }
-        $this->_json(array('success' => true, 'data' => $this->_format_blog_row($r)));
+        $this->_json(array('success' => true, 'data' => nb_housing_news_to_blog($r)));
     }
 
     public function categories()

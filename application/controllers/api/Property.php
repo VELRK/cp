@@ -50,7 +50,7 @@ class Property extends CI_Controller
         $input = $this->_input_json_or_post();
         $content_type = (string) $this->input->server('CONTENT_TYPE');
         $is_multipart_form = stripos($content_type, 'multipart/form-data') !== false;
-        $admin_save_request = !empty($input['admin_save']) || !empty($input['nb_admin_save']);
+        $admin_save_request = $this->_is_panel_property_save_request($input);
 
         $respond_json = $this->input->is_ajax_request()
             || stripos((string) $this->input->server('HTTP_ACCEPT'), 'application/json') !== false;
@@ -64,11 +64,13 @@ class Property extends CI_Controller
         $is_admin = $this->_resolve_is_admin_user();
         if (!$is_admin && (int) $this->session->userdata('nb_admin_property_save_verified') === 1) {
             $this->session->unset_userdata('nb_admin_property_save_verified');
-            $this->_resolve_is_admin_user();
-            $is_admin = true;
+            $is_admin = $this->_resolve_is_admin_user();
         }
         if (!$is_admin && $admin_save_request) {
             $is_admin = $this->_verify_admin_property_token($input);
+            if ($is_admin) {
+                $this->session->set_userdata('nb_admin_property_save_verified', 1);
+            }
         }
         $session_uid = (int) $this->session->userdata('nb_user_id');
         if ($admin_save_request && !$is_admin) {
@@ -390,11 +392,30 @@ class Property extends CI_Controller
                 : 'Listing submitted for admin verification. It will appear on the site after approval.';
         }
         $this->session->set_flashdata('nb_ok', $flash_ok);
-        if (!empty($input['admin_save'])) {
-            nb_redirect_path('panel/property/edit/' . (int) $new_id);
+        if ($admin_save_request) {
+            if (!$is_admin) {
+                $this->session->set_flashdata('nb_err', 'Admin login required. Open the panel from Admin after signing in.');
+                nb_redirect_path($id > 0 ? ('panel/property/edit/' . (int) $new_id) : 'panel/property/add');
+                return;
+            }
+            nb_redirect_path('panel/properties');
             return;
         }
-        redirect('owner/listings');
+        nb_redirect_path('owner/listings');
+    }
+
+    /** Panel admin form POST (not owner/mobile JSON save). */
+    private function _is_panel_property_save_request($input)
+    {
+        if (!empty($input['admin_save']) || !empty($input['nb_admin_save'])) {
+            return true;
+        }
+        $uri = (string) $this->uri->uri_string();
+        if ($uri === 'panel/property/save' || strpos($uri, 'panel/property/save') === 0) {
+            return true;
+        }
+        $requestUri = (string) $this->input->server('REQUEST_URI');
+        return stripos($requestUri, '/panel/property/save') !== false;
     }
 
     /** Owner role user suitable as listing owner */

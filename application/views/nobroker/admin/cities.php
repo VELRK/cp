@@ -17,6 +17,7 @@
       <thead>
         <tr>
           <th>ID</th>
+          <th>Image</th>
           <th>Name</th>
           <th>State</th>
           <th>Sort</th>
@@ -27,12 +28,25 @@
       <tbody>
         <?php if (empty($rows)) : ?>
         <tr>
-          <td colspan="6" class="text-center text-muted py-5">No cities yet.</td>
+          <td colspan="7" class="text-center text-muted py-5">No cities yet.</td>
         </tr>
         <?php else : ?>
-          <?php foreach ($rows as $c) : ?>
+          <?php foreach ($rows as $c) :
+            $thumbUrl = nb_city_image_url(isset($c->image) ? $c->image : null);
+          ?>
           <tr>
             <td class="text-muted font-monospace small">#<?php echo (int) $c->id; ?></td>
+            <td>
+              <?php if (!empty($thumbUrl)) : ?>
+                <a href="<?php echo site_url('panel/city/view/' . (int) $c->id); ?>" title="View <?php echo html_escape($c->name); ?>">
+                  <img src="<?php echo html_escape($thumbUrl); ?>" alt="" class="rounded border" width="48" height="48" style="object-fit: cover;">
+                </a>
+              <?php else : ?>
+                <span class="d-inline-flex align-items-center justify-content-center rounded border bg-light text-muted" style="width: 48px; height: 48px;" title="No image">
+                  <i class="bi bi-image"></i>
+                </span>
+              <?php endif; ?>
+            </td>
             <td class="fw-medium"><?php echo html_escape($c->name); ?></td>
             <td><?php echo html_escape($c->state); ?></td>
             <td><?php echo (int) $c->sort_order; ?></td>

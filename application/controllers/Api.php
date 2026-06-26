@@ -125,70 +125,37 @@ class Api extends CI_Controller
     }
 
     /**
-     * GET /api/blogs — active blogs (JSON array)
+     * GET /api/blogs — blog articles from housing_news (same content as panel housing-news).
      */
     public function blogs($id = null)
     {
         $this->load->database();
-        $this->load->model('Blog_model');
+        $this->load->model('Housing_news_model');
         if ($id === null) {
             $id = $this->input->get('id');
         }
 
         if ($id !== null && $id !== '') {
-            $r = $this->Blog_model->get_by_id($id);
-            if (!$r || $r->status !== 'active') {
+            $r = $this->Housing_news_model->get_by_id((int) $id);
+            if (!$r) {
                 $this->output
                     ->set_status_header(404)
                     ->set_content_type('application/json')
                     ->set_output(json_encode(array('success' => false, 'message' => 'Blog not found')));
                 return;
             }
-            $gallery = array();
-            if ($r->gallery) {
-                $gallery_decoded = json_decode($r->gallery, true);
-                if (is_array($gallery_decoded)) {
-                    foreach ($gallery_decoded as $g_img) {
-                        $gallery[] = preg_match('#^https?://#i', $g_img) ? $g_img : base_url($g_img);
-                    }
-                }
-            }
-            $out = array(
-                'id' => (int) $r->id,
-                'name' => $r->name,
-                'author' => $r->author,
-                'date' => $r->date,
-                'short_notes' => $r->short_notes,
-                'description' => $r->description,
-                'gallery' => $gallery,
-                'image' => count($gallery) > 0 ? $gallery[0] : null
-            );
-            $this->output->set_content_type('application/json')->set_output(json_encode($out));
+            $this->output->set_content_type('application/json')->set_output(json_encode(nb_housing_news_to_blog($r)));
             return;
         }
 
-        $rows = $this->Blog_model->get_all('active');
+        $category = trim((string) $this->input->get('category'));
+        $rows = $this->Housing_news_model->get_all($category !== '' ? $category : null);
         $out = array();
         foreach ($rows as $r) {
-            $gallery = array();
-            if ($r->gallery) {
-                $gallery_decoded = json_decode($r->gallery, true);
-                if (is_array($gallery_decoded)) {
-                    foreach ($gallery_decoded as $g_img) {
-                        $gallery[] = preg_match('#^https?://#i', $g_img) ? $g_img : base_url($g_img);
-                    }
-                }
+            $item = nb_housing_news_to_blog($r);
+            if ($item !== null) {
+                $out[] = $item;
             }
-            $out[] = array(
-                'id' => (int) $r->id,
-                'name' => $r->name,
-                'author' => $r->author,
-                'date' => $r->date,
-                'short_notes' => $r->short_notes,
-                'description' => $r->description,
-                'gallery' => $gallery,
-                'image' => count($gallery) > 0 ? $gallery[0] : null
-            );
         }
         $this->output->set_content_type('application/json')->set_output(json_encode($out));
     }

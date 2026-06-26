@@ -53,6 +53,162 @@ function nb_public_asset_url($path)
     return nb_fix_cp_asset_url($CI->config->base_url($path));
 }
 
+/**
+ * Ensure city image file exists under web-served assets/ path (migrate legacy public/assets copies).
+ *
+ * @param string|null $path DB value e.g. assets/images/city/foo.png
+ * @return string|null Canonical relative path or null when empty
+ */
+function nb_ensure_city_image_on_disk($path)
+{
+    if ($path === null) {
+        return null;
+    }
+    $path = trim((string) $path);
+    if ($path === '') {
+        return null;
+    }
+    $path = preg_replace('#^public/#', '', $path);
+    if (preg_match('#^https?://#i', $path)) {
+        return $path;
+    }
+
+    $canonical = FCPATH . str_replace('/', DIRECTORY_SEPARATOR, $path);
+    if (is_file($canonical)) {
+        return $path;
+    }
+
+    $legacy = FCPATH . 'public' . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $path);
+    if (is_file($legacy)) {
+        $dir = dirname($canonical);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        if (@copy($legacy, $canonical)) {
+            return $path;
+        }
+    }
+
+    return $path;
+}
+
+/** Public URL for nb_cities.image (handles /cp/ prefix and legacy storage). */
+function nb_city_image_url($path)
+{
+    $path = nb_ensure_city_image_on_disk($path);
+    if ($path === null || $path === '') {
+        return null;
+    }
+    if (preg_match('#^https?://#i', $path)) {
+        return nb_fix_cp_asset_url($path);
+    }
+    return nb_public_asset_url($path);
+}
+
+/** Ensure assets/images/city exists for uploads. */
+function nb_city_image_upload_dir()
+{
+    $rel = 'assets/images/city/';
+    $abs = FCPATH . str_replace('/', DIRECTORY_SEPARATOR, $rel);
+    if (!is_dir($abs)) {
+        @mkdir($abs, 0755, true);
+    }
+    return array('relative' => $rel, 'absolute' => $abs);
+}
+
+/** Decode housing_news.multiImages JSON into relative file paths. */
+function nb_decode_housing_news_images($raw)
+{
+    if (!is_string($raw) || trim($raw) === '') {
+        return array();
+    }
+    $decoded = json_decode($raw, true);
+    if (!is_array($decoded)) {
+        return array();
+    }
+    $clean = array();
+    foreach ($decoded as $img) {
+        if (!is_string($img)) {
+            continue;
+        }
+        $img = trim($img);
+        if ($img !== '') {
+            $clean[] = $img;
+        }
+    }
+    return array_values(array_unique($clean));
+}
+
+/** Absolute URLs for housing news gallery paths. */
+function nb_housing_news_image_urls($raw)
+{
+    $urls = array();
+    foreach (nb_decode_housing_news_images($raw) as $img) {
+        $url = nb_public_asset_url($img);
+        if ($url !== null && $url !== '') {
+            $urls[] = $url;
+        }
+    }
+    return $urls;
+}
+
+/**
+ * Map housing_news row to blog/article shape for /api/blogs and /api/mobile/blogs.
+ *
+ * @param object $row housing_news DB row
+ * @return array|null
+ */
+function nb_housing_news_to_blog($row)
+{
+    if (!$row) {
+        return null;
+    }
+    $gallery = nb_housing_news_image_urls(isset($row->multiImages) ? $row->multiImages : null);
+    $createdAt = isset($row->createdAt) ? (string) $row->createdAt : '';
+    $date = '';
+    $publishedAt = null;
+    if ($createdAt !== '') {
+        $ts = strtotime($createdAt);
+        if ($ts) {
+            $date = date('Y-m-d', $ts);
+            $publishedAt = date(DATE_ATOM, $ts);
+        } else {
+            $date = $createdAt;
+            $publishedAt = $createdAt;
+        }
+    }
+    $title = isset($row->title) ? (string) $row->title : '';
+    $subtitle = isset($row->subtitle) && $row->subtitle !== null ? (string) $row->subtitle : '';
+    $description = isset($row->description) && $row->description !== null ? (string) $row->description : '';
+    $excerpt = $subtitle;
+    if ($excerpt === '' && $description !== '') {
+        $plain = trim(strip_tags($description));
+        $excerpt = strlen($plain) > 200 ? substr($plain, 0, 200) . '…' : $plain;
+    }
+    $author = isset($row->authorName) && $row->authorName !== null ? (string) $row->authorName : '';
+
+    return array(
+        'id' => isset($row->id) ? (int) $row->id : 0,
+        'title' => $title,
+        'name' => $title,
+        'subtitle' => $subtitle,
+        'author' => $author,
+        'authorName' => $author,
+        'date' => $date,
+        'publishedAt' => $publishedAt,
+        'createdAt' => $createdAt !== '' ? $createdAt : null,
+        'excerpt' => $excerpt,
+        'short_notes' => $subtitle,
+        'description' => $description,
+        'content' => $description,
+        'category' => isset($row->category) ? (string) $row->category : 'market',
+        'slug' => $title !== '' ? url_title($title, '-', true) : '',
+        'gallery' => $gallery,
+        'multiImages' => $gallery,
+        'image' => count($gallery) > 0 ? $gallery[0] : null,
+    );
+}
+
 /** Ensure asset URLs include /cp/ when the app is deployed under that folder. */
 function nb_fix_cp_asset_url($url)
 {

@@ -37,6 +37,12 @@ class MY_Controller extends CI_Controller
         $this->load->library('nb_api_token');
         $this->nb_api_token->try_attach_session();
         if (!$this->session->userdata('nb_user_id')) {
+            $uri = (string) $this->uri->uri_string();
+            if ($uri === 'panel' || strpos($uri, 'panel/') === 0) {
+                $this->session->set_userdata('panel_return', current_url());
+                redirect(site_url('admin'));
+                return;
+            }
             redirect(base_url() . '?modal=login');
         }
     }

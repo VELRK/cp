@@ -92,7 +92,7 @@ $pt = isset($page_title) ? $page_title : 'Admin';
         </a>
         <a class="nb-admin-nav-link<?php echo $nav === 'housing_news' ? ' active' : ''; ?>"
           href="<?php echo site_url('panel/housing-news'); ?>">
-          <i class="bi bi-newspaper"></i> Housing News
+          <i class="bi bi-journal-text"></i> Blogs
         </a>
         <a class="nb-admin-nav-link<?php echo $nav === 'feedbacks' ? ' active' : ''; ?>"
           href="<?php echo site_url('panel/feedbacks'); ?>">
@@ -175,7 +175,7 @@ $pt = isset($page_title) ? $page_title : 'Admin';
           </a>
           <a class="nb-admin-nav-link<?php echo $nav === 'housing_news' ? ' active' : ''; ?>"
             href="<?php echo site_url('panel/housing-news'); ?>" data-bs-dismiss="offcanvas">
-            <i class="bi bi-newspaper"></i> Housing News
+            <i class="bi bi-journal-text"></i> Blogs
           </a>
           <a class="nb-admin-nav-link<?php echo $nav === 'feedbacks' ? ' active' : ''; ?>"
             href="<?php echo site_url('panel/feedbacks'); ?>" data-bs-dismiss="offcanvas">

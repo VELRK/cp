@@ -10,6 +10,7 @@ import {
   getWishlist,
   toggleWishlist,
 } from '@/lib/frontendApi';
+import { buildSearchUrlParams } from '@/lib/searchFilters';
 import { usePropertyTypeFilters } from '@/hooks/usePropertyTypeFilters';
 import { useAuth } from '@/hooks/useAuth';
 import ResearchTools from '@/components/common/ResearchTools';
@@ -422,15 +423,17 @@ export default function Home() {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const queryParams = new URLSearchParams();
-    if (propertyType) queryParams.append('property_type', propertyType);
-    if (cityId) queryParams.append('city_id', cityId);
-    if (searchQuery) queryParams.append('q', searchQuery);
-    if (minPrice) queryParams.append('min_price', minPrice);
-    if (maxPrice) queryParams.append('max_price', maxPrice);
-    if (bedrooms) queryParams.append('bedrooms', bedrooms);
-    if (sortBy) queryParams.append('sort', sortBy);
-
+    const queryParams = buildSearchUrlParams({
+      mainTypeSlug,
+      subTypeSlug,
+      propertyType,
+      cityId,
+      q: searchQuery,
+      minPrice,
+      maxPrice,
+      bedrooms,
+      sort: sortBy,
+    });
     router.push(`/search?${queryParams.toString()}`);
   };
 

@@ -210,6 +210,7 @@ class Nb_property_model extends CI_Model {
 
     public function search($filters, $limit = 0, $offset = 0)
     {
+        $filters = nb_normalize_search_filters($filters);
         $this->db->select('p.*, c.name AS city_name, u.name AS owner_name, u.phone AS owner_phone, u.user_type AS owner_user_type');
         $this->db->from($this->table . ' p');
         $this->db->join('nb_cities c', 'c.id = p.city_id', 'left');
@@ -316,6 +317,7 @@ class Nb_property_model extends CI_Model {
 
     public function count_search($filters)
     {
+        $filters = nb_normalize_search_filters($filters);
         $this->db->from($this->table . ' p');
         $this->db->where('p.is_active', 1);
         if (!empty($filters['posted_by_owner']) || !empty($filters['owner_only'])) {

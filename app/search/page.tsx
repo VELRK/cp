@@ -10,6 +10,12 @@ import {
 } from '@/lib/frontendApi';
 import { usePropertyTypeFilters } from '@/hooks/usePropertyTypeFilters';
 import { effectivePropertyTypeSlug } from '@/lib/propertyTypes';
+import {
+  buildSearchApiParams,
+  isListingIntentSlug,
+  listingTypeFromSlug,
+  resolveSearchFilterParams,
+} from '@/lib/searchFilters';
 import { PropertyTypeFilterFields } from '@/components/common/PropertyTypeSelects';
 import OwnerPhoneModal from '@/components/common/OwnerPhoneModal';
 import { useAuth } from '@/hooks/useAuth';
@@ -160,20 +166,7 @@ function getActiveQuickFilters(sp: URLSearchParams): string[] {
 }
 
 function buildApiParamsFromUrl(sp: URLSearchParams, page = 1, limit = 12): Record<string, string | number> {
-  const params: Record<string, string | number> = { page, limit };
-  const passthrough = ['city_id', 'q', 'listing_type', 'property_type', 'min_price', 'max_price', 'bedrooms', 'sort'] as const;
-  passthrough.forEach((key) => {
-    const value = sp.get(key);
-    if (value) params[key] = value;
-  });
-  if (sp.get('is_recommended')) params.is_recommended = 1;
-  if (sp.get('is_newly_launched')) params.is_newly_launched = 1;
-  if (sp.get('is_verified_property') || sp.get('verified')) params.is_verified_property = 1;
-  if (sp.get('posted_by_owner') || sp.get('owner_only') || sp.get('owner')) params.posted_by_owner = 1;
-  if (sp.get('has_video') || sp.get('video')) params.has_video = 1;
-  if (sp.get('ready_to_move')) params.ready_to_move = 1;
-  if (sp.get('under_construction')) params.under_construction = 1;
-  return params;
+  return buildSearchApiParams(sp, page, limit);
 }
 
 function SearchContent() {
@@ -238,7 +231,8 @@ function SearchContent() {
     skipAutoPushRef.current = true;
     setCityId(searchParams.get('city_id') || '');
     setLocality(searchParams.get('q') || '');
-    setListingType(searchParams.get('listing_type') || '');
+    const resolved = resolveSearchFilterParams(searchParams);
+    setListingType(resolved.listing_type);
     setMinPrice(searchParams.get('min_price') || '');
     setMaxPrice(searchParams.get('max_price') || '');
     setBedrooms(searchParams.get('bedrooms') || '');
@@ -295,21 +289,26 @@ function SearchContent() {
   useEffect(() => {
     if (skipAutoPushRef.current) return;
 
+    const resolved = resolveSearchFilterParams(searchParams);
     const urlSnapshot = {
       city_id: searchParams.get('city_id') || '',
       q: searchParams.get('q') || '',
-      listing_type: searchParams.get('listing_type') || '',
-      property_type: searchParams.get('property_type') || '',
+      listing_type: resolved.listing_type,
+      property_type: resolved.property_type,
       min_price: searchParams.get('min_price') || '',
       max_price: searchParams.get('max_price') || '',
       bedrooms: searchParams.get('bedrooms') || '',
       sort: searchParams.get('sort') || 'new',
     };
+    const mainListing = listingTypeFromSlug(mainTypeSlug);
+    const nextPropertyType = mainListing
+      ? subTypeSlug
+      : propertyType;
     const nextSnapshot = {
       city_id: cityId,
       q: locality.trim(),
-      listing_type: listingType,
-      property_type: propertyType,
+      listing_type: listingType || mainListing || '',
+      property_type: nextPropertyType,
       min_price: minPrice,
       max_price: maxPrice,
       bedrooms,
@@ -427,11 +426,23 @@ function SearchContent() {
 
   const handleMainTypeChange = (slug: string) => {
     setMainTypeSlug(slug);
-    pushRefineFilters({ property_type: effectivePropertyTypeSlug(slug, '') || null });
+    const listing = listingTypeFromSlug(slug);
+    if (listing) {
+      setListingType(listing);
+      setSubTypeSlug('');
+      pushRefineFilters({ listing_type: listing, property_type: null });
+      return;
+    }
+    pushRefineFilters({ property_type: effectivePropertyTypeSlug(slug, subTypeSlug) || null });
   };
 
   const handleSubTypeChange = (slug: string) => {
     setSubTypeSlug(slug);
+    const listing = listingTypeFromSlug(mainTypeSlug);
+    if (listing) {
+      pushRefineFilters({ listing_type: listing, property_type: slug || null });
+      return;
+    }
     pushRefineFilters({ property_type: effectivePropertyTypeSlug(mainTypeSlug, slug) || null });
   };
 
@@ -487,7 +498,13 @@ function SearchContent() {
       return;
     }
     if (key === 'locality') pushSearchUrl({ q: null });
-    else if (key === 'listing_type') pushSearchUrl({ listing_type: null });
+    else if (key === 'listing_type') {
+      const updates: Record<string, string | null> = { listing_type: null };
+      if (isListingIntentSlug(searchParams.get('property_type') || '')) {
+        updates.property_type = null;
+      }
+      pushSearchUrl(updates);
+    }
     else if (key === 'bedrooms') pushSearchUrl({ bedrooms: null });
     else if (key === 'verified') pushSearchUrl({ is_verified_property: null });
     else pushSearchUrl({ [key]: null });
@@ -498,8 +515,11 @@ function SearchContent() {
     results[0]?.city_name ||
     'All Cities';
 
+  const resolvedFilters = resolveSearchFilterParams(searchParams);
+  const activeListingType = resolvedFilters.listing_type || listingType;
+
   const listingTypeLabel =
-    listingType === 'rent' ? 'Rent' : listingType === 'sale' ? 'Sale' : 'Sale & Rent';
+    activeListingType === 'rent' ? 'Rent' : activeListingType === 'sale' ? 'Sale' : 'Sale & Rent';
 
   const formatPrice = (property: Property) => formatListingPrice(property);
 
@@ -681,13 +701,13 @@ function SearchContent() {
                     <X size={12} className="cursor-pointer text-muted" onClick={() => removeFilter('locality')} />
                   </span>
                 )}
-                {listingType && (
+                {activeListingType && (
                   <span className="badge bg-light border text-dark py-1.5 px-2 rounded-1 d-flex align-items-center gap-1">
-                    <span>{listingType === 'rent' ? 'For Rent' : 'For Sale'}</span>
+                    <span>{activeListingType === 'rent' ? 'For Rent' : 'For Sale'}</span>
                     <X size={12} className="cursor-pointer text-muted" onClick={() => removeFilter('listing_type')} />
                   </span>
                 )}
-                {propertyType && (
+                {propertyType && !isListingIntentSlug(propertyType) && (
                   <span className="badge bg-light border text-dark py-1.5 px-2 rounded-1 d-flex align-items-center gap-1">
                     <span>{propertyType}</span>
                     <X size={12} className="cursor-pointer text-muted" onClick={() => removeFilter('property_type')} />
@@ -711,7 +731,7 @@ function SearchContent() {
                     <X size={12} className="cursor-pointer text-muted" onClick={() => toggleQuickFilter(tag)} />
                   </span>
                 ))}
-                {!locality && !listingType && !propertyType && !bedrooms && !verifiedOnly && activeQuickFilters.length === 0 && (
+                {!locality && !activeListingType && !propertyType && !bedrooms && !verifiedOnly && activeQuickFilters.length === 0 && (
                   <span className="text-muted small">No active filters.</span>
                 )}
               </div>

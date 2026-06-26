@@ -290,6 +290,39 @@ function nb_format_listing_price($price, $listing_type)
     return '₹' . number_format($p, 0, '.', ',');
 }
 
+/**
+ * Map Buy/Rent tab slugs to listing_type and strip them from property_type.
+ *
+ * @param array<string, mixed> $filters
+ * @return array<string, mixed>
+ */
+function nb_normalize_search_filters(array $filters)
+{
+    $sale_slugs = array('buy', 'sale', 'sell');
+    $rent_slugs = array('rent', 'lease', 'pg');
+
+    if (!empty($filters['listing_type'])) {
+        $lt = strtolower(trim((string) $filters['listing_type']));
+        if (in_array($lt, $sale_slugs, true)) {
+            $filters['listing_type'] = 'sale';
+        } elseif (in_array($lt, $rent_slugs, true)) {
+            $filters['listing_type'] = 'rent';
+        }
+    }
+
+    if (!empty($filters['property_type'])) {
+        $pt = strtolower(trim((string) $filters['property_type']));
+        if (in_array($pt, $sale_slugs, true) || in_array($pt, $rent_slugs, true)) {
+            if (empty($filters['listing_type'])) {
+                $filters['listing_type'] = in_array($pt, $sale_slugs, true) ? 'sale' : 'rent';
+            }
+            unset($filters['property_type']);
+        }
+    }
+
+    return $filters;
+}
+
 /** @return array<string,string> slug => label */
 /**
  * Move chosen image to index 0 (cover / main photo for cards & carousel).

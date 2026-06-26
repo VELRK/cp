@@ -384,6 +384,7 @@ $route['panel/enquiry/(:num)'] = 'broker_admin/enquiry/$1';
 
 $route['panel/cities'] = 'broker_admin/cities';
 $route['panel/city/add'] = 'broker_admin/city_add';
+$route['panel/city/view/(:num)'] = 'broker_admin/city_view/$1';
 $route['panel/city/edit/(:num)'] = 'broker_admin/city_edit/$1';
 $route['panel/city/delete/(:num)'] = 'broker_admin/city_delete/$1';
 

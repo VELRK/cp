@@ -50,11 +50,25 @@ class Nb_city_model extends CI_Model {
      */
     public function count_references($city_id)
     {
-        $city_id = (int) $city_id;
-        $p = (int) $this->db->where('city_id', $city_id)->count_all_results('nb_properties');
-        $u = (int) $this->db->where('city_id', $city_id)->count_all_results('nb_users');
-        $l = (int) $this->db->where('city_id', $city_id)->count_all_results('nb_localities');
-        return $p + $u + $l;
+        return $this->count_properties($city_id) + $this->count_users($city_id) + $this->count_localities($city_id);
+    }
+
+    public function count_properties($city_id)
+    {
+        return (int) $this->db->where('city_id', (int) $city_id)->count_all_results('nb_properties');
+    }
+
+    public function count_users($city_id)
+    {
+        return (int) $this->db->where('city_id', (int) $city_id)->count_all_results('nb_users');
+    }
+
+    public function count_localities($city_id)
+    {
+        if (!$this->db->table_exists('nb_localities')) {
+            return 0;
+        }
+        return (int) $this->db->where('city_id', (int) $city_id)->count_all_results('nb_localities');
     }
 
     public function delete($id)

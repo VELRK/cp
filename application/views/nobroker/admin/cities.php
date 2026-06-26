@@ -38,6 +38,7 @@
             <td><?php echo (int) $c->sort_order; ?></td>
             <td><?php echo !empty($c->is_active) ? '<span class="text-success">Yes</span>' : '<span class="text-muted">No</span>'; ?></td>
             <td class="text-end text-nowrap">
+              <a class="btn btn-sm btn-outline-secondary rounded-pill px-3 me-1" href="<?php echo site_url('panel/city/view/' . (int) $c->id); ?>">View</a>
               <a class="btn btn-sm btn-outline-dark rounded-pill px-3" href="<?php echo site_url('panel/city/edit/' . (int) $c->id); ?>">Edit</a>
               <?php echo form_open(site_url('panel/city/delete/' . (int) $c->id), array('class' => 'd-inline', 'onsubmit' => "return confirm('Delete this city? Only allowed if unused.');")); ?>
                 <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2">Delete</button>

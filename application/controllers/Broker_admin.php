@@ -453,6 +453,30 @@ class Broker_admin extends MY_Controller {
         $this->load->view('nobroker/admin/footer', $data);
     }
 
+    public function city_view($id = null)
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        $id = (int) $id;
+        if ($id < 1) {
+            show_404();
+        }
+        $row = $this->Nb_city_model->get_by_id($id);
+        if (!$row) {
+            show_404();
+        }
+        $data['page_title'] = 'City #' . $id;
+        $data['row'] = $row;
+        $data['property_count'] = $this->Nb_city_model->count_properties($id);
+        $data['user_count'] = $this->Nb_city_model->count_users($id);
+        $data['locality_count'] = $this->Nb_city_model->count_localities($id);
+        $data['search_url'] = site_url('search?' . http_build_query(array('city_id' => $id)));
+        $data['admin_nav'] = 'cities';
+        $this->load->view('nobroker/admin/header', $data);
+        $this->load->view('nobroker/admin/city_view', $data);
+        $this->load->view('nobroker/admin/footer', $data);
+    }
+
     public function city_add()
     {
         $this->city_edit(0);

@@ -4,7 +4,8 @@
  *
  *   npm run deploy
  *
- * Run after: npm run build:git → git push origin main
+ * Prefer push to main — GitHub Actions builds in CI and rsyncs deploy/release/.
+ * Use this script only for emergency PHP-only hotfixes without waiting for CI.
  */
 
 import { execFileSync } from 'node:child_process';

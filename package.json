@@ -8,6 +8,7 @@
     "build:deploy": "node scripts/build-deploy.mjs",
     "build:git": "node scripts/build-deploy.mjs --git",
     "deploy": "node scripts/deploy-git.mjs",
+    "deploy:rsync": "node scripts/deploy-rsync.mjs",
     "start": "next start",
     "lint": "next lint"
   },

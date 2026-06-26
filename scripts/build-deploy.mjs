@@ -7,7 +7,7 @@
  *   BACKEND_URL=https://your-site.com/cp node scripts/build-deploy.mjs --git
  *
  * Output: deploy/release/ (local preview)
- * With --git: copies out/ + production .htaccess to repo root for git commit + deploy
+ * With --git: copies out/ + production .htaccess to repo root (legacy — CI build preferred)
  */
 
 import { execSync } from 'node:child_process';

@@ -11,31 +11,68 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy
-        uses: appleboy/ssh-action@master
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Build static export (CI — no Node on PC or server)
+        env:
+          BACKEND_URL: https://superfinelabels.in/cp
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build:deploy
+
+      - name: Backup server secrets
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_KEY_ILF }}
           port: 65002
           script: |
+            set -e
             TARGET=/home/u221026474/domains/superfinelabels.in/public_html/cp
-            cd $TARGET
-
-            BACKUP_DIR="/tmp/cp-deploy-backup-$$"
+            BACKUP_DIR=/tmp/cp-deploy-backup-latest
+            rm -rf "$BACKUP_DIR"
             mkdir -p "$BACKUP_DIR"
+            cd "$TARGET"
             [ -f application/config/database.php ] && cp application/config/database.php "$BACKUP_DIR/database.php"
             [ -f application/config/whatsapp.local.php ] && cp application/config/whatsapp.local.php "$BACKUP_DIR/whatsapp.local.php"
             [ -f .env ] && cp .env "$BACKUP_DIR/.env"
             [ -f deploy.local.php ] && cp deploy.local.php "$BACKUP_DIR/deploy.local.php"
+            echo "Secrets backed up to $BACKUP_DIR"
 
-            if [ ! -d ".git" ]; then
-              git init
-              git remote add origin https://github.com/VELRK/cp.git
-            fi
+      - name: Rsync release to server
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY_ILF }}
+        run: |
+          set -e
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          rsync -avz --delete \
+            -e "ssh -p 65002 -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+            --exclude-from=deploy/rsync-exclude.txt \
+            deploy/release/ \
+            "${{ secrets.USERNAME }}@${{ secrets.HOST }}:/home/u221026474/domains/superfinelabels.in/public_html/cp/"
 
-            git fetch origin main
-            git reset --hard origin/main
+      - name: Restore secrets and panel redirects
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY_ILF }}
+          port: 65002
+          script: |
+            set -e
+            TARGET=/home/u221026474/domains/superfinelabels.in/public_html/cp
+            BACKUP_DIR=/tmp/cp-deploy-backup-latest
+            cd "$TARGET"
 
             [ -f "$BACKUP_DIR/database.php" ] && cp "$BACKUP_DIR/database.php" application/config/database.php
             if [ ! -f application/config/database.php ] && [ -f application/config/database.php.example ]; then
@@ -44,10 +81,8 @@ jobs:
             [ -f "$BACKUP_DIR/whatsapp.local.php" ] && cp "$BACKUP_DIR/whatsapp.local.php" application/config/whatsapp.local.php
             [ -f "$BACKUP_DIR/.env" ] && cp "$BACKUP_DIR/.env" .env
             [ -f "$BACKUP_DIR/deploy.local.php" ] && cp "$BACKUP_DIR/deploy.local.php" deploy.local.php
-
             rm -rf "$BACKUP_DIR"
 
-            # Redirect /panel/* and /admin/* at site root → /cp/ (bookmarks/links without /cp)
             PARENT="$(dirname "$TARGET")"
             for SUB in panel admin; do
               SRC="$TARGET/deploy/htaccess.${SUB}-redirect"
@@ -65,4 +100,4 @@ jobs:
               } >> "$ROOT_HT"
             fi
 
-            echo "Deployed: $(git rev-parse --short HEAD) at $TARGET"
+            echo "Deployed static export + PHP from CI at $TARGET"

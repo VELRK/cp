@@ -38,6 +38,9 @@ yarn-error.log*
 # Duplicate static assets — canonical path is /assets/ (not public/assets/)
 public/assets/
 
+# Static Next export — built in GitHub Actions, deployed via rsync (not committed)
+_next/
+
 # --- Build & deploy artifacts ---
 deploy/release/
 deploy/dist/

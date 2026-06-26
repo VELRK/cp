@@ -2,10 +2,13 @@
 /**
  * Local deploy config — copy to deploy.local.php (gitignored).
  *
- * WORKFLOW (build on PC, deploy via git only — server never builds):
- *   1. npm run build:git
+ * WORKFLOW (no local Node build required):
+ *   1. Edit frontend (app/, components/) or PHP (application/)
  *   2. git add . && git commit -m "..." && git push origin main
- *   3. npm run deploy
+ *   3. GitHub Actions builds Next.js + rsyncs to Hostinger automatically
+ *
+ * Optional manual deploy (same as CI, from a machine with Node + SSH):
+ *   npm run build:deploy && npm run deploy:rsync
  */
 return [
     'ssh_host'  => 'YOUR_HOSTINGER_SSH_HOST',

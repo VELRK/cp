@@ -1,9 +1,12 @@
 # Server paths preserved during rsync deploy (user uploads, secrets, cache)
+.git/
+.env
 uploads/
 assets/uploads/
 deploy.local.php
 application/config/database.php
+application/config/whatsapp.local.php
 application/config/config.php
 application/cache/
 application/logs/
-.git/
+node_modules/

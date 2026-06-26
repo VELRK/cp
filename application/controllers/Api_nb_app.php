@@ -209,8 +209,8 @@ class Api_nb_app extends CI_Controller
         if ($bin === false) {
             return array('ok' => false, 'path' => null, 'error' => 'Invalid base64 data');
         }
-        if (strlen($bin) > 5 * 1024 * 1024) {
-            return array('ok' => false, 'path' => null, 'error' => 'File too large (max 5MB)');
+        if (strlen($bin) > nb_upload_max_bytes('image')) {
+            return array('ok' => false, 'path' => null, 'error' => 'File too large (max ' . nb_upload_max_label('image') . ')');
         }
         if ($kind === 'profile' && $ext === 'pdf') {
             return array('ok' => false, 'path' => null, 'error' => 'profile image must be jpg, png, or webp');

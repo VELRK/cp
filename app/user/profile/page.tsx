@@ -71,8 +71,8 @@ export default function UserProfilePage() {
   const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMsg('Profile photo must be under 5 MB.');
+    if (file.size > 15 * 1024 * 1024) {
+      setErrorMsg('Profile photo must be under 15 MB.');
       return;
     }
     setProfilePic(file);
@@ -280,7 +280,7 @@ export default function UserProfilePage() {
                     accept="image/jpeg,image/png,image/webp"
                     onChange={handleProfilePicChange}
                   />
-                  <div className="form-text">JPG, PNG or WebP. Max 5 MB.</div>
+                  <div className="form-text">JPG, PNG or WebP. Max 15 MB.</div>
                 </div>
 
                 {user.role === 'owner' && (

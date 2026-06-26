@@ -311,7 +311,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    const maxBytes = 5 * 1024 * 1024;
+    const maxBytes = 15 * 1024 * 1024;
     const validationErrors: string[] = [];
     const validFiles: File[] = [];
 
@@ -321,7 +321,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
         return;
       }
       if (file.size > maxBytes) {
-        validationErrors.push(`${file.name}: max size is 5MB`);
+        validationErrors.push(`${file.name}: max size is 15MB`);
         return;
       }
       validFiles.push(file);

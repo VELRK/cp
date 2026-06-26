@@ -1,6 +1,18 @@
 RewriteEngine On
 DirectoryIndex index.html index.php
 
+# Allow larger image uploads (property photos, admin banners, profile pics)
+<IfModule mod_php.c>
+  php_value upload_max_filesize 20M
+  php_value post_max_size 25M
+  php_value max_execution_time 120
+</IfModule>
+<IfModule mod_php8.c>
+  php_value upload_max_filesize 20M
+  php_value post_max_size 25M
+  php_value max_execution_time 120
+</IfModule>
+
 # --- User uploads & PHP static assets (never route to CodeIgniter) ---
 RewriteRule ^uploads/ - [L]
 RewriteRule ^assets/ - [L]

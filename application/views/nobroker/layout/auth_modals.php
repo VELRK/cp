@@ -291,13 +291,24 @@ $modal_cities = isset($modal_cities) && is_array($modal_cities) ? $modal_cities 
       });
     }
 
+    function dashboardUrlForRole(role) {
+      if (role === 'owner') {
+        return '<?php echo site_url('owner/dashboard'); ?>';
+      }
+      if (role === 'tenant' || role === 'customer') {
+        return '<?php echo site_url('tenant/dashboard'); ?>';
+      }
+      return '<?php echo site_url(''); ?>';
+    }
+
     function completeLogin(res) {
       if (res.token) {
         try { localStorage.setItem('nb_token', res.token); } catch (e) {}
       }
       showLoginAlert((res && res.message) ? res.message : 'Signed in successfully.', true);
+      var role = (res && res.user && res.user.role) ? res.user.role : 'tenant';
       setTimeout(function () {
-        window.location.reload();
+        window.location.href = dashboardUrlForRole(role);
       }, 500);
     }
 

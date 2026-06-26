@@ -64,9 +64,9 @@ class Whatsapp_library {
             $base_url     = !empty($this->api_url) ? $this->api_url : 'https://backend.askeva.io/v1/message/send-message';
             $url          = $base_url . '?token=' . urlencode($this->api_key);
 
-            $template_def = $this->_find_approved_template($this->otp_template);
+            $template_def = $this->_resolve_template_definition($this->otp_template);
             if (!$template_def) {
-                return '# Template "' . $this->otp_template . '" is not approved on AskEva. Create it in WhatsApp Manager first.';
+                return '# Template "' . $this->otp_template . '" could not be resolved. Check otp_template in whatsapp config.';
             }
 
             $data = $this->_build_template_request_data($phone_number, $otp, $template_def);
@@ -256,10 +256,10 @@ class Whatsapp_library {
             return array('success' => false, 'message' => 'WhatsApp API key is not configured. Set api_key in application/config/whatsapp.php');
         }
 
-        $template_def = $this->_find_approved_template($this->otp_template);
+        $template_def = $this->_resolve_template_definition($this->otp_template);
         if (!$template_def) {
-            $msg = 'WhatsApp template "' . $this->otp_template . '" is not approved on your AskEva account. '
-                . 'Create an AUTHENTICATION template with this name in AskEva/WhatsApp Manager and wait for Meta approval.';
+            $msg = 'WhatsApp template "' . $this->otp_template . '" is not configured. '
+                . 'Set otp_template in application/config/whatsapp.php.';
             log_message('error', $msg);
             return array('success' => false, 'message' => $msg);
         }
@@ -364,25 +364,90 @@ class Whatsapp_library {
         return $this->approved_templates_cache;
     }
 
-    private function _find_approved_template($name)
+    /**
+     * Resolve template definition for sending.
+     * AskEva's /templates list omits Meta AUTHENTICATION (OTP) templates, so we fall back
+     * to a known payload shape when the configured name is not in that list.
+     */
+    private function _resolve_template_definition($name)
     {
         $name = trim((string) $name);
         if ($name === '') {
             return null;
         }
 
+        $from_list = $this->_find_template_in_list($name);
+        if ($from_list) {
+            return $from_list;
+        }
+
+        $fallback = $this->_fallback_template_definition($name);
+        if ($fallback) {
+            log_message('debug', 'WhatsApp template "' . $name . '" not in AskEva templates list; using configured OTP fallback.');
+        }
+        return $fallback;
+    }
+
+    private function _find_template_in_list($name)
+    {
         foreach ($this->_fetch_approved_templates() as $template) {
             if (!is_array($template)) {
                 continue;
             }
-            if (isset($template['name'], $template['status'])
-                && strcasecmp((string) $template['name'], $name) === 0
-                && strtoupper((string) $template['status']) === 'APPROVED') {
+            if (!isset($template['name'])) {
+                continue;
+            }
+            if (strcasecmp((string) $template['name'], $name) !== 0) {
+                continue;
+            }
+            $status = strtoupper((string) ($template['status'] ?? 'APPROVED'));
+            if (in_array($status, array('APPROVED', 'ACTIVE', 'ENABLED'), true)) {
                 return $template;
             }
         }
 
         return null;
+    }
+
+    private function _fallback_template_definition($name)
+    {
+        $name = strtolower(trim((string) $name));
+        if ($name === '') {
+            return null;
+        }
+
+        // Meta AUTHENTICATION OTP templates (e.g. "authentication") are sendable but often
+        // absent from AskEva GET /templates (marketing/utility list only).
+        if (in_array($name, array('authentication', 'otp_verification', 'otp'), true)) {
+            return array(
+                'name'       => $name,
+                'language'   => $this->otp_template_language,
+                'category'   => 'AUTHENTICATION',
+                'components' => array(
+                    array(
+                        'type' => 'BODY',
+                        'text' => '{{1}} is your verification code.',
+                    ),
+                    array(
+                        'type'    => 'BUTTONS',
+                        'buttons' => array(
+                            array('type' => 'URL'),
+                        ),
+                    ),
+                ),
+            );
+        }
+
+        return array(
+            'name'       => $name,
+            'language'   => $this->otp_template_language,
+            'components' => array(
+                array(
+                    'type' => 'BODY',
+                    'text' => '{{1}}',
+                ),
+            ),
+        );
     }
 
     private function _body_variable_count($text)

@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Phone, Lock, ShieldAlert, CheckCircle, ArrowLeft, MessageCircle } from 'lucide-react';
+import { getDashboardPathForRole } from '@/lib/dashboardPaths';
 
 type LoginStep = 'phone' | 'otp';
 const RESEND_SECONDS = 60;
@@ -28,13 +29,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (user) {
-      if (user.role === 'owner') {
-        router.push('/owner/dashboard');
-      } else if (user.role === 'tenant') {
-        router.push('/tenant/dashboard');
-      } else {
-        router.push('/');
-      }
+      router.push(getDashboardPathForRole(user.role));
     }
   }, [user, router]);
 
@@ -93,7 +88,9 @@ export default function LoginPage() {
       const result = await verifyOtp(phone, code);
       if (!result.success) {
         setErrorMsg(result.message || 'Invalid OTP.');
+        return;
       }
+      router.push(getDashboardPathForRole(result.user?.role));
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || 'Verification failed.');
     } finally {

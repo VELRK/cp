@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { getCities } from '@/lib/frontendApi';
+import { getDashboardPathForRole } from '@/lib/dashboardPaths';
 import { X, Lock, Mail, User, Phone, CheckCircle, ShieldAlert, ArrowLeft, MessageCircle } from 'lucide-react';
 
 interface City {
@@ -20,6 +22,7 @@ function normalizePhoneInput(value: string): string {
 }
 
 const AuthModals: React.FC = () => {
+  const router = useRouter();
   const { isAuthModalOpen, setAuthModalOpen, sendOtp, verifyOtp, resendOtp, registerUser } = useAuth();
   const [cities, setCities] = useState<City[]>([]);
 
@@ -135,7 +138,9 @@ const AuthModals: React.FC = () => {
       const result = await verifyOtp(loginPhone, otp);
       if (!result.success) {
         setErrorMsg(result.message || 'Invalid OTP.');
+        return;
       }
+      router.push(getDashboardPathForRole(result.user?.role));
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || 'Verification failed. Please try again.');
     } finally {

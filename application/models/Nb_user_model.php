@@ -196,4 +196,39 @@ class Nb_user_model extends CI_Model {
         $this->db->limit($limit, $offset);
         return $this->db->get($this->table)->result();
     }
+
+    public function update_otp($user_id, $otp, $expires_at)
+    {
+        if (!$this->db->field_exists('otp', $this->table)) {
+            return false;
+        }
+        $this->db->where('id', (int) $user_id);
+        return $this->db->update($this->table, array(
+            'otp' => $otp,
+            'otp_expires_at' => $expires_at,
+        ));
+    }
+
+    public function verify_otp($phone, $otp)
+    {
+        $user = $this->get_by_phone($phone);
+        if (!$user) {
+            return array('success' => false, 'error' => 'user_not_found', 'message' => 'User not found');
+        }
+        if (empty($user->otp)) {
+            return array('success' => false, 'error' => 'no_otp', 'message' => 'No OTP found. Please request a new OTP.');
+        }
+        if (empty($user->otp_expires_at) || strtotime($user->otp_expires_at) <= time()) {
+            return array('success' => false, 'error' => 'otp_expired', 'message' => 'OTP has expired. Please request a new OTP.');
+        }
+        if ((string) $user->otp !== (string) $otp) {
+            return array('success' => false, 'error' => 'invalid_otp', 'message' => 'Invalid OTP. Please check and try again.');
+        }
+        $this->db->where('id', (int) $user->id);
+        $this->db->update($this->table, array(
+            'otp' => null,
+            'otp_expires_at' => null,
+        ));
+        return array('success' => true, 'user' => $user);
+    }
 }

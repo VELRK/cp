@@ -14,6 +14,9 @@ export { getAdminPanelUrl };
 export const API_PATHS = {
   // Auth (PHP)
   login: '/api/nb/login',
+  sendOtp: '/api/nb/send-otp',
+  verifyOtp: '/api/nb/verify-otp',
+  resendOtp: '/api/nb/resend-otp',
   register: '/api/nb/register',
   logout: '/api/nb/logout',
   me: '/api/nb/me',
@@ -81,6 +84,15 @@ export const getMe = () => api.get(API_PATHS.me, { validateStatus: (status) => s
 
 export const login = (loginId: string, password: string) =>
   api.post(API_PATHS.login, { login: loginId, password });
+
+export const sendOtp = (phone: string, countryCode = '+91') =>
+  api.post(API_PATHS.sendOtp, { phone, country_code: countryCode });
+
+export const verifyOtp = (phone: string, otp: string, countryCode = '+91') =>
+  api.post(API_PATHS.verifyOtp, { phone, otp, country_code: countryCode });
+
+export const resendOtp = (phone: string, countryCode = '+91') =>
+  api.post(API_PATHS.resendOtp, { phone, country_code: countryCode });
 
 export const register = (formData: FormData, config?: AxiosRequestConfig) =>
   api.post(API_PATHS.register, formData, config);

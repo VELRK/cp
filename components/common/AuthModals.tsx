@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { getCities } from '@/lib/frontendApi';
-import { X, Lock, Mail, User, Phone, CheckCircle, ShieldAlert } from 'lucide-react';
+import { X, Lock, Mail, User, Phone, CheckCircle, ShieldAlert, ArrowLeft, MessageCircle } from 'lucide-react';
 
 interface City {
   id: number;
@@ -11,14 +11,26 @@ interface City {
   state: string;
 }
 
+type LoginStep = 'phone' | 'otp';
+
+const RESEND_SECONDS = 60;
+
+function normalizePhoneInput(value: string): string {
+  return value.replace(/\D/g, '').slice(0, 10);
+}
+
 const AuthModals: React.FC = () => {
-  const { isAuthModalOpen, setAuthModalOpen, login, registerUser } = useAuth();
+  const { isAuthModalOpen, setAuthModalOpen, sendOtp, verifyOtp, resendOtp, registerUser } = useAuth();
   const [cities, setCities] = useState<City[]>([]);
 
-  // Form states
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
+  // Login OTP flow
+  const [loginStep, setLoginStep] = useState<LoginStep>('phone');
+  const [loginPhone, setLoginPhone] = useState('');
+  const [loginOtp, setLoginOtp] = useState('');
+  const [resendTimer, setResendTimer] = useState(0);
+  const otpInputRef = useRef<HTMLInputElement>(null);
 
+  // Register form states
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPhone, setRegPhone] = useState('');
@@ -31,16 +43,24 @@ const AuthModals: React.FC = () => {
   const [regProfilePic, setRegProfilePic] = useState<File | null>(null);
   const [regAcceptTerms, setRegAcceptTerms] = useState(false);
 
-  // Status states
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const resetLoginFlow = useCallback(() => {
+    setLoginStep('phone');
+    setLoginPhone('');
+    setLoginOtp('');
+    setResendTimer(0);
+  }, []);
 
   useEffect(() => {
     if (isAuthModalOpen) {
       setErrorMsg(null);
       setSuccessMsg(null);
-      // Fetch cities
+      if (isAuthModalOpen === 'login') {
+        resetLoginFlow();
+      }
       getCities()
         .then((res) => {
           if (res.data?.success && Array.isArray(res.data.cities)) {
@@ -49,24 +69,99 @@ const AuthModals: React.FC = () => {
         })
         .catch((e) => console.error('Error fetching cities', e));
     }
-  }, [isAuthModalOpen]);
+  }, [isAuthModalOpen, resetLoginFlow]);
+
+  useEffect(() => {
+    if (resendTimer <= 0) return;
+    const t = setTimeout(() => setResendTimer((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendTimer]);
+
+  useEffect(() => {
+    if (loginStep === 'otp') {
+      otpInputRef.current?.focus();
+    }
+  }, [loginStep]);
 
   if (!isAuthModalOpen) return null;
 
-  const handleLoginSubmit = async (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    setSuccessMsg(null);
+
+    const phone = normalizePhoneInput(loginPhone);
+    if (phone.length !== 10) {
+      setErrorMsg('Enter a valid 10-digit mobile number.');
+      return;
+    }
+
     setLoading(true);
     try {
-      const result = await login(loginEmail, loginPassword);
+      const result = await sendOtp(phone);
       if (!result.success) {
-        setErrorMsg(result.message || 'Invalid credentials');
-      } else {
-        setLoginEmail('');
-        setLoginPassword('');
+        setErrorMsg(result.message || 'Could not send OTP.');
+        return;
+      }
+      setLoginPhone(phone);
+      setLoginStep('otp');
+      setLoginOtp('');
+      setResendTimer(RESEND_SECONDS);
+      setSuccessMsg(
+        result.development_mode && result.otp
+          ? `OTP sent (dev mode): ${result.otp}`
+          : 'OTP sent to your WhatsApp number.'
+      );
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.message || 'Failed to send OTP. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    const otp = loginOtp.replace(/\D/g, '').slice(0, 4);
+    if (otp.length !== 4) {
+      setErrorMsg('Enter the 4-digit OTP.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await verifyOtp(loginPhone, otp);
+      if (!result.success) {
+        setErrorMsg(result.message || 'Invalid OTP.');
       }
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || 'Login failed. Please try again.');
+      setErrorMsg(err.response?.data?.message || 'Verification failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (resendTimer > 0 || loading) return;
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setLoading(true);
+    try {
+      const result = await resendOtp(loginPhone);
+      if (!result.success) {
+        setErrorMsg(result.message || 'Could not resend OTP.');
+        return;
+      }
+      setResendTimer(RESEND_SECONDS);
+      setSuccessMsg(
+        result.development_mode && result.otp
+          ? `OTP resent (dev mode): ${result.otp}`
+          : 'A new OTP has been sent to your WhatsApp.'
+      );
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.message || 'Failed to resend OTP.');
     } finally {
       setLoading(false);
     }
@@ -103,7 +198,6 @@ const AuthModals: React.FC = () => {
       const result = await registerUser(formData);
       if (result.success) {
         setSuccessMsg('Registration successful! Waiting for admin approval.');
-        // Reset state
         setRegName('');
         setRegEmail('');
         setRegPhone('');
@@ -137,9 +231,22 @@ const AuthModals: React.FC = () => {
       <div className="modal-dialog modal-dialog-centered" role="document">
         <div className="modal-content border-0 shadow-lg rounded-4 animate-fade-in">
           <div className="modal-header border-bottom-0 pb-0 d-flex justify-content-between align-items-center p-3">
-            <h2 className="modal-title h5 fw-bold text-primary" style={{ color: 'var(--nb-primary)' }}>
-              {isAuthModalOpen === 'login' ? 'Login' : 'Create an Account'}
-            </h2>
+            <div>
+              <h2 className="modal-title h5 fw-bold text-primary mb-0" style={{ color: 'var(--nb-primary)' }}>
+                {isAuthModalOpen === 'login'
+                  ? loginStep === 'phone'
+                    ? 'Sign in with Phone'
+                    : 'Verify OTP'
+                  : 'Create an Account'}
+              </h2>
+              {isAuthModalOpen === 'login' && (
+                <p className="text-muted small mb-0 mt-1">
+                  {loginStep === 'phone'
+                    ? 'We will send a 4-digit OTP to your WhatsApp'
+                    : `OTP sent to +91 ${loginPhone}`}
+                </p>
+              )}
+            </div>
             <button
               type="button"
               className="btn border-0 p-1 rounded-circle"
@@ -165,60 +272,120 @@ const AuthModals: React.FC = () => {
             )}
 
             {isAuthModalOpen === 'login' ? (
-              <form onSubmit={handleLoginSubmit}>
-                <div className="mb-3">
-                  <label className="form-label small fw-semibold">Email or Phone</label>
-                  <div className="input-group">
-                    <span className="input-group-text bg-light border-end-0">
-                      <Mail size={16} className="text-muted" />
-                    </span>
-                    <input
-                      type="text"
-                      className="form-control border-start-0"
-                      placeholder="Enter email or phone number"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      required
-                    />
+              loginStep === 'phone' ? (
+                <form onSubmit={handleSendOtp}>
+                  <div className="mb-3">
+                    <label className="form-label small fw-semibold">Mobile Number</label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-light border-end-0 fw-semibold small">+91</span>
+                      <span className="input-group-text bg-light border-end-0 border-start-0">
+                        <Phone size={16} className="text-muted" />
+                      </span>
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        className="form-control border-start-0"
+                        placeholder="10-digit mobile number"
+                        value={loginPhone}
+                        onChange={(e) => setLoginPhone(normalizePhoneInput(e.target.value))}
+                        maxLength={10}
+                        required
+                      />
+                    </div>
+                    <div className="d-flex align-items-center gap-1 mt-2 text-muted" style={{ fontSize: '0.75rem' }}>
+                      <MessageCircle size={14} />
+                      <span>OTP will be delivered on WhatsApp</span>
+                    </div>
                   </div>
-                </div>
 
-                <div className="mb-4">
-                  <label className="form-label small fw-semibold">Password</label>
-                  <div className="input-group">
-                    <span className="input-group-text bg-light border-end-0">
-                      <Lock size={16} className="text-muted" />
-                    </span>
-                    <input
-                      type="password"
-                      className="form-control border-start-0"
-                      placeholder="Enter password"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
+                  <button
+                    type="submit"
+                    className="btn btn-danger w-100 py-2.5 fw-semibold rounded-pill nb-btn-nav-danger text-dark"
+                    disabled={loading || loginPhone.length !== 10}
+                  >
+                    {loading ? 'Sending OTP...' : 'Send OTP'}
+                  </button>
 
-                <button
-                  type="submit"
-                  className="btn btn-danger w-100 py-2.5 fw-semibold rounded-pill nb-btn-nav-danger text-dark"
-                  disabled={loading}
-                >
-                  {loading ? 'Logging in...' : 'Sign In'}
-                </button>
-
-                <p className="small text-muted text-center mt-3 mb-0">
-                  Don&apos;t have an account?{' '}
+                  <p className="small text-muted text-center mt-3 mb-0">
+                    Don&apos;t have an account?{' '}
+                    <button
+                      type="button"
+                      className="btn btn-link p-0 small fw-semibold text-decoration-none"
+                      onClick={() => setAuthModalOpen('register')}
+                    >
+                      Register here
+                    </button>
+                  </p>
+                  <p className="small text-muted text-center mt-2 mb-0">
+                    Admin? Sign in via the{' '}
+                    <a href="/panel" className="fw-semibold text-decoration-none">
+                      admin panel
+                    </a>
+                    .
+                  </p>
+                </form>
+              ) : (
+                <form onSubmit={handleVerifyOtp}>
                   <button
                     type="button"
-                    className="btn btn-link p-0 small fw-semibold text-decoration-none"
-                    onClick={() => setAuthModalOpen('register')}
+                    className="btn btn-link btn-sm p-0 mb-3 text-decoration-none d-flex align-items-center gap-1"
+                    onClick={() => {
+                      setLoginStep('phone');
+                      setLoginOtp('');
+                      setErrorMsg(null);
+                      setSuccessMsg(null);
+                    }}
                   >
-                    Register here
+                    <ArrowLeft size={14} />
+                    Change number
                   </button>
-                </p>
-              </form>
+
+                  <div className="mb-3">
+                    <label className="form-label small fw-semibold">Enter 4-digit OTP</label>
+                    <div className="input-group">
+                      <span className="input-group-text bg-light border-end-0">
+                        <Lock size={16} className="text-muted" />
+                      </span>
+                      <input
+                        ref={otpInputRef}
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        className="form-control border-start-0 text-center fw-bold letter-spacing-wide"
+                        placeholder="• • • •"
+                        value={loginOtp}
+                        onChange={(e) => setLoginOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                        maxLength={4}
+                        required
+                        style={{ letterSpacing: '0.35em', fontSize: '1.25rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn btn-danger w-100 py-2.5 fw-semibold rounded-pill nb-btn-nav-danger text-dark mb-3"
+                    disabled={loading || loginOtp.length !== 4}
+                  >
+                    {loading ? 'Verifying...' : 'Verify & Sign In'}
+                  </button>
+
+                  <div className="text-center small">
+                    {resendTimer > 0 ? (
+                      <span className="text-muted">Resend OTP in {resendTimer}s</span>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn btn-link p-0 small fw-semibold text-decoration-none"
+                        onClick={handleResendOtp}
+                        disabled={loading}
+                      >
+                        Resend OTP
+                      </button>
+                    )}
+                  </div>
+                </form>
+              )
             ) : (
               <form onSubmit={handleRegisterSubmit} style={{ maxHeight: '65vh', overflowY: 'auto', paddingRight: '4px' }}>
                 <div className="mb-2">
@@ -346,7 +513,7 @@ const AuthModals: React.FC = () => {
                       />
                     </div>
                   )}
-                  <div className={regRole !== 'customer' ? "col-6" : "col-12"}>
+                  <div className={regRole !== 'customer' ? 'col-6' : 'col-12'}>
                     <label className="form-label small fw-semibold mb-1">Profile Photo</label>
                     <input
                       type="file"

@@ -860,16 +860,14 @@ function SearchContent() {
                           {/* Image Column */}
                           <div className="col-md-5">
                             <div className="nb-search-list-card__img-wrap">
-                              <Link href={`/property/${p.slug}`}>
+                              <Link href={`/property/${p.slug}`} className="nb-search-list-card__img-link">
                                 {thumbnail ? (
                                   <img 
                                     src={thumbnail} 
                                     alt={p.title} 
-                                    className="w-100 h-100 object-fit-cover position-absolute"
-                                    style={{ inset: 0 }}
                                   />
                                 ) : (
-                                  <div className="w-100 h-100 bg-light text-muted d-flex flex-column align-items-center justify-content-center position-absolute" style={{ inset: 0 }}>
+                                  <div className="nb-search-list-card__img-placeholder bg-light text-muted d-flex flex-column align-items-center justify-content-center">
                                     <span className="small">No Photo Provided</span>
                                   </div>
                                 )}

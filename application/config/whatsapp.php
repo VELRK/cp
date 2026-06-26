@@ -3,17 +3,17 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 /*
 |--------------------------------------------------------------------------
-| WhatsApp OTP Configuration (Syncr / WAAdmin)
+| WhatsApp OTP Configuration (AskEva)
 |--------------------------------------------------------------------------
 */
 $config['whatsapp'] = array(
 
     /*
-     | Provider: syncr
-     | API endpoint for sending WhatsApp messages via WAAdmin
+     | Provider: askeva | syncr | waadmin
+     | AskEva endpoint for WhatsApp template messages
      */
-    'provider'         => 'syncr',
-    'api_url'          => 'https://waadmin.syncr.in/api/send-message',
+    'provider'         => 'askeva',
+    'api_url'          => 'https://backend.askeva.io/v1/message/send-message',
 
     /*
      | Your WhatsApp sender number (with country code, no +)
@@ -21,19 +21,28 @@ $config['whatsapp'] = array(
     'from_number'      => '919790919412',
 
     /*
-     | API key / token issued by Syncr dashboard
+     | API token from AskEva dashboard (?token=...)
      */
-    'api_key'          => '',          // <-- fill in your Syncr API key
+    'api_key'          => '',
 
     /*
-     | OTP message template.
-     | Use {otp} as placeholder — it will be replaced with the actual OTP.
+     | WhatsApp template name registered in AskEva
      */
-    'otp_template'     => 'Your DVM verification OTP is: {otp}. Valid for 1 minute. Do not share it with anyone.',
+    'otp_template'     => 'otp_verification',
 
     /*
-     | development_mode = true  → OTP is returned in the API response (no WhatsApp sent)
-     | development_mode = false → OTP is sent via WhatsApp (production)
+     | OTP length (4 digits)
      */
-    'development_mode' => false,
+    'otp_length'       => 4,
+
+    /*
+     | OTP validity in seconds
+     */
+    'otp_ttl_seconds'  => 300,
+
+    /*
+     | development_mode = true  → OTP returned in API response (no WhatsApp sent)
+     | development_mode = false → OTP sent via WhatsApp (production)
+     */
+    'development_mode' => true,
 );

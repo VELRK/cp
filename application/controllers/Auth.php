@@ -34,17 +34,16 @@ class Auth extends CI_Controller {
             // Test mode: fixed OTP for test number
             $test_phone        = '9876543210';
             $test_country_code = '+91';
-            $test_otp          = '123456';
+            $test_otp          = '1234';
 
             if ($phone == $test_phone && $country_code == $test_country_code) {
                 $otp = $test_otp;
             } else {
-                // Generate 6-digit OTP for real numbers
-                $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+                $otp = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
             }
             
-            // OTP expires in 1 minute (60 seconds)
-            $otp_expires_at = date('Y-m-d H:i:s', time() + 60);
+            // OTP expires in 5 minutes
+            $otp_expires_at = date('Y-m-d H:i:s', time() + 300);
             
             // Check if user exists
             $user = $this->User_model->get_by_phone($phone, $country_code);
@@ -73,7 +72,6 @@ class Auth extends CI_Controller {
             
             // Check if development mode is enabled
             $development_mode = isset($whatsapp_config['development_mode']) && $whatsapp_config['development_mode'] === true;
-            $development_mode  = true;
             if ($development_mode) {
                 // Development mode: Skip actual WhatsApp sending, show cURL command
                 $curl_command = $this->whatsapp_library->get_curl_command($full_phone, $otp);
@@ -447,8 +445,8 @@ class Auth extends CI_Controller {
             }
             
             // Generate OTP for new phone
-            $otp = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
-            $otp_expires_at = date('Y-m-d H:i:s', time() + 60);
+            $otp = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+            $otp_expires_at = date('Y-m-d H:i:s', time() + 300);
             
             // Update user with new phone and OTP
             $this->User_model->update($user_id, array(

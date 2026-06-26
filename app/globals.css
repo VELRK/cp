@@ -1164,6 +1164,21 @@ body,
   min-height: 220px;
 }
 
+.nb-search-list-card__img-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  cursor: pointer;
+}
+
+.nb-search-list-card__img-link img,
+.nb-search-list-card__img-link .nb-search-list-card__img-placeholder {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .nb-search-list-card__img-tag {
   position: absolute;
   top: 10px;
@@ -1175,6 +1190,7 @@ body,
   padding: 0.2rem 0.5rem;
   border-radius: 2px;
   z-index: 5;
+  pointer-events: none;
 }
 
 .nb-search-list-card__rera {
@@ -1188,6 +1204,7 @@ body,
   padding: 0.2rem 0.5rem;
   border-radius: 2px;
   z-index: 5;
+  pointer-events: none;
 }
 
 .nb-search-list-card__shade {
@@ -1195,6 +1212,7 @@ body,
   inset: 0;
   background: linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0%, transparent 50%);
   z-index: 2;
+  pointer-events: none;
 }
 
 .nb-search-list-card__price-badge {
@@ -1206,6 +1224,7 @@ body,
   font-size: 1.2rem;
   z-index: 5;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
 }
 
 .nb-search-list-card__wishlist-btn {

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getMe, login as apiLogin, register as apiRegister, logout as apiLogout } from '../lib/frontendApi';
+import { getMe, login as apiLogin, register as apiRegister, logout as apiLogout, sendOtp as apiSendOtp, verifyOtp as apiVerifyOtp, resendOtp as apiResendOtp } from '../lib/frontendApi';
 import { getAppHomeUrl } from '../lib/api';
 import { AuthContext, type AuthUser } from '../lib/auth-context-store';
 
@@ -66,6 +66,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return response.data;
   };
 
+  const completeOtpSignIn = (receivedToken: string, receivedUser: AuthUser) => {
+    localStorage.setItem('nb_token', receivedToken);
+    setToken(receivedToken);
+    setUser(receivedUser);
+    setAuthModalOpen(null);
+  };
+
+  const sendOtp = async (phone: string, countryCode = '+91') => {
+    const response = await apiSendOtp(phone, countryCode);
+    return response.data;
+  };
+
+  const verifyOtp = async (phone: string, otp: string, countryCode = '+91') => {
+    const response = await apiVerifyOtp(phone, otp, countryCode);
+    if (response.data?.success) {
+      const { token: receivedToken, user: receivedUser } = response.data;
+      completeOtpSignIn(receivedToken, receivedUser);
+    }
+    return response.data;
+  };
+
+  const resendOtp = async (phone: string, countryCode = '+91') => {
+    const response = await apiResendOtp(phone, countryCode);
+    return response.data;
+  };
+
   const registerUser = async (formData: FormData) => {
     const response = await apiRegister(formData);
     if (response.data?.success) {
@@ -106,6 +132,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthModalOpen,
         setAuthModalOpen,
         login,
+        sendOtp,
+        verifyOtp,
+        resendOtp,
         registerUser,
         logout,
         refreshUser,

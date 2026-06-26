@@ -11,26 +11,28 @@ class Whatsapp_library {
     private $api_key;
     private $api_url;
     private $from_number;
+    private $otp_template;
     private $ci;
 
     public function __construct($config = array())
     {
         $this->ci =& get_instance();
 
-        // Load config from config file
         $this->ci->config->load('whatsapp', TRUE);
-        $config = $this->ci->config->item('whatsapp') ?: $config;
+        $file_config = $this->ci->config->item('whatsapp') ?: array();
+        $config = array_merge($file_config, $config);
 
-        $this->provider    = 'syncr';
-        $this->api_key     = 'd43fa5ae1f774ab727fb03376b2de1343efc9f42153f4905902bb4b705109b2cd27114922345bf8a0a99042892bd439f7a990a58dec4f2fc6b82cc8255e1af9e';
-        $this->api_url     = 'https://waadmin.syncr.in/v1/message/send-message';
-        $this->from_number = '919342012030';
+        $this->provider     = isset($config['provider']) ? (string) $config['provider'] : 'askeva';
+        $this->api_key      = isset($config['api_key']) ? (string) $config['api_key'] : '';
+        $this->api_url      = isset($config['api_url']) ? (string) $config['api_url'] : 'https://backend.askeva.io/v1/message/send-message';
+        $this->from_number  = isset($config['from_number']) ? (string) $config['from_number'] : '';
+        $this->otp_template = isset($config['otp_template']) ? (string) $config['otp_template'] : 'otp_verification';
 
         if (!empty($this->api_key)) {
             $masked_key = substr($this->api_key, 0, 8) . '...' . substr($this->api_key, -8);
             log_message('debug', 'Whatsapp_library initialized - Provider: ' . $this->provider . ', API Key: ' . $masked_key . ' (length: ' . strlen($this->api_key) . ')');
         } else {
-            log_message('error', 'Whatsapp_library initialized - API Key is empty!');
+            log_message('debug', 'Whatsapp_library initialized - API Key is empty (development mode expected).');
         }
     }
 
@@ -53,9 +55,9 @@ class Whatsapp_library {
      */
     public function get_curl_command($phone, $otp)
     {
-        if ($this->provider === 'syncr' || $this->provider === 'waadmin') {
+        if (in_array($this->provider, array('syncr', 'waadmin', 'askeva'), true)) {
             $phone_number = str_replace('+', '', $phone);
-            $base_url     = !empty($this->api_url) ? $this->api_url : 'https://waadmin.syncr.in/v1/message/send-message';
+            $base_url     = !empty($this->api_url) ? $this->api_url : 'https://backend.askeva.io/v1/message/send-message';
             $url          = $base_url . '?token=' . urlencode($this->api_key);
 
             $data = array(
@@ -63,7 +65,7 @@ class Whatsapp_library {
                 'type'     => 'template',
                 'template' => array(
                     'language'   => array('policy' => 'deterministic', 'code' => 'en'),
-                    'name'       => 'otp_verification',
+                    'name'       => $this->otp_template,
                     'components' => array(
                         array(
                             'type'       => 'body',
@@ -115,7 +117,8 @@ class Whatsapp_library {
                 return $this->send_via_messagebird($phone, $message);
             case 'syncr':
             case 'waadmin':
-                return $this->send_via_syncr($phone, $otp);
+            case 'askeva':
+                return $this->send_via_template_api($phone, $otp);
             default:
                 return $this->send_via_gupshup($phone, $message);
         }
@@ -253,17 +256,17 @@ class Whatsapp_library {
             : array('success' => false, 'message' => 'Failed to send OTP: ' . $response);
     }
 
-    private function send_via_syncr($phone, $otp)
+    private function send_via_template_api($phone, $otp)
     {
         if (empty($this->api_key) || trim($this->api_key) === '' || $this->api_key === 'YOUR_SYNCR_TOKEN_HERE') {
-            log_message('error', 'Syncr/WAAdmin API key is not configured.');
-            return array('success' => false, 'message' => 'WhatsApp API key is not configured. Please set your Syncr token in application/config/whatsapp.php');
+            log_message('error', 'WhatsApp API key is not configured.');
+            return array('success' => false, 'message' => 'WhatsApp API key is not configured. Set api_key in application/config/whatsapp.php');
         }
 
         $token_preview = substr($this->api_key, 0, 8) . '...' . substr($this->api_key, -8);
-        log_message('debug', 'Syncr/WAAdmin: Token (length: ' . strlen($this->api_key) . ', preview: ' . $token_preview . ')');
+        log_message('debug', 'WhatsApp template API: Token (length: ' . strlen($this->api_key) . ', preview: ' . $token_preview . ')');
 
-        $base_url     = !empty($this->api_url) ? $this->api_url : 'https://waadmin.syncr.in/v1/message/send-message';
+        $base_url     = !empty($this->api_url) ? $this->api_url : 'https://backend.askeva.io/v1/message/send-message';
         $phone_number = str_replace('+', '', $phone);
 
         $data = array(
@@ -271,7 +274,7 @@ class Whatsapp_library {
             'type'     => 'template',
             'template' => array(
                 'language'   => array('policy' => 'deterministic', 'code' => 'en'),
-                'name'       => 'otp_verification',
+                'name'       => $this->otp_template,
                 'components' => array(
                     array(
                         'type'       => 'body',
@@ -304,12 +307,12 @@ class Whatsapp_library {
         curl_close($ch);
 
         $masked_url = preg_replace('/token=[^&]+/', 'token=***', $url);
-        log_message('debug', 'Syncr/WAAdmin Request URL: ' . $masked_url);
-        log_message('debug', 'Syncr/WAAdmin Request Data: ' . json_encode($data));
-        log_message('debug', 'Syncr/WAAdmin Response: ' . $response . ' | HTTP Code: ' . $http_code);
+        log_message('debug', 'WhatsApp template API Request URL: ' . $masked_url);
+        log_message('debug', 'WhatsApp template API Request Data: ' . json_encode($data));
+        log_message('debug', 'WhatsApp template API Response: ' . $response . ' | HTTP Code: ' . $http_code);
 
         if ($curl_error) {
-            log_message('error', 'Syncr/WAAdmin CURL Error: ' . $curl_error);
+            log_message('error', 'WhatsApp template API CURL Error: ' . $curl_error);
             return array('success' => false, 'message' => 'CURL Error: ' . $curl_error);
         }
 
@@ -334,7 +337,7 @@ class Whatsapp_library {
         elseif (isset($rd['errors']))   { $error_msg = is_array($rd['errors']) ? implode(', ', $rd['errors']) : $rd['errors']; }
         elseif (!empty($response))      { $error_msg = $response; }
 
-        log_message('error', 'Syncr/WAAdmin API Error: ' . $error_msg . ' | HTTP Code: ' . $http_code);
+        log_message('error', 'WhatsApp template API Error: ' . $error_msg . ' | HTTP Code: ' . $http_code);
         return array('success' => false, 'message' => $error_msg);
     }
 }

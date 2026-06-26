@@ -20,6 +20,9 @@ export interface AuthContextType {
   isAuthModalOpen: 'login' | 'register' | null;
   setAuthModalOpen: (modal: 'login' | 'register' | null) => void;
   login: (login: string, password: string) => Promise<any>;
+  sendOtp: (phone: string, countryCode?: string) => Promise<any>;
+  verifyOtp: (phone: string, otp: string, countryCode?: string) => Promise<any>;
+  resendOtp: (phone: string, countryCode?: string) => Promise<any>;
   registerUser: (formData: FormData) => Promise<any>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;

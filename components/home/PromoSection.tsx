@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import { toFrontendAssetUrl } from '@/lib/cityImages';
 
 interface PromoSectionProps {
   user: any;
@@ -14,7 +15,7 @@ const PromoSection: React.FC<PromoSectionProps> = ({ user, setAuthModalOpen }) =
     <div className="nb-promo-section mb-5 fade-in-up">
       <div className="nb-promo-banner">
         <img
-          src="/assets/assets/img/nb-placeholder-property.svg"
+          src={toFrontendAssetUrl('/assets/img/nb-placeholder-property.svg')}
           alt="Post Property Free Agent"
           className="nb-promo-banner-img"
         />

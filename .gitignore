@@ -35,6 +35,12 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# Duplicate static assets — canonical path is /assets/ (not public/assets/)
+public/assets/
+
+# Next.js static export chunks at repo root (regenerate via npm run build)
+_next/
+
 # --- Build & deploy artifacts ---
 deploy/release/
 deploy/dist/

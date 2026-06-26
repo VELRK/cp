@@ -66,7 +66,7 @@ $config['api_catalog'] = array(
                     'path' => 'api/nb/login',
                     'auth' => false,
                     'body_type' => 'json',
-                    'description' => 'Admin email + password login only. Owner/tenant/agent accounts use Send OTP + Verify OTP.',
+                    'description' => 'Email + password login for approved owner, tenant, agent, and admin accounts. Phone sign-in uses Send OTP + Verify OTP.',
                     'body' => array('login' => 'owner@test.com', 'password' => 'your_password'),
                     'sample_response' => array(
                         'success' => true,

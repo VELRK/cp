@@ -4,10 +4,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Phone, Lock, ShieldAlert, CheckCircle, ArrowLeft, MessageCircle } from 'lucide-react';
+import { Phone, Lock, ShieldAlert, CheckCircle, ArrowLeft, MessageCircle, Mail } from 'lucide-react';
 import { getDashboardPathForRole } from '@/lib/dashboardPaths';
 
-type LoginStep = 'phone' | 'otp';
+type LoginMode = 'email' | 'otp';
+type OtpStep = 'phone' | 'verify';
 const RESEND_SECONDS = 60;
 
 function normalizePhoneInput(value: string): string {
@@ -15,10 +16,13 @@ function normalizePhoneInput(value: string): string {
 }
 
 export default function LoginPage() {
-  const { user, sendOtp, verifyOtp, resendOtp } = useAuth();
+  const { user, login, sendOtp, verifyOtp, resendOtp } = useAuth();
   const router = useRouter();
 
-  const [step, setStep] = useState<LoginStep>('phone');
+  const [mode, setMode] = useState<LoginMode>('email');
+  const [otpStep, setOtpStep] = useState<OtpStep>('phone');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [resendTimer, setResendTimer] = useState(0);
@@ -40,8 +44,41 @@ export default function LoginPage() {
   }, [resendTimer]);
 
   useEffect(() => {
-    if (step === 'otp') otpInputRef.current?.focus();
-  }, [step]);
+    if (mode === 'otp' && otpStep === 'verify') otpInputRef.current?.focus();
+  }, [mode, otpStep]);
+
+  const switchMode = (next: LoginMode) => {
+    setMode(next);
+    setOtpStep('phone');
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setOtp('');
+  };
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail || !password) {
+      setErrorMsg('Email and password are required.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const result = await login(trimmedEmail, password);
+      if (!result?.success) {
+        setErrorMsg(result?.message || 'Invalid email or password.');
+        if (result?.use_otp) setMode('otp');
+        return;
+      }
+      router.push(getDashboardPathForRole(result.user?.role));
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.message || 'Login failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +97,7 @@ export default function LoginPage() {
         return;
       }
       setPhone(normalized);
-      setStep('otp');
+      setOtpStep('verify');
       setOtp('');
       setResendTimer(RESEND_SECONDS);
       setSuccessMsg(
@@ -124,13 +161,32 @@ export default function LoginPage() {
           <div className="card border-0 shadow-lg rounded-3 p-4 bg-white mt-5">
             <div className="text-center mb-4">
               <h1 className="h3 fw-extrabold text-primary mb-1" style={{ color: 'var(--nb-primary)' }}>
-                {step === 'phone' ? 'Sign in with Phone' : 'Verify OTP'}
+                Sign In
               </h1>
-              <p className="text-muted small">
-                {step === 'phone'
-                  ? 'We will send a 4-digit OTP to your WhatsApp'
-                  : `OTP sent to +91 ${phone}`}
+              <p className="text-muted small mb-3">
+                {mode === 'email'
+                  ? 'Use your registered email and password'
+                  : otpStep === 'phone'
+                    ? 'We will send a 4-digit OTP to your WhatsApp'
+                    : `OTP sent to +91 ${phone}`}
               </p>
+
+              <div className="d-flex rounded-pill bg-light p-1 gap-1">
+                <button
+                  type="button"
+                  className={`btn btn-sm flex-fill rounded-pill fw-semibold ${mode === 'email' ? 'btn-danger text-dark' : 'btn-light border-0 text-muted'}`}
+                  onClick={() => switchMode('email')}
+                >
+                  Email & Password
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm flex-fill rounded-pill fw-semibold ${mode === 'otp' ? 'btn-danger text-dark' : 'btn-light border-0 text-muted'}`}
+                  onClick={() => switchMode('otp')}
+                >
+                  Phone OTP
+                </button>
+              </div>
             </div>
 
             {errorMsg && (
@@ -146,7 +202,60 @@ export default function LoginPage() {
               </div>
             )}
 
-            {step === 'phone' ? (
+            {mode === 'email' ? (
+              <form onSubmit={handleEmailLogin}>
+                <div className="mb-3">
+                  <label className="form-label small fw-semibold">Email Address</label>
+                  <div className="input-group">
+                    <span className="input-group-text bg-light border-end-0">
+                      <Mail size={16} className="text-muted" />
+                    </span>
+                    <input
+                      type="email"
+                      className="form-control border-start-0"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      autoComplete="email"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="mb-4">
+                  <label className="form-label small fw-semibold">Password</label>
+                  <div className="input-group">
+                    <span className="input-group-text bg-light border-end-0">
+                      <Lock size={16} className="text-muted" />
+                    </span>
+                    <input
+                      type="password"
+                      className="form-control border-start-0"
+                      placeholder="Your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoComplete="current-password"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-danger w-100 py-2 fw-semibold rounded-pill text-dark"
+                  disabled={loading || !email.trim() || !password}
+                >
+                  {loading ? 'Signing in...' : 'Sign In'}
+                </button>
+
+                <p className="small text-muted text-center mt-3 mb-0">
+                  Prefer OTP?{' '}
+                  <button type="button" className="btn btn-link p-0 small fw-semibold text-decoration-none" onClick={() => switchMode('otp')}>
+                    Sign in with phone
+                  </button>
+                </p>
+              </form>
+            ) : otpStep === 'phone' ? (
               <form onSubmit={handleSendOtp}>
                 <div className="mb-3">
                   <label className="form-label small fw-semibold">Mobile Number</label>
@@ -181,10 +290,10 @@ export default function LoginPage() {
                 </button>
 
                 <p className="small text-muted text-center mt-3 mb-0">
-                  Don&apos;t have an account?{' '}
-                  <Link href="/register" className="fw-semibold text-decoration-none text-primary">
-                    Register here
-                  </Link>
+                  Have email login?{' '}
+                  <button type="button" className="btn btn-link p-0 small fw-semibold text-decoration-none" onClick={() => switchMode('email')}>
+                    Use email & password
+                  </button>
                 </p>
               </form>
             ) : (
@@ -193,7 +302,7 @@ export default function LoginPage() {
                   type="button"
                   className="btn btn-link btn-sm p-0 mb-3 text-decoration-none d-flex align-items-center gap-1"
                   onClick={() => {
-                    setStep('phone');
+                    setOtpStep('phone');
                     setOtp('');
                     setErrorMsg(null);
                     setSuccessMsg(null);
@@ -249,6 +358,13 @@ export default function LoginPage() {
                 </div>
               </form>
             )}
+
+            <p className="small text-muted text-center mt-4 mb-0">
+              Don&apos;t have an account?{' '}
+              <Link href="/register" className="fw-semibold text-decoration-none text-primary">
+                Register here
+              </Link>
+            </p>
           </div>
         </div>
       </div>

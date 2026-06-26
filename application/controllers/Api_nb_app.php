@@ -415,7 +415,7 @@ class Api_nb_app extends CI_Controller
         ));
     }
 
-    /** POST — admin email + password login only (frontend users use OTP). */
+    /** POST — email + password login (owner, tenant, agent, admin). Phone sign-in uses OTP endpoints. */
     public function login()
     {
         if ($this->input->method() !== 'post') {
@@ -431,7 +431,7 @@ class Api_nb_app extends CI_Controller
         if (strpos($login, '@') === false) {
             return $this->_json(array(
                 'success' => false,
-                'message' => 'Please sign in with your phone number and OTP.',
+                'message' => 'Enter your email and password, or sign in with phone OTP.',
                 'use_otp' => true,
             ), 400);
         }
@@ -440,15 +440,8 @@ class Api_nb_app extends CI_Controller
             return $this->_json(array('success' => false, 'message' => 'Email and password required.'), 400);
         }
         $user = $this->Nb_user_model->get_by_email(strtolower($login));
-        if (!$user || !password_verify($password, $user->password)) {
-            return $this->_json(array('success' => false, 'message' => 'Invalid credentials.'), 401);
-        }
-        if (!isset($user->role) || $user->role !== 'admin') {
-            return $this->_json(array(
-                'success' => false,
-                'message' => 'Owner and agent accounts must sign in with phone OTP.',
-                'use_otp' => true,
-            ), 403);
+        if (!$user || empty($user->password) || !password_verify($password, $user->password)) {
+            return $this->_json(array('success' => false, 'message' => 'Invalid email or password.'), 401);
         }
         if (!isset($user->status) || $user->status !== 'approved') {
             return $this->_json(array('success' => false, 'message' => 'Account is not active. Contact support.'), 403);

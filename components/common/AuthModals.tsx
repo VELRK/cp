@@ -13,6 +13,7 @@ interface City {
   state: string;
 }
 
+type LoginMode = 'email' | 'otp';
 type LoginStep = 'phone' | 'otp';
 
 const RESEND_SECONDS = 60;
@@ -23,10 +24,13 @@ function normalizePhoneInput(value: string): string {
 
 const AuthModals: React.FC = () => {
   const router = useRouter();
-  const { isAuthModalOpen, setAuthModalOpen, sendOtp, verifyOtp, resendOtp, registerUser } = useAuth();
+  const { isAuthModalOpen, setAuthModalOpen, login, sendOtp, verifyOtp, resendOtp, registerUser } = useAuth();
   const [cities, setCities] = useState<City[]>([]);
 
-  // Login OTP flow
+  // Login flow
+  const [loginMode, setLoginMode] = useState<LoginMode>('email');
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [loginStep, setLoginStep] = useState<LoginStep>('phone');
   const [loginPhone, setLoginPhone] = useState('');
   const [loginOtp, setLoginOtp] = useState('');
@@ -51,6 +55,9 @@ const AuthModals: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const resetLoginFlow = useCallback(() => {
+    setLoginMode('email');
+    setLoginEmail('');
+    setLoginPassword('');
     setLoginStep('phone');
     setLoginPhone('');
     setLoginOtp('');
@@ -87,6 +94,31 @@ const AuthModals: React.FC = () => {
   }, [loginStep]);
 
   if (!isAuthModalOpen) return null;
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    const trimmedEmail = loginEmail.trim();
+    if (!trimmedEmail || !loginPassword) {
+      setErrorMsg('Email and password are required.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const result = await login(trimmedEmail, loginPassword);
+      if (!result?.success) {
+        setErrorMsg(result?.message || 'Invalid email or password.');
+        if (result?.use_otp) setLoginMode('otp');
+        return;
+      }
+      router.push(getDashboardPathForRole(result.user?.role));
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.message || 'Login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -239,16 +271,20 @@ const AuthModals: React.FC = () => {
             <div>
               <h2 className="modal-title h5 fw-bold text-primary mb-0" style={{ color: 'var(--nb-primary)' }}>
                 {isAuthModalOpen === 'login'
-                  ? loginStep === 'phone'
-                    ? 'Sign in with Phone'
-                    : 'Verify OTP'
+                  ? loginMode === 'email'
+                    ? 'Sign in with Email'
+                    : loginStep === 'phone'
+                      ? 'Sign in with Phone'
+                      : 'Verify OTP'
                   : 'Create an Account'}
               </h2>
               {isAuthModalOpen === 'login' && (
                 <p className="text-muted small mb-0 mt-1">
-                  {loginStep === 'phone'
-                    ? 'We will send a 4-digit OTP to your WhatsApp'
-                    : `OTP sent to +91 ${loginPhone}`}
+                  {loginMode === 'email'
+                    ? 'Use your registered email and password'
+                    : loginStep === 'phone'
+                      ? 'We will send a 4-digit OTP to your WhatsApp'
+                      : `OTP sent to +91 ${loginPhone}`}
                 </p>
               )}
             </div>
@@ -277,7 +313,92 @@ const AuthModals: React.FC = () => {
             )}
 
             {isAuthModalOpen === 'login' ? (
-              loginStep === 'phone' ? (
+              <>
+                {loginStep === 'phone' && (
+                  <div className="d-flex rounded-pill bg-light p-1 gap-1 mb-3">
+                    <button
+                      type="button"
+                      className={`btn btn-sm flex-fill rounded-pill fw-semibold ${loginMode === 'email' ? 'btn-danger text-dark' : 'btn-light border-0 text-muted'}`}
+                      onClick={() => {
+                        setLoginMode('email');
+                        setErrorMsg(null);
+                        setSuccessMsg(null);
+                      }}
+                    >
+                      Email
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn btn-sm flex-fill rounded-pill fw-semibold ${loginMode === 'otp' ? 'btn-danger text-dark' : 'btn-light border-0 text-muted'}`}
+                      onClick={() => {
+                        setLoginMode('otp');
+                        setErrorMsg(null);
+                        setSuccessMsg(null);
+                      }}
+                    >
+                      Phone OTP
+                    </button>
+                  </div>
+                )}
+
+                {loginMode === 'email' ? (
+                  <form onSubmit={handleEmailLogin}>
+                    <div className="mb-3">
+                      <label className="form-label small fw-semibold">Email Address</label>
+                      <div className="input-group">
+                        <span className="input-group-text bg-light border-end-0">
+                          <Mail size={16} className="text-muted" />
+                        </span>
+                        <input
+                          type="email"
+                          className="form-control border-start-0"
+                          placeholder="you@example.com"
+                          value={loginEmail}
+                          onChange={(e) => setLoginEmail(e.target.value)}
+                          autoComplete="email"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="form-label small fw-semibold">Password</label>
+                      <div className="input-group">
+                        <span className="input-group-text bg-light border-end-0">
+                          <Lock size={16} className="text-muted" />
+                        </span>
+                        <input
+                          type="password"
+                          className="form-control border-start-0"
+                          placeholder="Your password"
+                          value={loginPassword}
+                          onChange={(e) => setLoginPassword(e.target.value)}
+                          autoComplete="current-password"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="btn btn-danger w-100 py-2.5 fw-semibold rounded-pill nb-btn-nav-danger text-dark"
+                      disabled={loading || !loginEmail.trim() || !loginPassword}
+                    >
+                      {loading ? 'Signing in...' : 'Sign In'}
+                    </button>
+
+                    <p className="small text-muted text-center mt-3 mb-0">
+                      Don&apos;t have an account?{' '}
+                      <button
+                        type="button"
+                        className="btn btn-link p-0 small fw-semibold text-decoration-none"
+                        onClick={() => setAuthModalOpen('register')}
+                      >
+                        Register here
+                      </button>
+                    </p>
+                  </form>
+                ) : loginStep === 'phone' ? (
                 <form onSubmit={handleSendOtp}>
                   <div className="mb-3">
                     <label className="form-label small fw-semibold">Mobile Number</label>
@@ -322,7 +443,7 @@ const AuthModals: React.FC = () => {
                     </button>
                   </p>
                 </form>
-              ) : (
+                ) : (
                 <form onSubmit={handleVerifyOtp}>
                   <button
                     type="button"
@@ -383,7 +504,8 @@ const AuthModals: React.FC = () => {
                     )}
                   </div>
                 </form>
-              )
+                )}
+              </>
             ) : (
               <form onSubmit={handleRegisterSubmit} style={{ maxHeight: '65vh', overflowY: 'auto', paddingRight: '4px' }}>
                 <div className="mb-2">

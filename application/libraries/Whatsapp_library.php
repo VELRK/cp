@@ -28,7 +28,7 @@ class Whatsapp_library {
         $this->api_key      = isset($config['api_key']) ? (string) $config['api_key'] : '';
         $this->api_url      = isset($config['api_url']) ? (string) $config['api_url'] : 'https://backend.askeva.io/v1/message/send-message';
         $this->from_number  = isset($config['from_number']) ? (string) $config['from_number'] : '';
-        $this->otp_template         = isset($config['otp_template']) ? (string) $config['otp_template'] : 'otp_verification';
+        $this->otp_template         = isset($config['otp_template']) ? (string) $config['otp_template'] : 'authentication';
         $this->otp_template_language = isset($config['otp_template_language']) ? (string) $config['otp_template_language'] : 'en';
         $this->approved_templates_cache = null;
 
@@ -427,31 +427,6 @@ class Whatsapp_library {
                     'type'       => 'body',
                     'parameters' => $parameters,
                 );
-                continue;
-            }
-
-            if ($type === 'BUTTONS') {
-                foreach ($component['buttons'] ?? array() as $index => $button) {
-                    if (!is_array($button)) {
-                        continue;
-                    }
-                    $button_type = strtoupper((string) ($button['type'] ?? ''));
-                    if ($button_type === 'URL') {
-                        $components[] = array(
-                            'type'       => 'button',
-                            'sub_type'   => 'url',
-                            'index'      => (string) $index,
-                            'parameters' => array(array('type' => 'text', 'text' => (string) $otp)),
-                        );
-                    } elseif ($button_type === 'OTP') {
-                        $components[] = array(
-                            'type'       => 'button',
-                            'sub_type'   => 'url',
-                            'index'      => (string) $index,
-                            'parameters' => array(array('type' => 'text', 'text' => (string) $otp)),
-                        );
-                    }
-                }
             }
         }
 

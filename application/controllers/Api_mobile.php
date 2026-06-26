@@ -179,30 +179,72 @@ class Api_mobile extends CI_Controller {
 
     public function feedback()
     {
+        if ($this->input->method() === 'get') {
+            $params = array_merge($this->input->get(), $this->input->post());
+            $userId = trim((string) ($params['userId'] ?? $params['user_id'] ?? ''));
+            if ($userId === '') {
+                $this->_json(array('success' => false, 'message' => 'userId is required'), 400);
+                return;
+            }
+            $limit = isset($params['limit']) && trim((string) $params['limit']) !== '' ? (int) $params['limit'] : null;
+            $offset = isset($params['offset']) && trim((string) $params['offset']) !== '' ? (int) $params['offset'] : 0;
+            $rows = $this->Feedback_model->get_all($userId, $limit, $offset);
+            $total = $this->Feedback_model->count_all($userId);
+            $out = array();
+            foreach ($rows as $row) {
+                $out[] = $this->_format_feedback($row);
+            }
+            $this->_json(array(
+                'success' => true,
+                'data' => array(
+                    'feedbacks' => $out,
+                    'total' => $total,
+                    'limit' => $limit,
+                    'offset' => $offset,
+                ),
+            ));
+            return;
+        }
+
         if ($this->input->method() !== 'post') {
-            $this->_json(array('success' => false, 'message' => 'POST only'), 405);
+            $this->_json(array('success' => false, 'message' => 'GET or POST only'), 405);
             return;
         }
 
         $input = $this->_input_json_or_post();
+        $userId = trim((string) ($input['userId'] ?? $input['user_id'] ?? ''));
+        $title = trim((string) ($input['title'] ?? ''));
+        $description = trim((string) ($input['description'] ?? $input['message'] ?? ''));
         $name = trim((string) ($input['name'] ?? ''));
         $email = trim((string) ($input['email'] ?? ''));
-        $message = trim((string) ($input['message'] ?? ''));
         $phone = trim((string) ($input['phone'] ?? ''));
-        $userId = trim((string) ($input['userId'] ?? $input['user_id'] ?? ''));
 
-        if ($name === '' || $email === '' || $message === '') {
-            $this->_json(array('success' => false, 'message' => 'name, email and message are required'), 422);
+        if ($userId === '') {
+            $this->_json(array('success' => false, 'message' => 'userId is required'), 422);
             return;
         }
 
+        if ($title === '' && $name === '' && $description === '') {
+            $this->_json(array('success' => false, 'message' => 'title or message is required'), 422);
+            return;
+        }
+
+        if ($title === '') {
+            if ($name !== '' && $email !== '') {
+                $title = $name . ' (' . $email . ')';
+            } else {
+                $title = 'Mobile feedback';
+            }
+        }
+
         $data = array(
-            'title' => $this->security->xss_clean($name . ' (' . $email . ')'),
-            'description' => $this->security->xss_clean($message . ( $phone ? "\nPhone: " . $phone : '' )),
+            'userId' => $userId,
+            'title' => $this->security->xss_clean($title),
+            'description' => $this->security->xss_clean($description . ($phone !== '' ? "\nPhone: " . $phone : '')),
             'createdAt' => date('Y-m-d H:i:s'),
         );
-        if ($userId !== '') {
-            $data['userId'] = $userId;
+        if ($name !== '') {
+            $data['name'] = $this->security->xss_clean($name);
         }
 
         $id = $this->Feedback_model->create($data);
@@ -211,7 +253,32 @@ class Api_mobile extends CI_Controller {
             return;
         }
 
-        $this->_json(array('success' => true, 'message' => 'Feedback submitted', 'id' => $id));
+        $row = $this->Feedback_model->get_by_id($id);
+        $this->_json(array(
+            'success' => true,
+            'message' => 'Feedback submitted',
+            'id' => $id,
+            'data' => $row ? $this->_format_feedback($row) : null,
+        ));
+    }
+
+    private function _format_feedback($row)
+    {
+        $item = is_array($row) ? $row : (array) $row;
+        $out = array(
+            'id' => isset($item['id']) ? (string) $item['id'] : null,
+            'userId' => isset($item['userId']) ? (string) $item['userId'] : null,
+            'title' => isset($item['title']) ? (string) $item['title'] : '',
+            'description' => isset($item['description']) ? (string) $item['description'] : '',
+            'createdAt' => isset($item['createdAt']) ? (string) $item['createdAt'] : null,
+        );
+        if (isset($item['name']) && $item['name'] !== '') {
+            $out['name'] = (string) $item['name'];
+        }
+        if (isset($item['image']) && $item['image'] !== '') {
+            $out['image'] = $this->_asset_url_or_null($item['image']);
+        }
+        return $out;
     }
 
     public function contact()
@@ -309,7 +376,16 @@ class Api_mobile extends CI_Controller {
             $this->_json(array('success' => false, 'message' => 'Invalid user ID'), 400);
             return;
         }
-        $rows = $this->Enquiry_model->get_by_userid($userId);
+
+        $params = array_merge($this->input->get(), $this->input->post());
+        $status = isset($params['status']) && trim((string) $params['status']) !== ''
+            ? trim((string) $params['status'])
+            : null;
+        $limit = isset($params['limit']) && trim((string) $params['limit']) !== '' ? (int) $params['limit'] : null;
+        $offset = isset($params['offset']) && trim((string) $params['offset']) !== '' ? (int) $params['offset'] : 0;
+
+        $rows = $this->Enquiry_model->get_by_userid($userId, $status, $limit, $offset);
+        $total = $this->Enquiry_model->count_by_userid($userId, $status);
 
         $out = array();
         foreach ($rows as $row) {
@@ -327,7 +403,13 @@ class Api_mobile extends CI_Controller {
             $out[] = $item;
         }
 
-        $this->_json(array('success' => true, 'data' => $out, 'total' => count($out)));
+        $this->_json(array(
+            'success' => true,
+            'data' => $out,
+            'total' => (int) $total,
+            'limit' => $limit,
+            'offset' => $offset,
+        ));
     }
 
     public function enquiries_by_customer($customerId = null)
@@ -1287,6 +1369,22 @@ class Api_mobile extends CI_Controller {
         }
         list($page, $limit, $offset) = $this->_pagination_from_request();
         return $this->_property_list_response($this->_property_filters_from_query(), $limit, $offset, $page);
+    }
+
+    /** GET /api/mobile/properties/user/{userId} — listings posted by that owner. */
+    public function properties_by_user($userId = null)
+    {
+        if ($this->input->method() !== 'get') {
+            return $this->_json(array('success' => false, 'message' => 'GET only'), 405);
+        }
+        $userId = (int) $userId;
+        if ($userId <= 0) {
+            return $this->_json(array('success' => false, 'message' => 'Invalid user ID'), 400);
+        }
+        list($page, $limit, $offset) = $this->_pagination_from_request();
+        $filters = $this->_property_filters_from_query();
+        $filters['owner_id'] = $userId;
+        return $this->_property_list_response($filters, $limit, $offset, $page);
     }
 
     public function search_properties()

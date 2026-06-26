@@ -195,7 +195,7 @@ class Enquiry_model extends CI_Model
      * @param string|null $status Optional status filter
      * @return array
      */
-    public function get_by_userid($user_id, $status = null)
+    public function get_by_userid($user_id, $status = null, $limit = null, $offset = 0)
     {
         if ($this->using_nb_enquiries()) {
             $this->db->select('e.*, p.title AS property_name, p.images AS property_images, u.name AS tenant_name');
@@ -207,6 +207,9 @@ class Enquiry_model extends CI_Model
                 $this->db->where('e.status', $status);
             }
             $this->db->order_by('e.created_at', 'DESC');
+            if ($limit !== null) {
+                $this->db->limit((int) $limit, (int) $offset);
+            }
             return $this->map_nb_rows($this->db->get()->result());
         }
         $this->db->select('enquiries.*, enquiries.propertyName as property_name, enquiries.propertyId as property_id');
@@ -218,6 +221,9 @@ class Enquiry_model extends CI_Model
         }
 
         $this->db->order_by('enquiries.createdAt', 'DESC');
+        if ($limit !== null) {
+            $this->db->limit((int) $limit, (int) $offset);
+        }
 
         $rows = $this->db->get()->result();
         foreach ($rows as $row) {
@@ -227,6 +233,24 @@ class Enquiry_model extends CI_Model
             $row->created_at = $row->createdAt;
         }
         return $rows;
+    }
+
+    public function count_by_userid($user_id, $status = null)
+    {
+        if ($this->using_nb_enquiries()) {
+            $this->db->from('nb_enquiries e');
+            $this->db->where('e.tenant_id', (int) $user_id);
+            if ($status) {
+                $this->db->where('e.status', $status);
+            }
+            return (int) $this->db->count_all_results();
+        }
+        $this->db->from('enquiries');
+        $this->db->where('userId', (int) $user_id);
+        if ($status) {
+            $this->db->where('status', $status);
+        }
+        return (int) $this->db->count_all_results();
     }
 
     /**

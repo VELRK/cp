@@ -269,6 +269,7 @@ $route['api/mobile/properties/search'] = 'Api_mobile/search_properties';
 $route['api/mobile/properties/create'] = 'Api_mobile/properties_create';
 $route['api/mobile/properties/update/(:num)'] = 'Api_mobile/property_update/$1';
 $route['api/mobile/properties/delete/(:num)'] = 'Api_mobile/property_delete/$1';
+$route['api/mobile/properties/user/(:num)'] = 'Api_mobile/properties_by_user/$1';
 $route['api/mobile/properties/(:num)'] = 'Api_mobile/property/$1';
 $route['api/mobile/blogs'] = 'Api_mobile/blogs';
 $route['api/mobile/blogs/(:num)'] = 'Api_mobile/blog/$1';

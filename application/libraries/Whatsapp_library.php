@@ -427,6 +427,24 @@ class Whatsapp_library {
                     'type'       => 'body',
                     'parameters' => $parameters,
                 );
+                continue;
+            }
+
+            if ($type === 'BUTTONS') {
+                foreach ($component['buttons'] ?? array() as $index => $button) {
+                    if (!is_array($button)) {
+                        continue;
+                    }
+                    $button_type = strtoupper((string) ($button['type'] ?? ''));
+                    if (in_array($button_type, array('URL', 'OTP'), true)) {
+                        $components[] = array(
+                            'type'       => 'button',
+                            'sub_type'   => 'url',
+                            'index'      => (string) $index,
+                            'parameters' => array(array('type' => 'text', 'text' => (string) $otp)),
+                        );
+                    }
+                }
             }
         }
 

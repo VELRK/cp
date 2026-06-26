@@ -27,6 +27,7 @@ function nb_whatsapp_config($ci)
         'from_number',
         'api_key',
         'otp_template',
+        'otp_template_language',
         'otp_length',
         'otp_ttl_seconds',
         'development_mode',

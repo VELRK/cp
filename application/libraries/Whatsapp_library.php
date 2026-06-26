@@ -12,6 +12,8 @@ class Whatsapp_library {
     private $api_url;
     private $from_number;
     private $otp_template;
+    private $otp_template_language;
+    private $approved_templates_cache;
     private $ci;
 
     public function __construct($config = array())
@@ -26,7 +28,9 @@ class Whatsapp_library {
         $this->api_key      = isset($config['api_key']) ? (string) $config['api_key'] : '';
         $this->api_url      = isset($config['api_url']) ? (string) $config['api_url'] : 'https://backend.askeva.io/v1/message/send-message';
         $this->from_number  = isset($config['from_number']) ? (string) $config['from_number'] : '';
-        $this->otp_template = isset($config['otp_template']) ? (string) $config['otp_template'] : 'otp_verification';
+        $this->otp_template         = isset($config['otp_template']) ? (string) $config['otp_template'] : 'otp_verification';
+        $this->otp_template_language = isset($config['otp_template_language']) ? (string) $config['otp_template_language'] : 'en';
+        $this->approved_templates_cache = null;
 
         if (!empty($this->api_key)) {
             $masked_key = substr($this->api_key, 0, 8) . '...' . substr($this->api_key, -8);
@@ -60,26 +64,15 @@ class Whatsapp_library {
             $base_url     = !empty($this->api_url) ? $this->api_url : 'https://backend.askeva.io/v1/message/send-message';
             $url          = $base_url . '?token=' . urlencode($this->api_key);
 
-            $data = array(
-                'to'       => $phone_number,
-                'type'     => 'template',
-                'template' => array(
-                    'language'   => array('policy' => 'deterministic', 'code' => 'en'),
-                    'name'       => $this->otp_template,
-                    'components' => array(
-                        array(
-                            'type'       => 'body',
-                            'parameters' => array(array('type' => 'text', 'text' => $otp))
-                        ),
-                        array(
-                            'type'       => 'button',
-                            'sub_type'   => 'url',
-                            'index'      => '0',
-                            'parameters' => array(array('type' => 'text', 'text' => $otp))
-                        )
-                    )
-                )
-            );
+            $template_def = $this->_find_approved_template($this->otp_template);
+            if (!$template_def) {
+                return '# Template "' . $this->otp_template . '" is not approved on AskEva. Create it in WhatsApp Manager first.';
+            }
+
+            $data = $this->_build_template_request_data($phone_number, $otp, $template_def);
+            if (isset($data['error'])) {
+                return '# ' . $data['error'];
+            }
 
             $json_data = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
             $curl_cmd  = "curl --location '" . $url . "' \\\n";
@@ -263,32 +256,24 @@ class Whatsapp_library {
             return array('success' => false, 'message' => 'WhatsApp API key is not configured. Set api_key in application/config/whatsapp.php');
         }
 
+        $template_def = $this->_find_approved_template($this->otp_template);
+        if (!$template_def) {
+            $msg = 'WhatsApp template "' . $this->otp_template . '" is not approved on your AskEva account. '
+                . 'Create an AUTHENTICATION template with this name in AskEva/WhatsApp Manager and wait for Meta approval.';
+            log_message('error', $msg);
+            return array('success' => false, 'message' => $msg);
+        }
+
         $token_preview = substr($this->api_key, 0, 8) . '...' . substr($this->api_key, -8);
         log_message('debug', 'WhatsApp template API: Token (length: ' . strlen($this->api_key) . ', preview: ' . $token_preview . ')');
 
         $base_url     = !empty($this->api_url) ? $this->api_url : 'https://backend.askeva.io/v1/message/send-message';
         $phone_number = str_replace('+', '', $phone);
 
-        $data = array(
-            'to'       => $phone_number,
-            'type'     => 'template',
-            'template' => array(
-                'language'   => array('policy' => 'deterministic', 'code' => 'en'),
-                'name'       => $this->otp_template,
-                'components' => array(
-                    array(
-                        'type'       => 'body',
-                        'parameters' => array(array('type' => 'text', 'text' => $otp))
-                    ),
-                    array(
-                        'type'       => 'button',
-                        'sub_type'   => 'url',
-                        'index'      => '0',
-                        'parameters' => array(array('type' => 'text', 'text' => $otp))
-                    )
-                )
-            )
-        );
+        $data = $this->_build_template_request_data($phone_number, $otp, $template_def);
+        if (isset($data['error'])) {
+            return array('success' => false, 'message' => $data['error']);
+        }
 
         $url = $base_url . '?token=' . urlencode($this->api_key);
 
@@ -319,7 +304,10 @@ class Whatsapp_library {
         $rd = json_decode($response, true);
 
         if ($http_code >= 200 && $http_code < 300) {
-            if (isset($rd['status']) && in_array($rd['status'], array('success', 'sent', 'accepted'))) {
+            if (isset($rd['messages']) && is_array($rd['messages']) && !empty($rd['messages'])) {
+                return array('success' => true, 'message' => 'OTP sent successfully');
+            }
+            if (isset($rd['status']) && in_array($rd['status'], array('success', 'sent', 'accepted'), true)) {
                 return array('success' => true, 'message' => 'OTP sent successfully');
             } elseif (isset($rd['message']) && (stripos($rd['message'], 'success') !== false || stripos($rd['message'], 'sent') !== false)) {
                 return array('success' => true, 'message' => 'OTP sent successfully');
@@ -339,5 +327,149 @@ class Whatsapp_library {
 
         log_message('error', 'WhatsApp template API Error: ' . $error_msg . ' | HTTP Code: ' . $http_code);
         return array('success' => false, 'message' => $error_msg);
+    }
+
+    private function _templates_api_url()
+    {
+        $base = !empty($this->api_url) ? $this->api_url : 'https://backend.askeva.io/v1/message/send-message';
+        return preg_replace('#/message/send-message$#', '/templates', $base);
+    }
+
+    private function _fetch_approved_templates()
+    {
+        if (is_array($this->approved_templates_cache)) {
+            return $this->approved_templates_cache;
+        }
+
+        $url = $this->_templates_api_url() . '?token=' . urlencode($this->api_key);
+        $ch = curl_init();
+        curl_setopt_array($ch, array(
+            CURLOPT_URL            => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_TIMEOUT        => 20,
+        ));
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $this->approved_templates_cache = array();
+        if ($http_code >= 200 && $http_code < 300) {
+            $rd = json_decode($response, true);
+            if (isset($rd['data']) && is_array($rd['data'])) {
+                $this->approved_templates_cache = $rd['data'];
+            }
+        }
+
+        return $this->approved_templates_cache;
+    }
+
+    private function _find_approved_template($name)
+    {
+        $name = trim((string) $name);
+        if ($name === '') {
+            return null;
+        }
+
+        foreach ($this->_fetch_approved_templates() as $template) {
+            if (!is_array($template)) {
+                continue;
+            }
+            if (isset($template['name'], $template['status'])
+                && strcasecmp((string) $template['name'], $name) === 0
+                && strtoupper((string) $template['status']) === 'APPROVED') {
+                return $template;
+            }
+        }
+
+        return null;
+    }
+
+    private function _body_variable_count($text)
+    {
+        if (!is_string($text) || $text === '') {
+            return 0;
+        }
+        if (!preg_match_all('/\{\{(\d+)\}\}/', $text, $matches)) {
+            return 0;
+        }
+        $max = 0;
+        foreach ($matches[1] as $num) {
+            $max = max($max, (int) $num);
+        }
+        return $max;
+    }
+
+    private function _build_template_request_data($phone_number, $otp, array $template_def)
+    {
+        $language = !empty($template_def['language']) ? (string) $template_def['language'] : $this->otp_template_language;
+        $components = array();
+
+        foreach ($template_def['components'] ?? array() as $component) {
+            if (!is_array($component)) {
+                continue;
+            }
+            $type = strtoupper((string) ($component['type'] ?? ''));
+
+            if ($type === 'BODY') {
+                $var_count = $this->_body_variable_count($component['text'] ?? '');
+                if ($var_count < 1) {
+                    $var_count = 1;
+                }
+                $parameters = array();
+                for ($i = 1; $i <= $var_count; $i++) {
+                    $parameters[] = array(
+                        'type' => 'text',
+                        'text' => ($i === 1) ? (string) $otp : (string) $otp,
+                    );
+                }
+                $components[] = array(
+                    'type'       => 'body',
+                    'parameters' => $parameters,
+                );
+                continue;
+            }
+
+            if ($type === 'BUTTONS') {
+                foreach ($component['buttons'] ?? array() as $index => $button) {
+                    if (!is_array($button)) {
+                        continue;
+                    }
+                    $button_type = strtoupper((string) ($button['type'] ?? ''));
+                    if ($button_type === 'URL') {
+                        $components[] = array(
+                            'type'       => 'button',
+                            'sub_type'   => 'url',
+                            'index'      => (string) $index,
+                            'parameters' => array(array('type' => 'text', 'text' => (string) $otp)),
+                        );
+                    } elseif ($button_type === 'OTP') {
+                        $components[] = array(
+                            'type'       => 'button',
+                            'sub_type'   => 'url',
+                            'index'      => (string) $index,
+                            'parameters' => array(array('type' => 'text', 'text' => (string) $otp)),
+                        );
+                    }
+                }
+            }
+        }
+
+        if (empty($components)) {
+            $components[] = array(
+                'type'       => 'body',
+                'parameters' => array(array('type' => 'text', 'text' => (string) $otp)),
+            );
+        }
+
+        return array(
+            'to'   => $phone_number,
+            'type' => 'template',
+            'template' => array(
+                'language'   => array('policy' => 'deterministic', 'code' => $language),
+                'name'       => (string) $template_def['name'],
+                'components' => $components,
+            ),
+        );
     }
 }

@@ -3,26 +3,48 @@ $modal_cities = isset($modal_cities) && is_array($modal_cities) ? $modal_cities 
 ?>
 <div class="modal fade" id="nbModalLogin" tabindex="-1" aria-labelledby="nbModalLoginLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow">
+    <div class="modal-content border-0 shadow rounded-4">
       <div class="modal-header border-0 pb-0">
-        <h2 class="modal-title h5 fw-semibold" id="nbModalLoginLabel">Login</h2>
+        <div>
+          <h2 class="modal-title h5 fw-bold text-primary mb-0" id="nbModalLoginLabel">Sign in with Phone</h2>
+          <p class="text-muted small mb-0 mt-1" id="nb-login-subtitle">We will send a 4-digit OTP to your WhatsApp</p>
+        </div>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body pt-2">
-        <?php echo form_open('login', array('id' => 'nb-login-form')); ?>
-          <div id="nb-login-alert" class="alert d-none" role="alert"></div>
+      <div class="modal-body pt-2 pb-4">
+        <div id="nb-login-alert" class="alert d-none" role="alert"></div>
+
+        <div id="nb-login-step-phone">
           <div class="mb-3">
-            <label class="form-label" for="nb-modal-login-email">Email or phone</label>
-            <input type="text" name="login" id="nb-modal-login-email" class="form-control" value="<?php echo set_value('login'); ?>" required autocomplete="username" placeholder="you@example.com or 9876543210">
+            <label class="form-label small fw-semibold" for="nb-modal-login-phone">Mobile Number</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light fw-semibold small">+91</span>
+              <input type="tel" id="nb-modal-login-phone" class="form-control" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" autocomplete="tel-national">
+            </div>
+            <div class="text-muted mt-2" style="font-size:0.75rem;">OTP will be delivered on WhatsApp</div>
           </div>
+          <button type="button" class="btn btn-danger w-100 rounded-pill fw-semibold" id="nb-login-send-otp">Send OTP</button>
+        </div>
+
+        <div id="nb-login-step-otp" class="d-none">
+          <button type="button" class="btn btn-link btn-sm p-0 mb-3 text-decoration-none" id="nb-login-change-phone">&larr; Change number</button>
           <div class="mb-3">
-            <label class="form-label" for="nb-modal-login-password">Password</label>
-            <input type="password" name="password" id="nb-modal-login-password" class="form-control" required autocomplete="current-password">
+            <label class="form-label small fw-semibold" for="nb-modal-login-otp">Enter 4-digit OTP</label>
+            <input type="text" id="nb-modal-login-otp" class="form-control text-center fw-bold" inputmode="numeric" maxlength="4" placeholder="• • • •" autocomplete="one-time-code" style="letter-spacing:0.35em;font-size:1.25rem;">
           </div>
-          <button type="submit" class="btn btn-danger w-100">Login</button>
-        <?php echo form_close(); ?>
+          <button type="button" class="btn btn-danger w-100 rounded-pill fw-semibold mb-3" id="nb-login-verify-otp">Verify &amp; Sign In</button>
+          <div class="text-center small">
+            <button type="button" class="btn btn-link btn-sm p-0 fw-semibold text-decoration-none d-none" id="nb-login-resend-otp">Resend OTP</button>
+            <span class="text-muted d-none" id="nb-login-resend-timer">Resend OTP in 60s</span>
+          </div>
+        </div>
+
         <p class="mt-3 mb-0 small text-center text-secondary">
-          <button type="button" class="btn btn-link btn-sm p-0 align-baseline" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#nbModalRegister">Create account</button>
+          Don&apos;t have an account?
+          <button type="button" class="btn btn-link btn-sm p-0 align-baseline" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#nbModalRegister">Register</button>
+        </p>
+        <p class="small text-muted text-center mt-2 mb-0">
+          Admin? <a href="<?php echo site_url('panel'); ?>" class="fw-semibold text-decoration-none">Admin panel login</a>
         </p>
       </div>
     </div>
@@ -189,46 +211,202 @@ $modal_cities = isset($modal_cities) && is_array($modal_cities) ? $modal_cities 
     loginAlert.textContent = message;
   }
 
-  var loginForm = document.getElementById('nb-login-form');
-  if (loginForm) {
-    loginForm.addEventListener('submit', function (e) {
-      e.preventDefault();
-      showLoginAlert('', false);
+  (function initNbOtpLogin() {
+    var sendOtpUrl = '<?php echo site_url('api/nb/send-otp'); ?>';
+    var verifyOtpUrl = '<?php echo site_url('api/nb/verify-otp'); ?>';
+    var resendOtpUrl = '<?php echo site_url('api/nb/resend-otp'); ?>';
+    var phoneInput = document.getElementById('nb-modal-login-phone');
+    var otpInput = document.getElementById('nb-modal-login-otp');
+    var stepPhone = document.getElementById('nb-login-step-phone');
+    var stepOtp = document.getElementById('nb-login-step-otp');
+    var sendBtn = document.getElementById('nb-login-send-otp');
+    var verifyBtn = document.getElementById('nb-login-verify-otp');
+    var changePhoneBtn = document.getElementById('nb-login-change-phone');
+    var resendBtn = document.getElementById('nb-login-resend-otp');
+    var resendTimerEl = document.getElementById('nb-login-resend-timer');
+    var subtitle = document.getElementById('nb-login-subtitle');
+    var modalTitle = document.getElementById('nbModalLoginLabel');
+    var loginModal = document.getElementById('nbModalLogin');
+    var currentPhone = '';
+    var resendTimer = null;
+    var resendSeconds = 0;
+
+    if (!phoneInput || !sendBtn) return;
+
+    function normalizePhone(val) {
+      return String(val || '').replace(/\D/g, '').slice(-10);
+    }
+
+    function showStep(step) {
+      if (stepPhone) stepPhone.classList.toggle('d-none', step !== 'phone');
+      if (stepOtp) stepOtp.classList.toggle('d-none', step !== 'otp');
+      if (modalTitle) modalTitle.textContent = step === 'phone' ? 'Sign in with Phone' : 'Verify OTP';
+      if (subtitle) {
+        subtitle.textContent = step === 'phone'
+          ? 'We will send a 4-digit OTP to your WhatsApp'
+          : ('OTP sent to +91 ' + currentPhone);
+      }
+    }
+
+    function resetLoginModal() {
+      currentPhone = '';
+      if (phoneInput) phoneInput.value = '';
+      if (otpInput) otpInput.value = '';
+      showStep('phone');
+      clearInterval(resendTimer);
+      resendSeconds = 0;
+      if (resendBtn) resendBtn.classList.add('d-none');
+      if (resendTimerEl) resendTimerEl.classList.add('d-none');
       var loginAlert = document.getElementById('nb-login-alert');
       if (loginAlert) loginAlert.classList.add('d-none');
-      
-      var submitBtn = loginForm.querySelector('button[type="submit"]');
-      if (submitBtn) submitBtn.disabled = true;
+    }
 
-      fetch(loginForm.getAttribute('action'), {
+    function startResendTimer() {
+      resendSeconds = 60;
+      if (resendBtn) resendBtn.classList.add('d-none');
+      if (resendTimerEl) {
+        resendTimerEl.classList.remove('d-none');
+        resendTimerEl.textContent = 'Resend OTP in ' + resendSeconds + 's';
+      }
+      clearInterval(resendTimer);
+      resendTimer = setInterval(function () {
+        resendSeconds -= 1;
+        if (resendSeconds <= 0) {
+          clearInterval(resendTimer);
+          if (resendTimerEl) resendTimerEl.classList.add('d-none');
+          if (resendBtn) resendBtn.classList.remove('d-none');
+          return;
+        }
+        if (resendTimerEl) resendTimerEl.textContent = 'Resend OTP in ' + resendSeconds + 's';
+      }, 1000);
+    }
+
+    function postJson(url, payload) {
+      return fetch(url, {
         method: 'POST',
-        body: new FormData(loginForm),
         credentials: 'same-origin',
-        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
-      })
-        .then(function (r) {
-          return r.json().catch(function () {
-            return { success: false, message: 'Unexpected server response.' };
-          });
-        })
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(function (r) {
+        return r.json().catch(function () {
+          return { success: false, message: 'Unexpected server response.' };
+        });
+      });
+    }
+
+    function completeLogin(res) {
+      if (res.token) {
+        try { localStorage.setItem('nb_token', res.token); } catch (e) {}
+      }
+      showLoginAlert((res && res.message) ? res.message : 'Signed in successfully.', true);
+      setTimeout(function () {
+        window.location.reload();
+      }, 500);
+    }
+
+    phoneInput.addEventListener('input', function () {
+      phoneInput.value = normalizePhone(phoneInput.value);
+    });
+
+    if (modalTitle && loginModal) {
+      loginModal.addEventListener('hidden.bs.modal', resetLoginModal);
+      loginModal.addEventListener('show.bs.modal', resetLoginModal);
+    }
+
+    sendBtn.addEventListener('click', function () {
+      var phone = normalizePhone(phoneInput.value);
+      if (phone.length !== 10) {
+        showLoginAlert('Enter a valid 10-digit mobile number.', false);
+        return;
+      }
+      sendBtn.disabled = true;
+      postJson(sendOtpUrl, { phone: phone, country_code: '+91' })
         .then(function (res) {
           if (!res || !res.success) {
-            showLoginAlert((res && res.message) ? res.message : 'Login failed.', false);
+            showLoginAlert((res && res.message) ? res.message : 'Could not send OTP.', false);
             return;
           }
-          showLoginAlert((res && res.message) ? res.message : 'Login successful.', true);
-          setTimeout(function () {
-            window.location.href = (res && res.redirect) ? res.redirect : '<?php echo site_url(''); ?>';
-          }, 500);
+          currentPhone = phone;
+          showStep('otp');
+          if (otpInput) {
+            otpInput.value = '';
+            otpInput.focus();
+          }
+          startResendTimer();
+          var msg = 'OTP sent to your WhatsApp number.';
+          if (res.development_mode && res.otp) msg = 'OTP sent (dev mode): ' + res.otp;
+          showLoginAlert(msg, true);
         })
         .catch(function () {
           showLoginAlert('Network error. Please try again.', false);
         })
         .finally(function () {
-          if (submitBtn) submitBtn.disabled = false;
+          sendBtn.disabled = false;
         });
     });
-  }
+
+    if (changePhoneBtn) {
+      changePhoneBtn.addEventListener('click', function () {
+        showStep('phone');
+        if (otpInput) otpInput.value = '';
+      });
+    }
+
+    if (verifyBtn) {
+      verifyBtn.addEventListener('click', function () {
+        var otp = String(otpInput ? otpInput.value : '').replace(/\D/g, '').slice(0, 4);
+        if (otp.length !== 4) {
+          showLoginAlert('Enter the 4-digit OTP.', false);
+          return;
+        }
+        verifyBtn.disabled = true;
+        postJson(verifyOtpUrl, { phone: currentPhone, otp: otp, country_code: '+91' })
+          .then(function (res) {
+            if (!res || !res.success) {
+              showLoginAlert((res && res.message) ? res.message : 'Invalid OTP.', false);
+              return;
+            }
+            completeLogin(res);
+          })
+          .catch(function () {
+            showLoginAlert('Network error. Please try again.', false);
+          })
+          .finally(function () {
+            verifyBtn.disabled = false;
+          });
+      });
+    }
+
+    if (resendBtn) {
+      resendBtn.addEventListener('click', function () {
+        if (resendSeconds > 0 || !currentPhone) return;
+        resendBtn.disabled = true;
+        postJson(resendOtpUrl, { phone: currentPhone, country_code: '+91' })
+          .then(function (res) {
+            if (!res || !res.success) {
+              showLoginAlert((res && res.message) ? res.message : 'Could not resend OTP.', false);
+              return;
+            }
+            startResendTimer();
+            var msg = 'A new OTP has been sent to your WhatsApp.';
+            if (res.development_mode && res.otp) msg = 'OTP resent (dev mode): ' + res.otp;
+            showLoginAlert(msg, true);
+          })
+          .catch(function () {
+            showLoginAlert('Network error. Please try again.', false);
+          })
+          .finally(function () {
+            resendBtn.disabled = false;
+          });
+      });
+    }
+
+    if (otpInput) {
+      otpInput.addEventListener('input', function () {
+        otpInput.value = String(otpInput.value || '').replace(/\D/g, '').slice(0, 4);
+      });
+    }
+  })();
 
   if (regForm) {
     regForm.addEventListener('submit', function (e) {

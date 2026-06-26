@@ -64,7 +64,7 @@ const COMMERCIAL_TYPE_SLUGS = new Set([
 
 const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false, ownerMode = false }) => {
   const router = useRouter();
-  const { user, login, registerUser, setAuthModalOpen } = useAuth();
+  const { user, sendOtp, verifyOtp, resendOtp, registerUser, setAuthModalOpen } = useAuth();
 
   // Dual mode UI state: 'modern' | 'classic'
   const [uiMode, setUiMode] = useState<'modern' | 'classic'>('modern');
@@ -81,9 +81,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
 
   // Local popup states for Step 0
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [loginModalStep, setLoginModalStep] = useState<'phone' | 'password' | 'email' | 'register'>('phone');
+  const [loginModalStep, setLoginModalStep] = useState<'phone' | 'otp' | 'register'>('phone');
+  const [loginOtp, setLoginOtp] = useState('');
+  const [otpResendTimer, setOtpResendTimer] = useState(0);
   const [localPassword, setLocalPassword] = useState('');
-  const [localEmail, setLocalEmail] = useState('');
   const [localRegName, setLocalRegName] = useState('');
   const [localRegEmail, setLocalRegEmail] = useState('');
   const [localRegCity, setLocalRegCity] = useState('');
@@ -470,9 +471,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
     }
 
     if (!user) {
-      // Set modal state and show
-      setLocalEmail('');
-      setLocalPassword('');
+      setLoginOtp('');
+      setOtpResendTimer(0);
       setLoginModalStep('phone');
       setShowLoginModal(true);
       return;
@@ -483,6 +483,12 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
     setStep(1);
   };
 
+  useEffect(() => {
+    if (otpResendTimer <= 0) return;
+    const t = setTimeout(() => setOtpResendTimer((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [otpResendTimer]);
+
   // Local login handler
   const handleLocalLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -491,30 +497,36 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
 
     try {
       if (loginModalStep === 'phone') {
-        if (!landingPhone.trim()) {
-          setModalErrorMsg('Please enter your phone number.');
+        const phone = landingPhone.replace(/\D/g, '').slice(0, 10);
+        if (phone.length !== 10) {
+          setModalErrorMsg('Please enter a valid 10-digit phone number.');
           setModalLoading(false);
           return;
         }
-        // Proceed to ask password step
-        setLoginModalStep('password');
-      } else if (loginModalStep === 'password') {
-        const result = await login(landingPhone, localPassword);
-        if (result.success) {
-          setShowLoginModal(false);
-          setIsLandingMode(false);
-          setStep(1);
-        } else {
-          setModalErrorMsg(result.message || 'Login failed.');
+        const result = await sendOtp(phone);
+        if (!result.success) {
+          setModalErrorMsg(result.message || 'Could not send OTP.');
+          setModalLoading(false);
+          return;
         }
-      } else if (loginModalStep === 'email') {
-        const result = await login(localEmail, localPassword);
+        setLandingPhone(phone);
+        setLoginOtp('');
+        setLoginModalStep('otp');
+        setOtpResendTimer(60);
+      } else if (loginModalStep === 'otp') {
+        const otp = loginOtp.replace(/\D/g, '').slice(0, 4);
+        if (otp.length !== 4) {
+          setModalErrorMsg('Enter the 4-digit OTP.');
+          setModalLoading(false);
+          return;
+        }
+        const result = await verifyOtp(landingPhone, otp);
         if (result.success) {
           setShowLoginModal(false);
           setIsLandingMode(false);
           setStep(1);
         } else {
-          setModalErrorMsg(result.message || 'Login failed.');
+          setModalErrorMsg(result.message || 'Invalid OTP.');
         }
       } else if (loginModalStep === 'register') {
         // Build FormData for local signup
@@ -912,7 +924,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                     />
                   </div>
                   <div className="form-text small text-muted">
-                    Are you a registered user? <button type="button" onClick={() => { setLocalEmail(''); setLocalPassword(''); setLoginModalStep('email'); setShowLoginModal(true); }} className="btn btn-link p-0 small text-decoration-none fw-semibold">Login</button>
+                    Are you a registered user? <button type="button" onClick={() => { setLoginOtp(''); setLoginModalStep('phone'); setShowLoginModal(true); }} className="btn btn-link p-0 small text-decoration-none fw-semibold">Login</button>
                   </div>
                 </div>
               )}
@@ -2085,8 +2097,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
 
             {loginModalStep === 'phone' && (
               <form onSubmit={handleLocalLoginSubmit}>
-                <h3 className="h5 fw-bold text-primary mb-1">Login / Register</h3>
-                <p className="small text-muted mb-4">Please enter your Phone Number</p>
+                <h3 className="h5 fw-bold text-primary mb-1">Sign in with Phone</h3>
+                <p className="small text-muted mb-4">We will send a 4-digit OTP to your WhatsApp</p>
                 <div className="mb-4">
                   <label className="form-label small fw-bold text-secondary">Phone Number</label>
                   <div className="input-group">
@@ -2094,7 +2106,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                     <input
                       type="tel"
                       className="form-control"
-                      placeholder="99999 99999"
+                      placeholder="10-digit mobile number"
                       maxLength={10}
                       value={landingPhone}
                       onChange={(e) => setLandingPhone(e.target.value.replace(/\D/g, ''))}
@@ -2103,70 +2115,14 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                   </div>
                 </div>
 
-                <div className="d-flex flex-column gap-2">
-                  <button
-                    type="submit"
-                    className="btn btn-primary w-100 py-2 fw-bold rounded-pill text-white"
-                    style={{ background: '#3b82f6', borderColor: '#3b82f6' }}
-                    disabled={modalLoading}
-                  >
-                    {modalLoading ? 'Processing...' : 'Continue'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-outline-secondary w-100 py-2 fw-semibold rounded-pill"
-                    onClick={() => {
-                      setLoginModalStep('email');
-                      setModalErrorMsg(null);
-                    }}
-                  >
-                    <Mail size={14} className="me-2" />
-                    Login with Email
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {loginModalStep === 'password' && (
-              <form onSubmit={handleLocalLoginSubmit}>
-                <h3 className="h5 fw-bold text-primary mb-1">Enter Password</h3>
-                <p className="small text-muted mb-4">Enter password for phone number +91 {landingPhone}</p>
-                <div className="mb-4">
-                  <label className="form-label small fw-bold text-secondary">Password</label>
-                  <div className="input-group">
-                    <span className="input-group-text bg-light"><Lock size={16} /></span>
-                    <input
-                      type="password"
-                      className="form-control"
-                      placeholder="••••••••"
-                      value={localPassword}
-                      onChange={(e) => setLocalPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="d-flex gap-2">
-                  <button
-                    type="button"
-                    className="btn btn-outline-secondary flex-grow-1 py-2 fw-semibold rounded-pill"
-                    onClick={() => {
-                      setLoginModalStep('phone');
-                      setModalErrorMsg(null);
-                    }}
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-primary flex-grow-1 py-2 fw-bold rounded-pill text-white"
-                    style={{ background: '#3b82f6', borderColor: '#3b82f6' }}
-                    disabled={modalLoading}
-                  >
-                    {modalLoading ? 'Signing in...' : 'Sign In'}
-                  </button>
-                </div>
-
+                <button
+                  type="submit"
+                  className="btn btn-primary w-100 py-2 fw-bold rounded-pill text-white"
+                  style={{ background: '#3b82f6', borderColor: '#3b82f6' }}
+                  disabled={modalLoading || landingPhone.length !== 10}
+                >
+                  {modalLoading ? 'Sending OTP...' : 'Send OTP'}
+                </button>
                 <div className="text-center mt-3 small text-muted">
                   Don&apos;t have an account?{' '}
                   <button
@@ -2183,59 +2139,77 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
               </form>
             )}
 
-            {loginModalStep === 'email' && (
+            {loginModalStep === 'otp' && (
               <form onSubmit={handleLocalLoginSubmit}>
-                <h3 className="h5 fw-bold text-primary mb-1">Login with Email</h3>
-                <p className="small text-muted mb-4">Enter your credentials to sign in</p>
-                <div className="mb-3">
-                  <label className="form-label small fw-bold text-secondary">Email Address</label>
-                  <div className="input-group">
-                    <span className="input-group-text bg-light"><Mail size={16} /></span>
-                    <input
-                      type="email"
-                      className="form-control"
-                      placeholder="name@example.com"
-                      value={localEmail}
-                      onChange={(e) => setLocalEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
+                <button
+                  type="button"
+                  className="btn btn-link btn-sm p-0 mb-3 text-decoration-none"
+                  onClick={() => {
+                    setLoginModalStep('phone');
+                    setLoginOtp('');
+                    setModalErrorMsg(null);
+                  }}
+                >
+                  &larr; Change number
+                </button>
+                <h3 className="h5 fw-bold text-primary mb-1">Verify OTP</h3>
+                <p className="small text-muted mb-4">OTP sent to +91 {landingPhone}</p>
                 <div className="mb-4">
-                  <label className="form-label small fw-bold text-secondary">Password</label>
+                  <label className="form-label small fw-bold text-secondary">Enter 4-digit OTP</label>
                   <div className="input-group">
                     <span className="input-group-text bg-light"><Lock size={16} /></span>
                     <input
-                      type="password"
-                      className="form-control"
-                      placeholder="••••••••"
-                      value={localPassword}
-                      onChange={(e) => setLocalPassword(e.target.value)}
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      className="form-control text-center fw-bold"
+                      placeholder="• • • •"
+                      maxLength={4}
+                      value={loginOtp}
+                      onChange={(e) => setLoginOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
                       required
+                      style={{ letterSpacing: '0.35em', fontSize: '1.25rem' }}
                     />
                   </div>
                 </div>
 
-                <div className="d-flex gap-2">
-                  <button
-                    type="button"
-                    className="btn btn-outline-secondary flex-grow-1 py-2 fw-semibold rounded-pill"
-                    onClick={() => {
-                      setLoginModalStep('phone');
-                      setModalErrorMsg(null);
-                    }}
-                  >
-                    Back to Phone
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-primary flex-grow-1 py-2 fw-bold rounded-pill text-white"
-                    style={{ background: '#3b82f6', borderColor: '#3b82f6' }}
-                    disabled={modalLoading}
-                  >
-                    {modalLoading ? 'Signing in...' : 'Sign In'}
-                  </button>
+                <button
+                  type="submit"
+                  className="btn btn-primary w-100 py-2 fw-bold rounded-pill text-white mb-3"
+                  style={{ background: '#3b82f6', borderColor: '#3b82f6' }}
+                  disabled={modalLoading || loginOtp.length !== 4}
+                >
+                  {modalLoading ? 'Verifying...' : 'Verify & Sign In'}
+                </button>
+
+                <div className="text-center small">
+                  {otpResendTimer > 0 ? (
+                    <span className="text-muted">Resend OTP in {otpResendTimer}s</span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="btn btn-link p-0 small fw-bold text-decoration-none"
+                      disabled={modalLoading}
+                      onClick={async () => {
+                        setModalErrorMsg(null);
+                        setModalLoading(true);
+                        try {
+                          const result = await resendOtp(landingPhone);
+                          if (!result.success) {
+                            setModalErrorMsg(result.message || 'Could not resend OTP.');
+                          } else {
+                            setOtpResendTimer(60);
+                          }
+                        } catch {
+                          setModalErrorMsg('Failed to resend OTP.');
+                        } finally {
+                          setModalLoading(false);
+                        }
+                      }}
+                    >
+                      Resend OTP
+                    </button>
+                  )}
                 </div>
               </form>
             )}
@@ -2319,7 +2293,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                     type="button"
                     className="btn btn-outline-secondary flex-grow-1 py-1.5 fw-semibold rounded-pill btn-sm"
                     onClick={() => {
-                      setLoginModalStep('password');
+                      setLoginModalStep('phone');
                       setModalErrorMsg(null);
                     }}
                   >

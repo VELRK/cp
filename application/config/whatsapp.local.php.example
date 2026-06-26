@@ -1,0 +1,16 @@
+<?php
+defined('BASEPATH') OR exit('No direct script access allowed');
+/**
+ * AskEva WhatsApp API key (token from dashboard).
+ *
+ * Setup:
+ * 1. Copy this file to whatsapp.local.php (same folder).
+ * 2. Paste your AskEva token below.
+ * 3. whatsapp.local.php is gitignored — do not commit it.
+ *
+ * Alternatively set ASKEVA_API_KEY in project root .env (see .env.example).
+ */
+return array(
+    'api_key'          => '',
+    'development_mode' => false,
+);

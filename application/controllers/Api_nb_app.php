@@ -625,8 +625,8 @@ class Api_nb_app extends CI_Controller
 
     private function _otp_ttl_seconds()
     {
-        $this->config->load('whatsapp', TRUE);
-        $cfg = $this->config->item('whatsapp');
+        $this->load->helper('whatsapp_config');
+        $cfg = nb_whatsapp_config($this);
         $ttl = isset($cfg['otp_ttl_seconds']) ? (int) $cfg['otp_ttl_seconds'] : 300;
         return $ttl > 30 ? $ttl : 300;
     }
@@ -641,8 +641,8 @@ class Api_nb_app extends CI_Controller
 
     private function _dispatch_whatsapp_otp($full_phone, $otp)
     {
-        $this->config->load('whatsapp', TRUE);
-        $cfg = $this->config->item('whatsapp');
+        $this->load->helper('whatsapp_config');
+        $cfg = nb_whatsapp_config($this);
         $development_mode = !empty($cfg['development_mode']);
 
         if ($development_mode) {

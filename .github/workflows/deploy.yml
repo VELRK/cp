@@ -25,6 +25,7 @@ jobs:
             BACKUP_DIR="/tmp/cp-deploy-backup-$$"
             mkdir -p "$BACKUP_DIR"
             [ -f application/config/database.php ] && cp application/config/database.php "$BACKUP_DIR/database.php"
+            [ -f application/config/whatsapp.local.php ] && cp application/config/whatsapp.local.php "$BACKUP_DIR/whatsapp.local.php"
             [ -f .env ] && cp .env "$BACKUP_DIR/.env"
             [ -f deploy.local.php ] && cp deploy.local.php "$BACKUP_DIR/deploy.local.php"
 
@@ -40,6 +41,7 @@ jobs:
             if [ ! -f application/config/database.php ] && [ -f application/config/database.php.example ]; then
               cp application/config/database.php.example application/config/database.php
             fi
+            [ -f "$BACKUP_DIR/whatsapp.local.php" ] && cp "$BACKUP_DIR/whatsapp.local.php" application/config/whatsapp.local.php
             [ -f "$BACKUP_DIR/.env" ] && cp "$BACKUP_DIR/.env" .env
             [ -f "$BACKUP_DIR/deploy.local.php" ] && cp "$BACKUP_DIR/deploy.local.php" deploy.local.php
 

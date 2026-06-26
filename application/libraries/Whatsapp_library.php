@@ -18,8 +18,8 @@ class Whatsapp_library {
     {
         $this->ci =& get_instance();
 
-        $this->ci->config->load('whatsapp', TRUE);
-        $file_config = $this->ci->config->item('whatsapp') ?: array();
+        $this->ci->load->helper('whatsapp_config');
+        $file_config = nb_whatsapp_config($this->ci);
         $config = array_merge($file_config, $config);
 
         $this->provider     = isset($config['provider']) ? (string) $config['provider'] : 'askeva';

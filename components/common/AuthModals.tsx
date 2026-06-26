@@ -316,13 +316,6 @@ const AuthModals: React.FC = () => {
                       Register here
                     </button>
                   </p>
-                  <p className="small text-muted text-center mt-2 mb-0">
-                    Admin? Sign in via the{' '}
-                    <a href="/panel" className="fw-semibold text-decoration-none">
-                      admin panel
-                    </a>
-                    .
-                  </p>
                 </form>
               ) : (
                 <form onSubmit={handleVerifyOtp}>

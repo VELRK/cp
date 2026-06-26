@@ -9,6 +9,7 @@ desktop.ini
 deploy.local.php
 application/config/database.php
 application/config/google_maps_api_key.local.php
+application/config/whatsapp.local.php
 
 # --- PHP / CodeIgniter ---
 application/cache/*

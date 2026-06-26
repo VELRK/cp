@@ -43,9 +43,6 @@ $modal_cities = isset($modal_cities) && is_array($modal_cities) ? $modal_cities 
           Don&apos;t have an account?
           <button type="button" class="btn btn-link btn-sm p-0 align-baseline" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#nbModalRegister">Register</button>
         </p>
-        <p class="small text-muted text-center mt-2 mb-0">
-          Admin? <a href="<?php echo site_url('panel'); ?>" class="fw-semibold text-decoration-none">Admin panel login</a>
-        </p>
       </div>
     </div>
   </div>

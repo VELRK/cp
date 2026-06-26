@@ -189,9 +189,6 @@ export default function LoginPage() {
                     Register here
                   </Link>
                 </p>
-                <p className="small text-muted text-center mt-2 mb-0">
-                  Admin? <Link href="/panel" className="fw-semibold text-decoration-none">Admin panel login</Link>
-                </p>
               </form>
             ) : (
               <form onSubmit={handleVerifyOtp}>

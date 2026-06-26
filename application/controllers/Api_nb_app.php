@@ -520,7 +520,7 @@ class Api_nb_app extends CI_Controller
         ));
 
         $full_phone = ltrim($country_code, '+') . $phone;
-        $send_result = $this->_dispatch_whatsapp_otp($full_phone, $otp);
+        $send_result = $this->_dispatch_whatsapp_otp($full_phone, $otp, $phone);
 
         if (!$send_result['success']) {
             return $this->_json(array(
@@ -639,8 +639,16 @@ class Api_nb_app extends CI_Controller
         return str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
     }
 
-    private function _dispatch_whatsapp_otp($full_phone, $otp)
+    private function _dispatch_whatsapp_otp($full_phone, $otp, $phone = '')
     {
+        if ($this->_is_test_otp_phone($phone, $full_phone)) {
+            return array(
+                'success'          => true,
+                'message'          => 'Test OTP generated (WhatsApp skipped).',
+                'development_mode' => true,
+            );
+        }
+
         $this->load->helper('whatsapp_config');
         $cfg = nb_whatsapp_config($this);
         $development_mode = !empty($cfg['development_mode']);
@@ -656,6 +664,16 @@ class Api_nb_app extends CI_Controller
 
         $this->load->library('whatsapp_library');
         return $this->whatsapp_library->send_otp($full_phone, $otp);
+    }
+
+    private function _is_test_otp_phone($phone, $full_phone = '')
+    {
+        $normalized = $this->_normalize_phone($phone);
+        if ($normalized === '9876543210') {
+            return true;
+        }
+        $digits = preg_replace('/\D+/', '', (string) $full_phone);
+        return strlen($digits) >= 10 && substr($digits, -10) === '9876543210';
     }
 
     private function _issue_auth_token($user)

@@ -27,77 +27,110 @@ jobs:
           npm ci --no-audit --no-fund
           npm run build:deploy
 
-      - name: Backup server secrets
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY_ILF }}
-          port: 65002
-          script: |
-            set -e
-            TARGET=/home/u221026474/domains/superfinelabels.in/public_html/cp
-            BACKUP_DIR=/tmp/cp-deploy-backup-latest
-            rm -rf "$BACKUP_DIR"
-            mkdir -p "$BACKUP_DIR"
-            cd "$TARGET"
-            [ -f application/config/database.php ] && cp application/config/database.php "$BACKUP_DIR/database.php"
-            [ -f application/config/whatsapp.local.php ] && cp application/config/whatsapp.local.php "$BACKUP_DIR/whatsapp.local.php"
-            [ -f .env ] && cp .env "$BACKUP_DIR/.env"
-            [ -f deploy.local.php ] && cp deploy.local.php "$BACKUP_DIR/deploy.local.php"
-            echo "Secrets backed up to $BACKUP_DIR"
-
-      - name: Rsync release to server
+      - name: Configure SSH for deploy
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_KEY_ILF }}
+          DEPLOY_HOST: ${{ secrets.HOST }}
+          DEPLOY_USER: ${{ secrets.USERNAME }}
         run: |
           set -e
           mkdir -p ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          rsync -avz --delete \
-            -e "ssh -p 65002 -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
-            --exclude-from=deploy/rsync-exclude.txt \
-            deploy/release/ \
-            "${{ secrets.USERNAME }}@${{ secrets.HOST }}:/home/u221026474/domains/superfinelabels.in/public_html/cp/"
+          {
+            echo 'Host hostinger-deploy'
+            echo "  HostName ${DEPLOY_HOST}"
+            echo "  User ${DEPLOY_USER}"
+            echo '  Port 65002'
+            echo '  IdentityFile ~/.ssh/deploy_key'
+            echo '  StrictHostKeyChecking no'
+            echo '  ConnectTimeout 60'
+            echo '  ServerAliveInterval 30'
+            echo '  ServerAliveCountMax 3'
+          } > ~/.ssh/config
+          chmod 600 ~/.ssh/config
+
+      - name: Backup server secrets
+        run: |
+          set -e
+          for attempt in 1 2 3; do
+            echo "SSH backup attempt $attempt/3..."
+            if ssh hostinger-deploy 'set -e
+              TARGET=/home/u221026474/domains/superfinelabels.in/public_html/cp
+              BACKUP_DIR=/tmp/cp-deploy-backup-latest
+              rm -rf "$BACKUP_DIR"
+              mkdir -p "$BACKUP_DIR"
+              cd "$TARGET"
+              [ -f application/config/database.php ] && cp application/config/database.php "$BACKUP_DIR/database.php"
+              [ -f application/config/whatsapp.local.php ] && cp application/config/whatsapp.local.php "$BACKUP_DIR/whatsapp.local.php"
+              [ -f .env ] && cp .env "$BACKUP_DIR/.env"
+              [ -f deploy.local.php ] && cp deploy.local.php "$BACKUP_DIR/deploy.local.php"
+              echo "Secrets backed up to $BACKUP_DIR"'; then
+              exit 0
+            fi
+            echo "SSH failed, waiting 45s before retry..."
+            sleep 45
+          done
+          echo "Could not connect to Hostinger SSH on port 65002 after 3 attempts."
+          exit 1
+
+      - name: Rsync release to server
+        run: |
+          set -e
+          for attempt in 1 2 3; do
+            echo "Rsync attempt $attempt/3..."
+            if rsync -avz --delete \
+              -e "ssh -F ~/.ssh/config" \
+              --exclude-from=deploy/rsync-exclude.txt \
+              deploy/release/ \
+              hostinger-deploy:/home/u221026474/domains/superfinelabels.in/public_html/cp/; then
+              exit 0
+            fi
+            echo "Rsync failed, waiting 45s before retry..."
+            sleep 45
+          done
+          exit 1
 
       - name: Restore secrets and panel redirects
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY_ILF }}
-          port: 65002
-          script: |
-            set -e
-            TARGET=/home/u221026474/domains/superfinelabels.in/public_html/cp
-            BACKUP_DIR=/tmp/cp-deploy-backup-latest
-            cd "$TARGET"
+        run: |
+          set -e
+          for attempt in 1 2 3; do
+            echo "SSH restore attempt $attempt/3..."
+            if ssh hostinger-deploy 'set -e
+              TARGET=/home/u221026474/domains/superfinelabels.in/public_html/cp
+              BACKUP_DIR=/tmp/cp-deploy-backup-latest
+              cd "$TARGET"
 
-            [ -f "$BACKUP_DIR/database.php" ] && cp "$BACKUP_DIR/database.php" application/config/database.php
-            if [ ! -f application/config/database.php ] && [ -f application/config/database.php.example ]; then
-              cp application/config/database.php.example application/config/database.php
-            fi
-            [ -f "$BACKUP_DIR/whatsapp.local.php" ] && cp "$BACKUP_DIR/whatsapp.local.php" application/config/whatsapp.local.php
-            [ -f "$BACKUP_DIR/.env" ] && cp "$BACKUP_DIR/.env" .env
-            [ -f "$BACKUP_DIR/deploy.local.php" ] && cp "$BACKUP_DIR/deploy.local.php" deploy.local.php
-            rm -rf "$BACKUP_DIR"
-
-            PARENT="$(dirname "$TARGET")"
-            for SUB in panel admin; do
-              SRC="$TARGET/deploy/htaccess.${SUB}-redirect"
-              if [ -f "$SRC" ]; then
-                mkdir -p "$PARENT/$SUB"
-                cp "$SRC" "$PARENT/$SUB/.htaccess"
+              [ -f "$BACKUP_DIR/database.php" ] && cp "$BACKUP_DIR/database.php" application/config/database.php
+              if [ ! -f application/config/database.php ] && [ -f application/config/database.php.example ]; then
+                cp application/config/database.php.example application/config/database.php
               fi
-            done
-            ROOT_HT="$PARENT/.htaccess"
-            if [ -f "$TARGET/deploy/htaccess.root-redirect" ] && { [ ! -f "$ROOT_HT" ] || ! grep -q 'cp-panel-redirect' "$ROOT_HT" 2>/dev/null; }; then
-              {
-                echo ""
-                echo "# cp-panel-redirect"
-                cat "$TARGET/deploy/htaccess.root-redirect"
-              } >> "$ROOT_HT"
-            fi
+              [ -f "$BACKUP_DIR/whatsapp.local.php" ] && cp "$BACKUP_DIR/whatsapp.local.php" application/config/whatsapp.local.php
+              [ -f "$BACKUP_DIR/.env" ] && cp "$BACKUP_DIR/.env" .env
+              [ -f "$BACKUP_DIR/deploy.local.php" ] && cp "$BACKUP_DIR/deploy.local.php" deploy.local.php
+              rm -rf "$BACKUP_DIR"
 
-            echo "Deployed static export + PHP from CI at $TARGET"
+              PARENT="$(dirname "$TARGET")"
+              for SUB in panel admin; do
+                SRC="$TARGET/deploy/htaccess.${SUB}-redirect"
+                if [ -f "$SRC" ]; then
+                  mkdir -p "$PARENT/$SUB"
+                  cp "$SRC" "$PARENT/$SUB/.htaccess"
+                fi
+              done
+              ROOT_HT="$PARENT/.htaccess"
+              if [ -f "$TARGET/deploy/htaccess.root-redirect" ] && { [ ! -f "$ROOT_HT" ] || ! grep -q "cp-panel-redirect" "$ROOT_HT" 2>/dev/null; }; then
+                {
+                  echo ""
+                  echo "# cp-panel-redirect"
+                  cat "$TARGET/deploy/htaccess.root-redirect"
+                } >> "$ROOT_HT"
+              fi
+
+              echo "Deployed static export + PHP from CI at $TARGET"'; then
+              exit 0
+            fi
+            echo "SSH failed, waiting 45s before retry..."
+            sleep 45
+          done
+          exit 1

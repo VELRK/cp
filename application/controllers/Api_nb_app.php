@@ -1509,16 +1509,22 @@ class Api_nb_app extends CI_Controller
     {
         $img = isset($n->image) ? trim((string) $n->image) : '';
         $video = isset($n->video) ? trim((string) $n->video) : '';
+        $image_url = $img !== '' ? $this->_asset_url_or_null($img) : null;
+        $video_url = $video !== '' ? $this->_asset_url_or_null($video) : null;
+        $created_at = isset($n->created_at) ? (string) $n->created_at : null;
+        $updated_at = isset($n->updated_at) ? (string) $n->updated_at : null;
+
         return array(
             'id' => isset($n->id) ? (int) $n->id : 0,
             'title' => isset($n->title) ? (string) $n->title : '',
             'description' => isset($n->description) && $n->description !== null ? (string) $n->description : '',
             'status' => isset($n->status) ? (string) $n->status : 'active',
-            'image' => $img !== '' ? $img : null,
-            'image_url' => $img !== '' ? $this->_asset_url_or_null($img) : null,
-            'video' => $video !== '' ? $video : null,
-            'video_url' => $video !== '' ? $this->_asset_url_or_null($video) : null,
-            'created_at' => isset($n->created_at) ? (string) $n->created_at : null,
+            'image' => $image_url,
+            'image_url' => $image_url,
+            'video' => $video_url,
+            'video_url' => $video_url,
+            'created_at' => $created_at,
+            'updated_at' => $updated_at,
         );
     }
 

@@ -590,6 +590,47 @@ function nb_ensure_youtube_media_tables()
 }
 
 /**
+ * Create notifications table when missing (admin broadcast + mobile API).
+ * Safe to call on every request; runs DDL once per request.
+ */
+function nb_ensure_notifications_table()
+{
+    $CI =& get_instance();
+    if (!isset($CI->db) || !$CI->db) {
+        return;
+    }
+
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+
+    if (!$CI->db->table_exists('notifications')) {
+        $CI->db->query("CREATE TABLE IF NOT EXISTS `notifications` (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `title` VARCHAR(255) NOT NULL,
+            `description` TEXT NULL,
+            `image` VARCHAR(500) NULL,
+            `video` VARCHAR(512) NULL,
+            `status` ENUM('active','inactive') NOT NULL DEFAULT 'active',
+            `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `idx_notifications_status_created` (`status`, `created_at`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
+        return;
+    }
+
+    if (!$CI->db->field_exists('video', 'notifications')) {
+        $CI->db->query('ALTER TABLE `notifications` ADD COLUMN `video` VARCHAR(512) NULL AFTER `image`');
+    }
+    if (!$CI->db->field_exists('updated_at', 'notifications')) {
+        $CI->db->query('ALTER TABLE `notifications` ADD COLUMN `updated_at` DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP AFTER `created_at`');
+    }
+}
+
+/**
  * Admin/panel URL map for reels or videos CRUD views.
  *
  * @param string $kind reels|videos
@@ -645,4 +686,41 @@ function nb_media_external_url($url)
         return $url;
     }
     return base_url($url);
+}
+
+/**
+ * Send FCM push for an admin broadcast notification (topic all_users).
+ *
+ * @param int   $notification_id DB row id
+ * @param array $data            title, description, optional image/video paths
+ * @return string Raw FCM JSON response
+ */
+function nb_send_fcm_notification($notification_id, array $data)
+{
+    $CI =& get_instance();
+    $CI->load->library('firebase');
+
+    $image_url = !empty($data['image']) ? base_url($data['image']) : null;
+    $video_url = null;
+    if (!empty($data['video'])) {
+        $CI->load->database();
+        if ($CI->db->field_exists('video', 'notifications')) {
+            $video_url = base_url($data['video']);
+        }
+    }
+
+    $body = isset($data['description']) ? (string) $data['description'] : '';
+    $fcm_data = array(
+        'type' => 'notification',
+        'notification_id' => (string) (int) $notification_id,
+    );
+
+    return $CI->firebase->send_notification(
+        (string) ($data['title'] ?? ''),
+        $body,
+        $image_url,
+        $fcm_data,
+        'all_users',
+        $video_url
+    );
 }

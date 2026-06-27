@@ -1968,22 +1968,8 @@ class Admin extends CI_Controller {
                 return;
             }
 
-            $this->Notification_model->create($data);
-
-            // FCM: all users subscribed to topic `all_users` (see Flutter/Android subscribeToTopic)
-            $this->load->library('firebase');
-            $image_url = !empty($data['image']) ? base_url($data['image']) : null;
-            $video_url = (!empty($data['video']) && $this->db->field_exists('video', 'notifications'))
-                ? base_url($data['video']) : null;
-            $body = isset($data['description']) ? (string) $data['description'] : '';
-            $this->firebase->send_notification(
-                $data['title'],
-                $body,
-                $image_url,
-                array('type' => 'notification'),
-                'all_users',
-                $video_url
-            );
+            $notification_id = (int) $this->Notification_model->create($data);
+            nb_send_fcm_notification($notification_id, $data);
 
             $this->session->set_flashdata('success', 'Notification sent and saved successfully');
             redirect('admin/notifications');

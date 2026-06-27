@@ -7,6 +7,7 @@ class Notification_model extends CI_Model {
     {
         parent::__construct();
         $this->load->database();
+        nb_ensure_notifications_table();
     }
 
     public function get_all($status = null)

@@ -279,6 +279,9 @@ class Api_web extends CI_Controller
             return $this->_json(array('success' => false, 'message' => 'Property not found'), 404);
         }
 
+        $this->Nb_property_model->increment_views((int) $prop->id);
+        $prop->views = (int) ($prop->views ?? 0) + 1;
+
         $images_list = array();
         if (!empty($prop->images)) {
             $decoded = json_decode($prop->images, true);

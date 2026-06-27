@@ -916,6 +916,10 @@ class Api_mobile extends CI_Controller {
             $this->_json(array('success' => false, 'message' => 'Property not found'), 404);
             return;
         }
+        if (!empty($row->is_active)) {
+            $this->Nb_property_model->increment_views($id);
+            $row = $this->Nb_property_model->get_by_id($id);
+        }
         $this->_json(array('success' => true, 'data' => $this->_format_property_core($row)));
     }
 
@@ -1989,6 +1993,9 @@ class Api_mobile extends CI_Controller {
         if (!empty($item['thumbnail']) && !filter_var($item['thumbnail'], FILTER_VALIDATE_URL)) {
             $item['thumbnail'] = $this->_asset_url_or_null($item['thumbnail']);
         }
+        $item['createdAt'] = isset($item['createdAt']) && $item['createdAt'] !== null && $item['createdAt'] !== ''
+            ? (string) $item['createdAt']
+            : null;
         return $item;
     }
 

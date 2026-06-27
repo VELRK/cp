@@ -1030,19 +1030,8 @@ class Broker_admin extends MY_Controller {
                 redirect('panel/notification/create');
                 return;
             }
-            $this->Notification_model->create($data);
-            $this->load->library('firebase');
-            $image_url = !empty($data['image']) ? base_url($data['image']) : null;
-            $video_url = (!empty($data['video']) && $this->db->field_exists('video', 'notifications'))
-                ? base_url($data['video']) : null;
-            $this->firebase->send_notification(
-                (string) $data['title'],
-                isset($data['description']) ? (string) $data['description'] : '',
-                $image_url,
-                array('type' => 'notification'),
-                'all_users',
-                $video_url
-            );
+            $notification_id = (int) $this->Notification_model->create($data);
+            nb_send_fcm_notification($notification_id, $data);
             $this->session->set_flashdata('nb_ok', 'Notification sent.');
             redirect('panel/notifications');
             return;

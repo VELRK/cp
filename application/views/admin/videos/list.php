@@ -1,7 +1,10 @@
 <div class="container-fluid">
+    <?php
+    $mu = isset($media_urls) ? $media_urls : nb_media_admin_urls('videos', false);
+    ?>
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="fas fa-film me-2"></i>Videos</h2>
-        <a href="<?php echo base_url('admin/video_create'); ?>" class="btn btn-primary">
+        <a href="<?php echo html_escape($mu['create']); ?>" class="btn btn-primary">
             <i class="fas fa-plus me-2"></i>Add New Video
         </a>
     </div>
@@ -55,7 +58,7 @@
                                     <td><?php echo $video->id; ?></td>
                                     <td>
                                         <?php if($video->thumbnail): ?>
-                                            <img src="<?php echo base_url($video->thumbnail); ?>" style="max-width: 100px; height: 60px; object-fit: cover;" class="img-thumbnail">
+                                            <img src="<?php echo html_escape(nb_media_external_url($video->thumbnail)); ?>" style="max-width: 100px; height: 60px; object-fit: cover;" class="img-thumbnail">
                                         <?php else: ?>
                                             <span class="text-muted">No thumbnail</span>
                                         <?php endif; ?>
@@ -63,7 +66,7 @@
                                     <td><?php echo htmlspecialchars($video->title ?: 'Untitled'); ?></td>
                                     <td>
                                         <?php if($video->videoUrl): ?>
-                                            <a href="<?php echo base_url($video->videoUrl); ?>" target="_blank" class="text-primary">
+                                            <a href="<?php echo html_escape(nb_media_external_url($video->videoUrl)); ?>" target="_blank" class="text-primary">
                                                 <i class="fas fa-video me-1"></i>View Video
                                             </a>
                                         <?php else: ?>
@@ -78,10 +81,10 @@
                                     </td>
                                     <td><?php echo $video->createdAt ? date('M d, Y', strtotime($video->createdAt)) : 'N/A'; ?></td>
                                     <td>
-                                        <a href="<?php echo base_url('admin/video_edit/'.$video->id); ?>" class="btn btn-sm btn-warning" title="Edit">
+                                        <a href="<?php echo html_escape($mu['edit'] . $video->id); ?>" class="btn btn-sm btn-warning" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <a href="<?php echo base_url('admin/video_delete/'.$video->id); ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')" title="Delete">
+                                        <a href="<?php echo html_escape($mu['delete'] . $video->id); ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')" title="Delete">
                                             <i class="fas fa-trash"></i>
                                         </a>
                                     </td>
@@ -157,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateVideoOrder(orders) {
         console.log('Updating video order:', orders);
         
-        fetch('<?php echo base_url("admin/video_update_order"); ?>', {
+        fetch('<?php echo html_escape($mu['update_order']); ?>', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',

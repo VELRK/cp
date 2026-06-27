@@ -1,4 +1,5 @@
 <div class="container-fluid">
+    <?php $mu = isset($media_urls) ? $media_urls : nb_media_admin_urls('reels', false); ?>
     <h2 class="mb-4"><i class="fas fa-plus me-2"></i>Create Reel Video</h2>
 
     <div class="card">
@@ -30,7 +31,7 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save me-2"></i>Create Reel
                     </button>
-                    <a href="<?php echo base_url('admin/reels'); ?>" class="btn btn-secondary">
+                    <a href="<?php echo html_escape($mu['list']); ?>" class="btn btn-secondary">
                         <i class="fas fa-times me-2"></i>Cancel
                     </a>
                 </div>

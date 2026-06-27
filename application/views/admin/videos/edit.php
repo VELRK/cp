@@ -1,4 +1,5 @@
 <div class="container-fluid">
+    <?php $mu = isset($media_urls) ? $media_urls : nb_media_admin_urls('videos', false); ?>
     <h2 class="mb-4"><i class="fas fa-edit me-2"></i>Edit Video</h2>
 
     <div class="card">
@@ -8,7 +9,7 @@
                     <label class="form-label">Current Video</label>
                     <?php if($video->videoUrl): ?>
                         <div class="mb-2">
-                            <a href="<?php echo $video->videoUrl; ?>" target="_blank" class="btn btn-sm btn-info">
+                            <a href="<?php echo html_escape(nb_media_external_url($video->videoUrl)); ?>" target="_blank" class="btn btn-sm btn-info">
                                 <i class="fas fa-video me-1"></i>View Current Video
                             </a>
                         </div>
@@ -38,7 +39,7 @@
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-save me-2"></i>Update Video
                     </button>
-                    <a href="<?php echo base_url('admin/videos'); ?>" class="btn btn-secondary">
+                    <a href="<?php echo html_escape($mu['list']); ?>" class="btn btn-secondary">
                         <i class="fas fa-times me-2"></i>Cancel
                     </a>
                 </div>

@@ -94,6 +94,14 @@ $pt = isset($page_title) ? $page_title : 'Admin';
           href="<?php echo site_url('panel/housing-news'); ?>">
           <i class="bi bi-journal-text"></i> Blogs
         </a>
+        <a class="nb-admin-nav-link<?php echo $nav === 'reels' ? ' active' : ''; ?>"
+          href="<?php echo site_url('panel/reels'); ?>">
+          <i class="bi bi-camera-reels"></i> Reels
+        </a>
+        <a class="nb-admin-nav-link<?php echo $nav === 'videos' ? ' active' : ''; ?>"
+          href="<?php echo site_url('panel/videos'); ?>">
+          <i class="bi bi-play-btn"></i> Videos
+        </a>
         <a class="nb-admin-nav-link<?php echo $nav === 'feedbacks' ? ' active' : ''; ?>"
           href="<?php echo site_url('panel/feedbacks'); ?>">
           <i class="bi bi-chat-left-text"></i> Feedback
@@ -176,6 +184,14 @@ $pt = isset($page_title) ? $page_title : 'Admin';
           <a class="nb-admin-nav-link<?php echo $nav === 'housing_news' ? ' active' : ''; ?>"
             href="<?php echo site_url('panel/housing-news'); ?>" data-bs-dismiss="offcanvas">
             <i class="bi bi-journal-text"></i> Blogs
+          </a>
+          <a class="nb-admin-nav-link<?php echo $nav === 'reels' ? ' active' : ''; ?>"
+            href="<?php echo site_url('panel/reels'); ?>" data-bs-dismiss="offcanvas">
+            <i class="bi bi-camera-reels"></i> Reels
+          </a>
+          <a class="nb-admin-nav-link<?php echo $nav === 'videos' ? ' active' : ''; ?>"
+            href="<?php echo site_url('panel/videos'); ?>" data-bs-dismiss="offcanvas">
+            <i class="bi bi-play-btn"></i> Videos
           </a>
           <a class="nb-admin-nav-link<?php echo $nav === 'feedbacks' ? ' active' : ''; ?>"
             href="<?php echo site_url('panel/feedbacks'); ?>" data-bs-dismiss="offcanvas">

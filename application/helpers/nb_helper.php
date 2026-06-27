@@ -588,3 +588,61 @@ function nb_ensure_youtube_media_tables()
         }
     }
 }
+
+/**
+ * Admin/panel URL map for reels or videos CRUD views.
+ *
+ * @param string $kind reels|videos
+ * @param bool $panel Use /panel/* routes instead of legacy /admin/*
+ * @return array
+ */
+function nb_media_admin_urls($kind = 'reels', $panel = false)
+{
+    if ($kind === 'videos') {
+        if ($panel) {
+            return array(
+                'list' => site_url('panel/videos'),
+                'create' => site_url('panel/video/add'),
+                'edit' => site_url('panel/video/edit/'),
+                'delete' => site_url('panel/video/delete/'),
+                'update_order' => site_url('panel/video/update-order'),
+            );
+        }
+        return array(
+            'list' => base_url('admin/videos'),
+            'create' => base_url('admin/video_create'),
+            'edit' => base_url('admin/video_edit/'),
+            'delete' => base_url('admin/video_delete/'),
+            'update_order' => base_url('admin/video_update_order'),
+        );
+    }
+
+    if ($panel) {
+        return array(
+            'list' => site_url('panel/reels'),
+            'create' => site_url('panel/reel/add'),
+            'edit' => site_url('panel/reel/edit/'),
+            'delete' => site_url('panel/reel/delete/'),
+            'update_order' => site_url('panel/reel/update-order'),
+        );
+    }
+    return array(
+        'list' => base_url('admin/reels'),
+        'create' => base_url('admin/reel_create'),
+        'edit' => base_url('admin/reel_edit/'),
+        'delete' => base_url('admin/reel_delete/'),
+        'update_order' => base_url('admin/reel_update_order'),
+    );
+}
+
+function nb_media_external_url($url)
+{
+    $url = trim((string) $url);
+    if ($url === '') {
+        return '';
+    }
+    if (filter_var($url, FILTER_VALIDATE_URL)) {
+        return $url;
+    }
+    return base_url($url);
+}

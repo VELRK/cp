@@ -445,6 +445,16 @@ $route['panel/notification/create'] = 'broker_admin/notification_create';
 $route['panel/notification/edit/(:num)'] = 'broker_admin/notification_edit/$1';
 $route['panel/notification/delete/(:num)'] = 'broker_admin/notification_delete/$1';
 $route['panel/notification/toggle/(:num)'] = 'broker_admin/notification_toggle/$1';
+$route['panel/reels'] = 'broker_admin/reels';
+$route['panel/reel/add'] = 'broker_admin/reel_add';
+$route['panel/reel/edit/(:num)'] = 'broker_admin/reel_edit/$1';
+$route['panel/reel/delete/(:num)'] = 'broker_admin/reel_delete/$1';
+$route['panel/reel/update-order'] = 'broker_admin/reel_update_order';
+$route['panel/videos'] = 'broker_admin/videos';
+$route['panel/video/add'] = 'broker_admin/video_add';
+$route['panel/video/edit/(:num)'] = 'broker_admin/video_edit/$1';
+$route['panel/video/delete/(:num)'] = 'broker_admin/video_delete/$1';
+$route['panel/video/update-order'] = 'broker_admin/video_update_order';
 
 $route['user/feedback'] = 'feedback_user/index';
 $route['user/live-updates'] = 'live_updates_user/index';

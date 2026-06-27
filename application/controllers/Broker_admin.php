@@ -8,7 +8,8 @@ class Broker_admin extends MY_Controller {
         parent::__construct();
         $this->load->helper(array('url', 'form'));
         $this->load->database();
-        $this->load->model(array('Nb_user_model', 'Nb_property_model', 'Nb_enquiry_model', 'Nb_city_model', 'Nb_amenity_model', 'Nb_property_type_model', 'Wishlist_model', 'Live_update_model', 'Housing_news_model', 'Banner_model', 'Feedback_model', 'Notification_model', 'Nb_delete_request_model'));
+        $this->load->model(array('Nb_user_model', 'Nb_property_model', 'Nb_enquiry_model', 'Nb_city_model', 'Nb_amenity_model', 'Nb_property_type_model', 'Wishlist_model', 'Live_update_model', 'Housing_news_model', 'Banner_model', 'Feedback_model', 'Notification_model', 'Nb_delete_request_model', 'Reelsvideo_model', 'Video_model'));
+        $this->load->helper('nb');
     }
 
     /**
@@ -1877,5 +1878,245 @@ class Broker_admin extends MY_Controller {
                 @unlink($full);
             }
         }
+    }
+
+    // ==================== REELS & VIDEOS (YouTube) ====================
+
+    private function _panel_media_view($kind, $view, array $data = array())
+    {
+        $data['media_urls'] = nb_media_admin_urls($kind, true);
+        $data['admin_nav'] = $kind;
+        if (!isset($data['page_title'])) {
+            $data['page_title'] = $kind === 'videos' ? 'Videos' : 'Reels';
+        }
+        $this->load->view('nobroker/admin/header', $data);
+        $this->load->view($view, $data);
+        $this->load->view('nobroker/admin/footer', $data);
+    }
+
+    private function _extract_youtube_video_id($url)
+    {
+        if (empty($url)) {
+            return null;
+        }
+        $patterns = array(
+            '/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/',
+            '/youtube\.com\/.*[?&]v=([^&\n?#]+)/',
+            '/youtube\.com\/shorts\/([^&\n?#]+)/',
+        );
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $url, $matches)) {
+                return $matches[1];
+            }
+        }
+        return null;
+    }
+
+    private function _youtube_thumbnail_url($videoId)
+    {
+        return 'https://img.youtube.com/vi/' . $videoId . '/maxresdefault.jpg';
+    }
+
+    private function _save_youtube_media_row($input, $requireUrl = true)
+    {
+        $videoUrl = trim((string) ($input['videoUrl'] ?? ''));
+        if ($videoUrl === '') {
+            return $requireUrl ? array('error' => 'Please provide a YouTube video URL') : null;
+        }
+        $videoId = $this->_extract_youtube_video_id($videoUrl);
+        if (!$videoId) {
+            return array('error' => 'Please provide a valid YouTube video URL');
+        }
+        $data = array(
+            'title' => trim((string) ($input['title'] ?? '')),
+            'status' => trim((string) ($input['status'] ?? 'active')) ?: 'active',
+            'videoUrl' => $videoUrl,
+            'thumbnail' => $this->_youtube_thumbnail_url($videoId),
+        );
+        $thumb = trim((string) ($input['thumbnail'] ?? ''));
+        if ($thumb !== '') {
+            $data['thumbnail'] = $thumb;
+        }
+        return array('data' => $data);
+    }
+
+    public function reels()
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        $this->_panel_media_view('reels', 'admin/reels/list', array(
+            'page_title' => 'Reels',
+            'reels' => $this->Reelsvideo_model->get_all(),
+        ));
+    }
+
+    public function reel_add()
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        if ($this->input->post()) {
+            $payload = $this->_save_youtube_media_row($this->input->post(), true);
+            if (isset($payload['error'])) {
+                $this->session->set_flashdata('error', $payload['error']);
+                redirect('panel/reel/add');
+                return;
+            }
+            $this->Reelsvideo_model->create($payload['data']);
+            $this->session->set_flashdata('success', 'Reel video created successfully');
+            redirect('panel/reels');
+            return;
+        }
+        $this->_panel_media_view('reels', 'admin/reels/create', array('page_title' => 'Add reel'));
+    }
+
+    public function reel_edit($id = 0)
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        $id = (int) $id;
+        $reel = $this->Reelsvideo_model->get_by_id($id);
+        if (!$reel) {
+            show_404();
+        }
+        if ($this->input->post()) {
+            $payload = $this->_save_youtube_media_row($this->input->post(), true);
+            if (isset($payload['error'])) {
+                $this->session->set_flashdata('error', $payload['error']);
+                redirect('panel/reel/edit/' . $id);
+                return;
+            }
+            $this->Reelsvideo_model->update($id, $payload['data']);
+            $this->session->set_flashdata('success', 'Reel video updated successfully');
+            redirect('panel/reels');
+            return;
+        }
+        $this->_panel_media_view('reels', 'admin/reels/edit', array(
+            'page_title' => 'Edit reel',
+            'reel' => $reel,
+        ));
+    }
+
+    public function reel_delete($id = 0)
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        $id = (int) $id;
+        $reel = $this->Reelsvideo_model->get_by_id($id);
+        if ($reel) {
+            $this->Reelsvideo_model->delete($id);
+            $this->session->set_flashdata('success', 'Reel video deleted successfully');
+        }
+        redirect('panel/reels');
+    }
+
+    public function reel_update_order()
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        header('Content-Type: application/json');
+        $ordersJson = $this->input->post('orders');
+        if ($ordersJson === null || $ordersJson === '') {
+            echo json_encode(array('success' => false, 'message' => 'Invalid order data: No data received'));
+            return;
+        }
+        $orders = json_decode($ordersJson, true);
+        if (json_last_error() !== JSON_ERROR_NONE || empty($orders) || !is_array($orders)) {
+            echo json_encode(array('success' => false, 'message' => 'Invalid order data format'));
+            return;
+        }
+        $result = $this->Reelsvideo_model->update_orders($orders);
+        echo json_encode($result
+            ? array('success' => true, 'message' => 'Order updated successfully')
+            : array('success' => false, 'message' => 'Failed to update order'));
+    }
+
+    public function videos()
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        $this->_panel_media_view('videos', 'admin/videos/list', array(
+            'page_title' => 'Videos',
+            'videos' => $this->Video_model->get_all(),
+        ));
+    }
+
+    public function video_add()
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        if ($this->input->post()) {
+            $payload = $this->_save_youtube_media_row($this->input->post(), true);
+            if (isset($payload['error'])) {
+                $this->session->set_flashdata('error', $payload['error']);
+                redirect('panel/video/add');
+                return;
+            }
+            $this->Video_model->create($payload['data']);
+            $this->session->set_flashdata('success', 'Video created successfully');
+            redirect('panel/videos');
+            return;
+        }
+        $this->_panel_media_view('videos', 'admin/videos/create', array('page_title' => 'Add video'));
+    }
+
+    public function video_edit($id = 0)
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        $id = (int) $id;
+        $video = $this->Video_model->get_by_id($id);
+        if (!$video) {
+            show_404();
+        }
+        if ($this->input->post()) {
+            $payload = $this->_save_youtube_media_row($this->input->post(), true);
+            if (isset($payload['error'])) {
+                $this->session->set_flashdata('error', $payload['error']);
+                redirect('panel/video/edit/' . $id);
+                return;
+            }
+            $this->Video_model->update($id, $payload['data']);
+            $this->session->set_flashdata('success', 'Video updated successfully');
+            redirect('panel/videos');
+            return;
+        }
+        $this->_panel_media_view('videos', 'admin/videos/edit', array(
+            'page_title' => 'Edit video',
+            'video' => $video,
+        ));
+    }
+
+    public function video_delete($id = 0)
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        $id = (int) $id;
+        $video = $this->Video_model->get_by_id($id);
+        if ($video) {
+            $this->Video_model->delete($id);
+            $this->session->set_flashdata('success', 'Video deleted successfully');
+        }
+        redirect('panel/videos');
+    }
+
+    public function video_update_order()
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        header('Content-Type: application/json');
+        $ordersJson = $this->input->post('orders');
+        if ($ordersJson === null || $ordersJson === '') {
+            echo json_encode(array('success' => false, 'message' => 'Invalid order data: No data received'));
+            return;
+        }
+        $orders = json_decode($ordersJson, true);
+        if (json_last_error() !== JSON_ERROR_NONE || empty($orders) || !is_array($orders)) {
+            echo json_encode(array('success' => false, 'message' => 'Invalid order data format'));
+            return;
+        }
+        $result = $this->Video_model->update_orders($orders);
+        echo json_encode($result
+            ? array('success' => true, 'message' => 'Order updated successfully')
+            : array('success' => false, 'message' => 'Failed to update order'));
     }
 }

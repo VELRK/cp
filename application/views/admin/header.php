@@ -85,6 +85,9 @@
             <a class="nav-link <?php echo (strpos(uri_string(), 'admin/banners') !== false) ? 'active' : ''; ?>" href="<?php echo base_url('admin/banners'); ?>">
                 <i class="fas fa-images me-2"></i>Banners
             </a>
+            <a class="nav-link <?php echo (strpos(uri_string(), 'admin/notifications') !== false || strpos(uri_string(), 'admin/notification_') !== false) ? 'active' : ''; ?>" href="<?php echo base_url('admin/notifications'); ?>">
+                <i class="fas fa-bell me-2"></i>Notifications
+            </a>
             <a class="nav-link <?php echo (strpos(uri_string(), 'admin/offer_banners') !== false) ? 'active' : ''; ?>" href="<?php echo base_url('admin/offer_banners'); ?>">
                 <i class="fas fa-gift me-2"></i>Offer Banners
             </a>
@@ -111,9 +114,6 @@
             </a>
             <a class="nav-link <?php echo (strpos(uri_string(), 'admin/videos') !== false) ? 'active' : ''; ?>" href="<?php echo base_url('admin/videos'); ?>">
                 <i class="fas fa-film me-2"></i>Videos
-            </a>
-            <a class="nav-link <?php echo (strpos(uri_string(), 'admin/notifications') !== false) ? 'active' : ''; ?>" href="<?php echo base_url('admin/notifications'); ?>">
-                <i class="fas fa-bell me-2"></i>Notifications
             </a>
             <a class="nav-link <?php echo (strpos(uri_string(), 'admin/user') !== false) ? 'active' : ''; ?>" href="<?php echo base_url('admin/users'); ?>">
                 <i class="fas fa-users me-2"></i>Users

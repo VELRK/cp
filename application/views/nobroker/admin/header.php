@@ -82,6 +82,10 @@ $pt = isset($page_title) ? $page_title : 'Admin';
           href="<?php echo site_url('panel/banners'); ?>">
           <i class="bi bi-images"></i> Banners
         </a>
+        <a class="nb-admin-nav-link<?php echo $nav === 'notifications' ? ' active' : ''; ?>"
+          href="<?php echo site_url('panel/notifications'); ?>">
+          <i class="bi bi-bell"></i> Notifications
+        </a>
         <a class="nb-admin-nav-link<?php echo $nav === 'wishlists' ? ' active' : ''; ?>"
           href="<?php echo site_url('panel/wishlists'); ?>">
           <i class="bi bi-heart"></i> Wishlists
@@ -105,10 +109,6 @@ $pt = isset($page_title) ? $page_title : 'Admin';
         <a class="nb-admin-nav-link<?php echo $nav === 'feedbacks' ? ' active' : ''; ?>"
           href="<?php echo site_url('panel/feedbacks'); ?>">
           <i class="bi bi-chat-left-text"></i> Feedback
-        </a>
-        <a class="nb-admin-nav-link<?php echo $nav === 'notifications' ? ' active' : ''; ?>"
-          href="<?php echo site_url('panel/notifications'); ?>">
-          <i class="bi bi-bell"></i> Notifications
         </a>
         <a class="nb-admin-nav-link<?php echo $nav === 'api_collection' ? ' active' : ''; ?>"
           href="<?php echo site_url('panel/api-collection'); ?>">
@@ -173,6 +173,10 @@ $pt = isset($page_title) ? $page_title : 'Admin';
             href="<?php echo site_url('panel/banners'); ?>" data-bs-dismiss="offcanvas">
             <i class="bi bi-images"></i> Banners
           </a>
+          <a class="nb-admin-nav-link<?php echo $nav === 'notifications' ? ' active' : ''; ?>"
+            href="<?php echo site_url('panel/notifications'); ?>" data-bs-dismiss="offcanvas">
+            <i class="bi bi-bell"></i> Notifications
+          </a>
           <a class="nb-admin-nav-link<?php echo $nav === 'wishlists' ? ' active' : ''; ?>"
             href="<?php echo site_url('panel/wishlists'); ?>" data-bs-dismiss="offcanvas">
             <i class="bi bi-heart"></i> Wishlists
@@ -196,10 +200,6 @@ $pt = isset($page_title) ? $page_title : 'Admin';
           <a class="nb-admin-nav-link<?php echo $nav === 'feedbacks' ? ' active' : ''; ?>"
             href="<?php echo site_url('panel/feedbacks'); ?>" data-bs-dismiss="offcanvas">
             <i class="bi bi-chat-left-text"></i> Feedback
-          </a>
-          <a class="nb-admin-nav-link<?php echo $nav === 'notifications' ? ' active' : ''; ?>"
-            href="<?php echo site_url('panel/notifications'); ?>" data-bs-dismiss="offcanvas">
-            <i class="bi bi-bell"></i> Notifications
           </a>
           <a class="nb-admin-nav-link<?php echo $nav === 'api_collection' ? ' active' : ''; ?>"
             href="<?php echo site_url('panel/api-collection'); ?>" data-bs-dismiss="offcanvas">

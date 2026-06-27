@@ -1,13 +1,26 @@
-<div class="container-fluid">
-    <?php
-    $mu = isset($media_urls) ? $media_urls : nb_media_admin_urls('reels', false);
-    ?>
+<?php
+$mu = isset($media_urls) ? $media_urls : nb_media_admin_urls('reels', false);
+$is_panel = isset($media_urls);
+?>
+<div class="<?php echo $is_panel ? '' : 'container-fluid'; ?>">
+    <?php if ($is_panel) : ?>
+    <div class="nb-admin-page-head d-flex flex-wrap justify-content-between align-items-start gap-3">
+        <div>
+            <h1 class="nb-admin-page-title">Reels</h1>
+            <p class="nb-admin-page-desc mb-0">Manage YouTube reel links shown on the homepage.</p>
+        </div>
+        <a href="<?php echo html_escape($mu['create']); ?>" class="btn btn-success rounded-pill px-3">
+            <i class="bi bi-plus-lg me-1"></i> Add reel
+        </a>
+    </div>
+    <?php else : ?>
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="fas fa-video me-2"></i>Reels Videos</h2>
         <a href="<?php echo html_escape($mu['create']); ?>" class="btn btn-primary">
             <i class="fas fa-plus me-2"></i>Add New Reel
         </a>
     </div>
+    <?php endif; ?>
 
     <?php if($this->session->flashdata('success')): ?>
         <div class="alert alert-success alert-dismissible fade show">
@@ -24,13 +37,14 @@
     <?php endif; ?>
 
     <div class="alert alert-info">
-        <i class="fas fa-info-circle me-2"></i>Drag and drop rows to reorder reels. Order will be saved automatically.
+        <?php if ($is_panel) : ?><i class="bi bi-info-circle me-2"></i><?php else : ?><i class="fas fa-info-circle me-2"></i><?php endif; ?>
+        Drag and drop rows to reorder reels. Order will be saved automatically.
     </div>
 
-    <div class="card">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
+    <div class="<?php echo $is_panel ? 'nb-admin-panel' : 'card'; ?>">
+        <?php if ($is_panel) : ?><div class="nb-admin-panel-body"><?php else : ?><div class="card-body"><?php endif; ?>
+            <div class="<?php echo $is_panel ? 'nb-admin-table-wrap' : 'table-responsive'; ?>">
+                <table class="table <?php echo $is_panel ? 'nb-admin-table mb-0' : 'table-striped table-hover'; ?>">
                     <thead>
                         <tr>
                             <th style="width: 40px;"><i class="fas fa-grip-vertical text-muted"></i></th>
@@ -41,7 +55,7 @@
                             <th>Order</th>
                             <th>Status</th>
                             <th>Created</th>
-                            <th>Actions</th>
+                            <th class="<?php echo $is_panel ? 'text-end' : ''; ?>">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="reelsTableBody">
@@ -80,13 +94,20 @@
                                         </span>
                                     </td>
                                     <td><?php echo $reel->createdAt ? date('M d, Y', strtotime($reel->createdAt)) : 'N/A'; ?></td>
-                                    <td>
+                                    <td class="<?php echo $is_panel ? 'text-end' : ''; ?>">
+                                        <?php if ($is_panel) : ?>
+                                        <div class="d-inline-flex align-items-center gap-2 flex-nowrap">
+                                            <a href="<?php echo html_escape($mu['edit'] . $reel->id); ?>" class="btn btn-sm btn-outline-primary rounded-pill px-3">Edit</a>
+                                            <a href="<?php echo html_escape($mu['delete'] . $reel->id); ?>" class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="return confirm('Delete this reel?');">Delete</a>
+                                        </div>
+                                        <?php else : ?>
                                         <a href="<?php echo html_escape($mu['edit'] . $reel->id); ?>" class="btn btn-sm btn-warning" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         <a href="<?php echo html_escape($mu['delete'] . $reel->id); ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')" title="Delete">
                                             <i class="fas fa-trash"></i>
                                         </a>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

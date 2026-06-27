@@ -34,28 +34,31 @@ jobs:
           DEPLOY_USER: ${{ secrets.USERNAME }}
         run: |
           set -e
-          mkdir -p ~/.ssh
-          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
+          SSH_DIR="${HOME}/.ssh"
+          mkdir -p "$SSH_DIR"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "${SSH_DIR}/deploy_key"
+          chmod 600 "${SSH_DIR}/deploy_key"
           {
             echo 'Host hostinger-deploy'
             echo "  HostName ${DEPLOY_HOST}"
             echo "  User ${DEPLOY_USER}"
             echo '  Port 65002'
-            echo '  IdentityFile ~/.ssh/deploy_key'
+            echo "  IdentityFile ${SSH_DIR}/deploy_key"
             echo '  StrictHostKeyChecking no'
             echo '  ConnectTimeout 60'
             echo '  ServerAliveInterval 30'
             echo '  ServerAliveCountMax 3'
-          } > ~/.ssh/config
-          chmod 600 ~/.ssh/config
+          } > "${SSH_DIR}/config"
+          chmod 600 "${SSH_DIR}/config"
+          echo "SSH_DIR=${SSH_DIR}" >> "$GITHUB_ENV"
+          echo "RSYNC_SSH=ssh -F ${SSH_DIR}/config" >> "$GITHUB_ENV"
 
       - name: Backup server secrets
         run: |
           set -e
           for attempt in 1 2 3; do
             echo "SSH backup attempt $attempt/3..."
-            if ssh hostinger-deploy 'set -e
+            if ssh -F "${SSH_DIR}/config" hostinger-deploy 'set -e
               TARGET=/home/u221026474/domains/superfinelabels.in/public_html/cp
               BACKUP_DIR=/tmp/cp-deploy-backup-latest
               rm -rf "$BACKUP_DIR"
@@ -80,7 +83,7 @@ jobs:
           for attempt in 1 2 3; do
             echo "Rsync attempt $attempt/3..."
             if rsync -avz --delete \
-              -e "ssh -F ~/.ssh/config" \
+              -e "${RSYNC_SSH}" \
               --exclude-from=deploy/rsync-exclude.txt \
               deploy/release/ \
               hostinger-deploy:/home/u221026474/domains/superfinelabels.in/public_html/cp/; then
@@ -96,7 +99,7 @@ jobs:
           set -e
           for attempt in 1 2 3; do
             echo "SSH restore attempt $attempt/3..."
-            if ssh hostinger-deploy 'set -e
+            if ssh -F "${SSH_DIR}/config" hostinger-deploy 'set -e
               TARGET=/home/u221026474/domains/superfinelabels.in/public_html/cp
               BACKUP_DIR=/tmp/cp-deploy-backup-latest
               cd "$TARGET"

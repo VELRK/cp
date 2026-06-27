@@ -80,6 +80,7 @@ class Db_store {
             "CREATE TABLE IF NOT EXISTS videos (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 videoUrl TEXT NOT NULL,
+                thumbnail TEXT NULL,
                 title VARCHAR(255) NULL,
                 index_no INT DEFAULT 0,
                 status VARCHAR(20) DEFAULT 'active',
@@ -88,6 +89,7 @@ class Db_store {
             "CREATE TABLE IF NOT EXISTS reels_videos (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 videoUrl TEXT NOT NULL,
+                thumbnail TEXT NULL,
                 title VARCHAR(255) NULL,
                 index_no INT DEFAULT 0,
                 status VARCHAR(20) DEFAULT 'active',
@@ -184,6 +186,11 @@ class Db_store {
         }
         if ($this->CI->db->table_exists('enquiries') && !$this->CI->db->field_exists('city', 'enquiries')) {
             $this->CI->db->query("ALTER TABLE enquiries ADD COLUMN city VARCHAR(120) NULL");
+        }
+        foreach (array('videos', 'reels_videos') as $mediaTable) {
+            if ($this->CI->db->table_exists($mediaTable) && !$this->CI->db->field_exists('thumbnail', $mediaTable)) {
+                $this->CI->db->query("ALTER TABLE {$mediaTable} ADD COLUMN thumbnail TEXT NULL");
+            }
         }
     }
 

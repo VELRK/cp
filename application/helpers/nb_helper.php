@@ -535,3 +535,56 @@ function nb_redirect_path($path, $code = 303)
     header('Location: ' . $path, true, (int) $code);
     exit;
 }
+
+/**
+ * Create videos + reels_videos tables when missing (YouTube URL modules).
+ * Safe to call on every request; runs DDL once per request.
+ */
+function nb_ensure_youtube_media_tables()
+{
+    $CI =& get_instance();
+    if (!isset($CI->db) || !$CI->db) {
+        return;
+    }
+
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+
+    $definitions = array(
+        'videos' => "CREATE TABLE IF NOT EXISTS `videos` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `videoUrl` text NOT NULL,
+            `thumbnail` text NULL,
+            `title` varchar(255) NULL,
+            `index_no` int(11) NOT NULL DEFAULT 0,
+            `status` varchar(20) NOT NULL DEFAULT 'active',
+            `createdAt` datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `idx_videos_status_index` (`status`, `index_no`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci",
+        'reels_videos' => "CREATE TABLE IF NOT EXISTS `reels_videos` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `videoUrl` text NOT NULL,
+            `thumbnail` text NULL,
+            `title` varchar(255) NULL,
+            `index_no` int(11) NOT NULL DEFAULT 0,
+            `status` varchar(20) NOT NULL DEFAULT 'active',
+            `createdAt` datetime DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `idx_reels_videos_status_index` (`status`, `index_no`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci",
+    );
+
+    foreach ($definitions as $table => $createSql) {
+        if (!$CI->db->table_exists($table)) {
+            $CI->db->query($createSql);
+            continue;
+        }
+        if (!$CI->db->field_exists('thumbnail', $table)) {
+            $CI->db->query("ALTER TABLE `{$table}` ADD COLUMN `thumbnail` text NULL AFTER `videoUrl`");
+        }
+    }
+}

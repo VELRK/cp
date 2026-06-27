@@ -7,6 +7,8 @@ class Video_model extends CI_Model {
     {
         parent::__construct();
         $this->load->database();
+        $this->load->helper('nb');
+        nb_ensure_youtube_media_tables();
     }
 
     public function get_all($status = null)

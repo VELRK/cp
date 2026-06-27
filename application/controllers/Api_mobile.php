@@ -13,6 +13,7 @@ class Api_mobile extends CI_Controller {
             'Banner_model', 'Housing_news_model', 'Feedback_model', 'Live_update_model', 'Contact_model',
             'Enquiry_model', 'Nb_property_model', 'Nb_user_model', 'Nb_amenity_model', 'Nb_city_model',
             'Blog_model', 'User_model', 'Location_model', 'Category_model', 'Offer_banner_model',
+            'Reelsvideo_model', 'Video_model',
         ));
         $this->output->set_content_type('application/json');
         $this->_cors();
@@ -843,6 +844,9 @@ class Api_mobile extends CI_Controller {
         if (!empty($out['location_image'])) {
             $out['location_image'] = $this->_asset_url_or_null($out['location_image']);
         }
+        if (!empty($out['home_banner_image'])) {
+            $out['home_banner_image_url'] = $this->_asset_url_or_null($out['home_banner_image']);
+        }
         return $out;
     }
 
@@ -1418,6 +1422,67 @@ class Api_mobile extends CI_Controller {
         return $this->_property_list_response($filters, $limit, $offset, $page);
     }
 
+    private function _section_properties(array $sectionFilters)
+    {
+        if ($this->input->method() !== 'get') {
+            return $this->_json(array('success' => false, 'message' => 'GET only'), 405);
+        }
+        list($page, $limit, $offset) = $this->_pagination_from_request();
+        $filters = array_merge($this->_property_filters_from_query(), $sectionFilters);
+        return $this->_property_list_response($filters, $limit, $offset, $page);
+    }
+
+    /** GET /api/mobile/properties/published — active listings, newest first. */
+    public function published_properties()
+    {
+        return $this->_section_properties(array('sort' => 'new'));
+    }
+
+    /** GET /api/mobile/properties/best-rate */
+    public function best_rate_properties()
+    {
+        return $this->_section_properties(array('tags_best_rate_localities' => 1));
+    }
+
+    /** GET /api/mobile/properties/high-growth */
+    public function high_growth_properties()
+    {
+        return $this->_section_properties(array('tags_high_growth_localities' => 1));
+    }
+
+    /** GET /api/mobile/properties/recommended */
+    public function recommended_properties()
+    {
+        return $this->_section_properties(array('is_recommended' => 1));
+    }
+
+    /** GET /api/mobile/properties/newly-launched */
+    public function newly_launched_properties()
+    {
+        return $this->_section_properties(array('is_newly_launched' => 1));
+    }
+
+    /** GET /api/mobile/properties/verified */
+    public function verified_properties()
+    {
+        return $this->_section_properties(array('is_verified_property' => 1));
+    }
+
+    /** GET /api/mobile/properties/premium */
+    public function premium_properties()
+    {
+        return $this->_section_properties(array('is_premium' => 1));
+    }
+
+    /** GET /api/mobile/properties/home-banner */
+    public function home_banner_properties()
+    {
+        return $this->_section_properties(array(
+            'is_home_banner' => 1,
+            'sort' => 'home_banner',
+        ));
+    }
+
     public function property($id = null)
     {
         return $this->property_core($id);
@@ -1897,6 +1962,349 @@ class Api_mobile extends CI_Controller {
             return $this->_json(array('success' => false, 'message' => 'GET only'), 405);
         }
         $this->_json(array('success' => true, 'stats' => array('total' => 0, 'pending' => 0, 'approved' => 0)));
+    }
+
+    // ============================================
+    // Reels & videos (YouTube URL)
+    // ============================================
+
+    private function _extract_youtube_video_id($url)
+    {
+        $parts = nb_video_embed_parts($url);
+        return ($parts && isset($parts['type'], $parts['id']) && $parts['type'] === 'youtube') ? $parts['id'] : null;
+    }
+
+    private function _youtube_thumbnail_url($videoId)
+    {
+        return 'https://img.youtube.com/vi/' . $videoId . '/maxresdefault.jpg';
+    }
+
+    private function _format_youtube_media_row($row)
+    {
+        $item = (array) $row;
+        $videoUrl = isset($item['videoUrl']) ? trim((string) $item['videoUrl']) : '';
+        $videoId = $videoUrl !== '' ? $this->_extract_youtube_video_id($videoUrl) : null;
+        $item['youtube_id'] = $videoId;
+        $item['embed_url'] = $videoId ? 'https://www.youtube.com/embed/' . $videoId : null;
+        if (!empty($item['thumbnail']) && !filter_var($item['thumbnail'], FILTER_VALIDATE_URL)) {
+            $item['thumbnail'] = $this->_asset_url_or_null($item['thumbnail']);
+        }
+        return $item;
+    }
+
+    private function _youtube_media_payload_from_input(array $input, $requireTitle = false)
+    {
+        $videoUrl = trim((string) ($input['videoUrl'] ?? $input['video_url'] ?? ''));
+        if ($videoUrl === '') {
+            return array('error' => 'videoUrl is required', 'code' => 422);
+        }
+
+        $videoUrl = nb_sanitize_video_url($videoUrl);
+        $videoId = $this->_extract_youtube_video_id($videoUrl);
+        if (!$videoId) {
+            return array('error' => 'Please provide a valid YouTube video URL', 'code' => 422);
+        }
+
+        $title = trim((string) ($input['title'] ?? ''));
+        if ($requireTitle && $title === '') {
+            return array('error' => 'title is required', 'code' => 422);
+        }
+
+        $data = array(
+            'videoUrl' => $videoUrl,
+            'thumbnail' => $this->_youtube_thumbnail_url($videoId),
+        );
+        if ($title !== '') {
+            $data['title'] = $this->security->xss_clean($title);
+        }
+
+        $status = trim((string) ($input['status'] ?? ''));
+        if ($status !== '') {
+            $data['status'] = $status;
+        } elseif ($requireTitle) {
+            $data['status'] = 'active';
+        }
+
+        if (isset($input['index_no']) && trim((string) $input['index_no']) !== '') {
+            $data['index_no'] = (int) $input['index_no'];
+        }
+
+        $thumb = trim((string) ($input['thumbnail'] ?? ''));
+        if ($thumb !== '') {
+            $data['thumbnail'] = $thumb;
+        }
+
+        return array('data' => $data);
+    }
+
+    public function reels()
+    {
+        $params = $this->_input_json_or_post();
+        $status = isset($params['status']) ? trim((string) $params['status']) : null;
+        if ($status === '') {
+            $status = null;
+        }
+        $rows = $this->Reelsvideo_model->get_all($status);
+        $out = array();
+        foreach ($rows as $row) {
+            $out[] = $this->_format_youtube_media_row($row);
+        }
+        $this->_json(array('success' => true, 'data' => $out, 'count' => count($out)));
+    }
+
+    public function reel($id = null)
+    {
+        $id = (int) $id;
+        if ($id <= 0) {
+            return $this->_json(array('success' => false, 'message' => 'Invalid reel ID'), 400);
+        }
+        $row = $this->Reelsvideo_model->get_by_id($id);
+        if (!$row) {
+            return $this->_json(array('success' => false, 'message' => 'Reel not found'), 404);
+        }
+        $this->_json(array('success' => true, 'data' => $this->_format_youtube_media_row($row)));
+    }
+
+    public function reels_create()
+    {
+        if ($this->input->method() !== 'post') {
+            return $this->_json(array('success' => false, 'message' => 'POST only'), 405);
+        }
+        $input = $this->_input_json_or_post();
+        $payload = $this->_youtube_media_payload_from_input($input, true);
+        if (isset($payload['error'])) {
+            return $this->_json(array('success' => false, 'message' => $payload['error']), $payload['code']);
+        }
+        $id = $this->Reelsvideo_model->create($payload['data']);
+        if ($id <= 0) {
+            return $this->_json(array('success' => false, 'message' => 'Could not create reel'), 500);
+        }
+        $row = $this->Reelsvideo_model->get_by_id($id);
+        $this->_json(array(
+            'success' => true,
+            'message' => 'Reel created',
+            'id' => $id,
+            'data' => $row ? $this->_format_youtube_media_row($row) : null,
+        ));
+    }
+
+    public function reels_update($id = null)
+    {
+        $id = (int) $id;
+        if ($id <= 0) {
+            return $this->_json(array('success' => false, 'message' => 'Invalid reel ID'), 400);
+        }
+        if ($this->input->method() !== 'post' && $this->input->method() !== 'put') {
+            return $this->_json(array('success' => false, 'message' => 'POST or PUT only'), 405);
+        }
+        $row = $this->Reelsvideo_model->get_by_id($id);
+        if (!$row) {
+            return $this->_json(array('success' => false, 'message' => 'Reel not found'), 404);
+        }
+
+        $input = $this->_input_json_or_post();
+        $update = array();
+        if (isset($input['title'])) {
+            $update['title'] = $this->security->xss_clean(trim((string) $input['title']));
+        }
+        if (isset($input['status'])) {
+            $update['status'] = trim((string) $input['status']);
+        }
+        if (isset($input['index_no']) && trim((string) $input['index_no']) !== '') {
+            $update['index_no'] = (int) $input['index_no'];
+        }
+        if (isset($input['videoUrl']) || isset($input['video_url'])) {
+            $payload = $this->_youtube_media_payload_from_input($input, false);
+            if (isset($payload['error'])) {
+                return $this->_json(array('success' => false, 'message' => $payload['error']), $payload['code']);
+            }
+            $update = array_merge($update, $payload['data']);
+        } elseif (isset($input['thumbnail'])) {
+            $update['thumbnail'] = trim((string) $input['thumbnail']);
+        }
+
+        if (empty($update)) {
+            return $this->_json(array('success' => false, 'message' => 'No fields to update'), 422);
+        }
+
+        $this->Reelsvideo_model->update($id, $update);
+        $row = $this->Reelsvideo_model->get_by_id($id);
+        $this->_json(array(
+            'success' => true,
+            'message' => 'Reel updated',
+            'data' => $row ? $this->_format_youtube_media_row($row) : null,
+        ));
+    }
+
+    public function reels_delete($id = null)
+    {
+        $id = (int) $id;
+        if ($id <= 0) {
+            return $this->_json(array('success' => false, 'message' => 'Invalid reel ID'), 400);
+        }
+        if ($this->input->method() !== 'post' && $this->input->method() !== 'delete') {
+            return $this->_json(array('success' => false, 'message' => 'POST or DELETE only'), 405);
+        }
+        $row = $this->Reelsvideo_model->get_by_id($id);
+        if (!$row) {
+            return $this->_json(array('success' => false, 'message' => 'Reel not found'), 404);
+        }
+        $this->Reelsvideo_model->delete($id);
+        $this->_json(array('success' => true, 'message' => 'Reel deleted'));
+    }
+
+    public function reels_reorder()
+    {
+        if ($this->input->method() !== 'post') {
+            return $this->_json(array('success' => false, 'message' => 'POST only'), 405);
+        }
+        $input = $this->_input_json_or_post();
+        $orders = isset($input['orders']) && is_array($input['orders']) ? $input['orders'] : null;
+        if ($orders === null && isset($input['order']) && is_array($input['order'])) {
+            $orders = $input['order'];
+        }
+        if (empty($orders) || !is_array($orders)) {
+            return $this->_json(array('success' => false, 'message' => 'orders object is required (id => index_no)'), 422);
+        }
+        if (!$this->Reelsvideo_model->update_orders($orders)) {
+            return $this->_json(array('success' => false, 'message' => 'Could not reorder reels'), 500);
+        }
+        $this->_json(array('success' => true, 'message' => 'Reels reordered'));
+    }
+
+    public function videos()
+    {
+        $params = $this->_input_json_or_post();
+        $status = isset($params['status']) ? trim((string) $params['status']) : null;
+        if ($status === '') {
+            $status = null;
+        }
+        $rows = $this->Video_model->get_all($status);
+        $out = array();
+        foreach ($rows as $row) {
+            $out[] = $this->_format_youtube_media_row($row);
+        }
+        $this->_json(array('success' => true, 'data' => $out, 'count' => count($out)));
+    }
+
+    public function video($id = null)
+    {
+        $id = (int) $id;
+        if ($id <= 0) {
+            return $this->_json(array('success' => false, 'message' => 'Invalid video ID'), 400);
+        }
+        $row = $this->Video_model->get_by_id($id);
+        if (!$row) {
+            return $this->_json(array('success' => false, 'message' => 'Video not found'), 404);
+        }
+        $this->_json(array('success' => true, 'data' => $this->_format_youtube_media_row($row)));
+    }
+
+    public function videos_create()
+    {
+        if ($this->input->method() !== 'post') {
+            return $this->_json(array('success' => false, 'message' => 'POST only'), 405);
+        }
+        $input = $this->_input_json_or_post();
+        $payload = $this->_youtube_media_payload_from_input($input, true);
+        if (isset($payload['error'])) {
+            return $this->_json(array('success' => false, 'message' => $payload['error']), $payload['code']);
+        }
+        $id = $this->Video_model->create($payload['data']);
+        if ($id <= 0) {
+            return $this->_json(array('success' => false, 'message' => 'Could not create video'), 500);
+        }
+        $row = $this->Video_model->get_by_id($id);
+        $this->_json(array(
+            'success' => true,
+            'message' => 'Video created',
+            'id' => $id,
+            'data' => $row ? $this->_format_youtube_media_row($row) : null,
+        ));
+    }
+
+    public function videos_update($id = null)
+    {
+        $id = (int) $id;
+        if ($id <= 0) {
+            return $this->_json(array('success' => false, 'message' => 'Invalid video ID'), 400);
+        }
+        if ($this->input->method() !== 'post' && $this->input->method() !== 'put') {
+            return $this->_json(array('success' => false, 'message' => 'POST or PUT only'), 405);
+        }
+        $row = $this->Video_model->get_by_id($id);
+        if (!$row) {
+            return $this->_json(array('success' => false, 'message' => 'Video not found'), 404);
+        }
+
+        $input = $this->_input_json_or_post();
+        $update = array();
+        if (isset($input['title'])) {
+            $update['title'] = $this->security->xss_clean(trim((string) $input['title']));
+        }
+        if (isset($input['status'])) {
+            $update['status'] = trim((string) $input['status']);
+        }
+        if (isset($input['index_no']) && trim((string) $input['index_no']) !== '') {
+            $update['index_no'] = (int) $input['index_no'];
+        }
+        if (isset($input['videoUrl']) || isset($input['video_url'])) {
+            $payload = $this->_youtube_media_payload_from_input($input, false);
+            if (isset($payload['error'])) {
+                return $this->_json(array('success' => false, 'message' => $payload['error']), $payload['code']);
+            }
+            $update = array_merge($update, $payload['data']);
+        } elseif (isset($input['thumbnail'])) {
+            $update['thumbnail'] = trim((string) $input['thumbnail']);
+        }
+
+        if (empty($update)) {
+            return $this->_json(array('success' => false, 'message' => 'No fields to update'), 422);
+        }
+
+        $this->Video_model->update($id, $update);
+        $row = $this->Video_model->get_by_id($id);
+        $this->_json(array(
+            'success' => true,
+            'message' => 'Video updated',
+            'data' => $row ? $this->_format_youtube_media_row($row) : null,
+        ));
+    }
+
+    public function videos_delete($id = null)
+    {
+        $id = (int) $id;
+        if ($id <= 0) {
+            return $this->_json(array('success' => false, 'message' => 'Invalid video ID'), 400);
+        }
+        if ($this->input->method() !== 'post' && $this->input->method() !== 'delete') {
+            return $this->_json(array('success' => false, 'message' => 'POST or DELETE only'), 405);
+        }
+        $row = $this->Video_model->get_by_id($id);
+        if (!$row) {
+            return $this->_json(array('success' => false, 'message' => 'Video not found'), 404);
+        }
+        $this->Video_model->delete($id);
+        $this->_json(array('success' => true, 'message' => 'Video deleted'));
+    }
+
+    public function videos_reorder()
+    {
+        if ($this->input->method() !== 'post') {
+            return $this->_json(array('success' => false, 'message' => 'POST only'), 405);
+        }
+        $input = $this->_input_json_or_post();
+        $orders = isset($input['orders']) && is_array($input['orders']) ? $input['orders'] : null;
+        if ($orders === null && isset($input['order']) && is_array($input['order'])) {
+            $orders = $input['order'];
+        }
+        if (empty($orders) || !is_array($orders)) {
+            return $this->_json(array('success' => false, 'message' => 'orders object is required (id => index_no)'), 422);
+        }
+        if (!$this->Video_model->update_orders($orders)) {
+            return $this->_json(array('success' => false, 'message' => 'Could not reorder videos'), 500);
+        }
+        $this->_json(array('success' => true, 'message' => 'Videos reordered'));
     }
 
     // ============================================

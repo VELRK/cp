@@ -66,6 +66,10 @@ $pt = isset($page_title) ? $page_title : 'Admin';
           href="<?php echo site_url('panel/enquiries'); ?>">
           <i class="bi bi-chat-dots"></i> Enquiries
         </a>
+        <a class="nb-admin-nav-link<?php echo $nav === 'site_visits' ? ' active' : ''; ?>"
+          href="<?php echo site_url('panel/site-visits'); ?>">
+          <i class="bi bi-calendar-check"></i> Site Visits
+        </a>
         <a class="nb-admin-nav-link<?php echo $nav === 'cities' ? ' active' : ''; ?>"
           href="<?php echo site_url('panel/cities'); ?>">
           <i class="bi bi-geo-alt"></i> Cities
@@ -156,6 +160,10 @@ $pt = isset($page_title) ? $page_title : 'Admin';
           <a class="nb-admin-nav-link<?php echo $nav === 'enquiries' ? ' active' : ''; ?>"
             href="<?php echo site_url('panel/enquiries'); ?>" data-bs-dismiss="offcanvas">
             <i class="bi bi-chat-dots"></i> Enquiries
+          </a>
+          <a class="nb-admin-nav-link<?php echo $nav === 'site_visits' ? ' active' : ''; ?>"
+            href="<?php echo site_url('panel/site-visits'); ?>" data-bs-dismiss="offcanvas">
+            <i class="bi bi-calendar-check"></i> Site Visits
           </a>
           <a class="nb-admin-nav-link<?php echo $nav === 'cities' ? ' active' : ''; ?>"
             href="<?php echo site_url('panel/cities'); ?>" data-bs-dismiss="offcanvas">

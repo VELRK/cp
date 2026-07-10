@@ -417,6 +417,10 @@ $route['panel/property/delete/(:num)'] = 'broker_admin/property_delete/$1';
 $route['panel/property/save'] = 'nb_property_form/save';
 $route['panel/enquiries'] = 'broker_admin/enquiries';
 $route['panel/enquiry/(:num)'] = 'broker_admin/enquiry/$1';
+$route['panel/site-visits'] = 'broker_admin/site_visits';
+$route['panel/site-visit/(:num)'] = 'broker_admin/site_visit/$1';
+$route['panel/update-site-visit'] = 'broker_admin/update_site_visit';
+$route['panel/delete-site-visit'] = 'broker_admin/delete_site_visit';
 
 $route['panel/cities'] = 'broker_admin/cities';
 $route['panel/city/add'] = 'broker_admin/city_add';

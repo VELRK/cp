@@ -59,4 +59,48 @@ class Site_visit_model extends CI_Model {
         $this->db->where('id', (int) $id);
         return $this->db->update($this->table, array('status' => $status));
     }
+
+    public function list_admin($filters = array(), $limit = 100, $offset = 0)
+    {
+        $this->db->select('sv.*, p.title AS property_title, p.slug AS property_slug, p.locality,
+            u.name AS visitor_name, u.phone AS visitor_phone, u.email AS visitor_email,
+            c.name AS city_name, o.name AS owner_name');
+        $this->db->from($this->table . ' sv');
+        $this->db->join('nb_properties p', 'p.id = sv.property_id', 'left');
+        $this->db->join('nb_users u', 'u.id = sv.user_id', 'left');
+        $this->db->join('nb_users o', 'o.id = p.owner_id', 'left');
+        $this->db->join('nb_cities c', 'c.id = p.city_id', 'left');
+        if (!empty($filters['status'])) {
+            $this->db->where('sv.status', $filters['status']);
+        }
+        $this->db->order_by('sv.scheduled_at', 'DESC');
+        $this->db->limit((int) $limit, max(0, (int) $offset));
+        return $this->db->get()->result();
+    }
+
+    public function get_admin_detail($id)
+    {
+        $this->db->select('sv.*, p.title AS property_title, p.slug AS property_slug, p.locality, p.owner_id,
+            u.name AS visitor_name, u.phone AS visitor_phone, u.email AS visitor_email,
+            c.name AS city_name, o.name AS owner_name, o.phone AS owner_phone, o.email AS owner_email');
+        $this->db->from($this->table . ' sv');
+        $this->db->join('nb_properties p', 'p.id = sv.property_id', 'left');
+        $this->db->join('nb_users u', 'u.id = sv.user_id', 'left');
+        $this->db->join('nb_users o', 'o.id = p.owner_id', 'left');
+        $this->db->join('nb_cities c', 'c.id = p.city_id', 'left');
+        $this->db->where('sv.id', (int) $id);
+        return $this->db->get()->row();
+    }
+
+    public function update($id, array $data)
+    {
+        $this->db->where('id', (int) $id);
+        return $this->db->update($this->table, $data);
+    }
+
+    public function delete($id)
+    {
+        $this->db->where('id', (int) $id);
+        return $this->db->delete($this->table);
+    }
 }

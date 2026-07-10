@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { getOwnerDashboard } from '@/lib/frontendApi';
-import { Home, Eye, MessageSquare, Plus, FileText, ClipboardList, CheckCircle } from 'lucide-react';
+import { Home, Eye, MessageSquare, Plus, FileText, ClipboardList, CheckCircle, CalendarCheck } from 'lucide-react';
 
 interface Enquiry {
   id: number;
@@ -122,6 +122,10 @@ export default function OwnerDashboard() {
             <Link href="/owner/enquiries" className="btn btn-outline-secondary rounded-pill px-4 d-inline-flex align-items-center gap-1">
               <FileText size={16} />
               <span>Received Enquiries</span>
+            </Link>
+            <Link href="/owner/site-visits" className="btn btn-outline-secondary rounded-pill px-4 d-inline-flex align-items-center gap-1">
+              <CalendarCheck size={16} />
+              <span>Site Visits</span>
             </Link>
           </p>
 

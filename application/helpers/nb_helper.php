@@ -243,7 +243,7 @@ function nb_property_url($p)
     } else {
         $seg = (string) (int) $p->id;
     }
-    return $CI->config->site_url('property/' . rawurlencode($seg));
+    return rtrim($CI->config->site_url('property/' . rawurlencode($seg)), '/') . '/';
 }
 
 /**

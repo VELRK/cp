@@ -153,7 +153,7 @@ export default function OwnerEnquiriesPage() {
 
           <div className="d-flex flex-column gap-3">
             {enquiries.map((e) => {
-              const propertyHref = e.property_slug ? `/property/${e.property_slug}` : null;
+              const propertyHref = e.property_slug ? `/property/${e.property_slug}/` : null;
               const locationParts = [e.locality, e.city_name].filter(Boolean);
 
               return (

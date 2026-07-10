@@ -537,6 +537,58 @@ function nb_redirect_path($path, $code = 303)
 }
 
 /**
+ * Turn a return path/URL from the browser into a safe absolute URL under this app.
+ * Avoids /cp/cp/... when pathname already includes the /cp subfolder prefix.
+ *
+ * @param string|null $return
+ * @param string|null $default site_url-style default
+ * @return string
+ */
+function nb_normalize_return_url($return, $default = null)
+{
+    if ($default === null || $default === '') {
+        $default = site_url('owner/dashboard');
+    }
+    if (!is_string($return) || trim($return) === '') {
+        return $default;
+    }
+    $return = trim($return);
+
+    if (strpos($return, 'http://') === 0 || strpos($return, 'https://') === 0) {
+        $host = parse_url($return, PHP_URL_HOST);
+        $site_host = parse_url(site_url(), PHP_URL_HOST);
+        if (!$host || !$site_host || strcasecmp($host, $site_host) !== 0) {
+            return $default;
+        }
+        $path = (string) parse_url($return, PHP_URL_PATH);
+        $query = parse_url($return, PHP_URL_QUERY);
+        $base_path = nb_app_base_path();
+        if ($base_path !== '' && strpos($path, $base_path . '/') === 0) {
+            $path = substr($path, strlen($base_path));
+        } elseif ($base_path !== '' && ($path === $base_path || $path === $base_path . '/')) {
+            $path = '/';
+        }
+        $url = site_url(ltrim($path, '/'));
+        if (is_string($query) && $query !== '') {
+            $url .= (strpos($url, '?') === false ? '?' : '&') . $query;
+        }
+        return $url;
+    }
+
+    if ($return[0] === '/') {
+        $base_path = nb_app_base_path();
+        if ($base_path !== '' && strpos($return, $base_path . '/') === 0) {
+            $return = substr($return, strlen($base_path));
+        } elseif ($base_path !== '' && ($return === $base_path || $return === $base_path . '/')) {
+            $return = '/';
+        }
+        return site_url(ltrim($return, '/'));
+    }
+
+    return site_url(ltrim($return, '/'));
+}
+
+/**
  * Create videos + reels_videos tables when missing (YouTube URL modules).
  * Safe to call on every request; runs DDL once per request.
  */

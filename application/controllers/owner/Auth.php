@@ -3,7 +3,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 /**
  * Bridge Next.js / API token login into PHP session for owner panel pages.
- * GET owner/auth?token=...&return=/cp/owner/property/edit/36
+ * GET owner/auth?token=...&return=/owner/dashboard
  */
 class Auth extends MY_Controller {
 
@@ -13,7 +13,7 @@ class Auth extends MY_Controller {
         $this->load->model('Nb_user_model');
         $this->load->helper('nb');
 
-        $return = $this->_safe_return_url($this->input->get('return', true));
+        $return = nb_normalize_return_url($this->input->get('return', true));
         $token = $this->nb_api_token->read_token_from_request();
 
         if ($this->session->userdata('nb_user_id')) {
@@ -53,26 +53,5 @@ class Auth extends MY_Controller {
         $this->set_nb_session_from_user($user);
         nb_set_api_token_cookie($token);
         redirect($return);
-    }
-
-    private function _safe_return_url($return)
-    {
-        $default = site_url('owner/dashboard');
-        if (!is_string($return) || trim($return) === '') {
-            return $default;
-        }
-        $return = trim($return);
-        if (strpos($return, 'http://') === 0 || strpos($return, 'https://') === 0) {
-            $host = parse_url($return, PHP_URL_HOST);
-            $site_host = parse_url(site_url(), PHP_URL_HOST);
-            if ($host && $site_host && strcasecmp($host, $site_host) === 0) {
-                return $return;
-            }
-            return $default;
-        }
-        if ($return[0] === '/') {
-            return rtrim(base_url(), '/') . $return;
-        }
-        return site_url(ltrim($return, '/'));
     }
 }

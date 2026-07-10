@@ -41,6 +41,13 @@ if ($pending_visits < 1) {
       sessionStorage.setItem('nb_owner_auth_sync', '1');
       var authBase = (typeof window.NB_BASE_URL === 'string' && window.NB_BASE_URL) ? window.NB_BASE_URL : '/';
       var ret = window.location.pathname + window.location.search;
+      try {
+        var baseUrl = new URL(authBase, window.location.origin);
+        var basePath = baseUrl.pathname.replace(/\/$/, '');
+        if (basePath && ret.indexOf(basePath) === 0) {
+          ret = ret.slice(basePath.length) || '/';
+        }
+      } catch (e) {}
       window.location.replace(authBase + 'owner/auth?token=' + encodeURIComponent(t) + '&return=' + encodeURIComponent(ret));
     } catch (e) {}
   })();

@@ -367,6 +367,21 @@ $route['api/mobile/referral/apply'] = 'Api_mobile/referral_apply';
 $route['api/mobile/referral/list'] = 'Api_mobile/referral_list';
 $route['api/mobile/referral/stats'] = 'Api_mobile/referral_stats';
 
+// Mobile auth & account (delegates to Api_nb_app)
+$route['api/mobile/register'] = 'api_nb_app/register';
+$route['api/mobile/login'] = 'api_nb_app/login';
+$route['api/mobile/forgot-password'] = 'api_nb_app/forgot_password';
+$route['api/mobile/forgot_password'] = 'api_nb_app/forgot_password';
+$route['api/mobile/reset-password'] = 'api_nb_app/reset_password';
+$route['api/mobile/reset_password'] = 'api_nb_app/reset_password';
+$route['api/mobile/change-password'] = 'api_nb_app/change_password';
+$route['api/mobile/change_password'] = 'api_nb_app/change_password';
+$route['api/mobile/my-properties'] = 'api_nb_app/my_properties';
+$route['api/mobile/my_properties'] = 'api_nb_app/my_properties';
+$route['api/mobile/site-visits'] = 'api_nb_app/site_visits';
+$route['api/mobile/site-visits/schedule'] = 'api_nb_app/site_visit_schedule';
+$route['api/mobile/site_visit_schedule'] = 'api_nb_app/site_visit_schedule';
+
 // ============ Coimbatore Properties platform (overrides; keep last) ============
 $route['default_controller'] = 'Nb_home';
 
@@ -492,6 +507,17 @@ $route['api/nb/notifications/(:num)'] = 'api_nb_app/notification/$1';
 $route['api/nb/cities'] = 'api_nb_app/cities';
 $route['api/nb/explore-cities'] = 'api_nb_app/explore_cities';
 $route['api/nb/property-type-counts'] = 'api_nb_app/property_type_counts';
+$route['api/nb/forgot-password'] = 'api_nb_app/forgot_password';
+$route['api/nb/forgot_password'] = 'api_nb_app/forgot_password';
+$route['api/nb/reset-password'] = 'api_nb_app/reset_password';
+$route['api/nb/reset_password'] = 'api_nb_app/reset_password';
+$route['api/nb/change-password'] = 'api_nb_app/change_password';
+$route['api/nb/change_password'] = 'api_nb_app/change_password';
+$route['api/nb/my-properties'] = 'api_nb_app/my_properties';
+$route['api/nb/my_properties'] = 'api_nb_app/my_properties';
+$route['api/nb/site-visits'] = 'api_nb_app/site_visits';
+$route['api/nb/site-visits/schedule'] = 'api_nb_app/site_visit_schedule';
+$route['api/nb/site_visit_schedule'] = 'api_nb_app/site_visit_schedule';
 
 // Next.js web API (production on PHP-only hosting — same paths as app/api/*)
 $route['api/feedback'] = 'api_web/feedback';

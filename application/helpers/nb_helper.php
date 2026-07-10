@@ -630,6 +630,80 @@ function nb_ensure_notifications_table()
     }
 }
 
+/** Site visit scheduling table (mobile TC_006). */
+function nb_ensure_site_visits_table()
+{
+    $CI =& get_instance();
+    if (!isset($CI->db) || !$CI->db) {
+        return;
+    }
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+    if ($CI->db->table_exists('nb_site_visits')) {
+        return;
+    }
+    $CI->db->query("CREATE TABLE IF NOT EXISTS `nb_site_visits` (
+        `id` INT(11) NOT NULL AUTO_INCREMENT,
+        `property_id` INT(11) NOT NULL,
+        `user_id` INT(11) NOT NULL,
+        `scheduled_at` DATETIME NOT NULL,
+        `notes` TEXT NULL,
+        `status` ENUM('pending','confirmed','cancelled','completed') NOT NULL DEFAULT 'pending',
+        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id`),
+        KEY `idx_site_visits_property` (`property_id`),
+        KEY `idx_site_visits_user` (`user_id`),
+        KEY `idx_site_visits_status_scheduled` (`status`, `scheduled_at`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci");
+}
+
+/** Property type category image column (mobile TC_003). */
+function nb_ensure_property_type_image_column()
+{
+    $CI =& get_instance();
+    if (!isset($CI->db) || !$CI->db) {
+        return;
+    }
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+    if ($CI->db->table_exists('nb_property_types') && !$CI->db->field_exists('image', 'nb_property_types')) {
+        $CI->db->query('ALTER TABLE `nb_property_types` ADD COLUMN `image` VARCHAR(500) NULL AFTER `slug`');
+    }
+}
+
+/** Map / location columns on nb_properties (mobile TC_007). */
+function nb_ensure_property_map_columns()
+{
+    $CI =& get_instance();
+    if (!isset($CI->db) || !$CI->db) {
+        return;
+    }
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+    if (!$CI->db->table_exists('nb_properties')) {
+        return;
+    }
+    if (!$CI->db->field_exists('location', 'nb_properties')) {
+        $CI->db->query('ALTER TABLE `nb_properties` ADD COLUMN `location` VARCHAR(500) NULL AFTER `locality`');
+    }
+    if (!$CI->db->field_exists('location_image', 'nb_properties')) {
+        $CI->db->query('ALTER TABLE `nb_properties` ADD COLUMN `location_image` VARCHAR(512) NULL AFTER `location`');
+    }
+    if (!$CI->db->field_exists('map_url', 'nb_properties')) {
+        $CI->db->query('ALTER TABLE `nb_properties` ADD COLUMN `map_url` VARCHAR(500) NULL AFTER `location_image`');
+    }
+}
+
 /**
  * Admin/panel URL map for reels or videos CRUD views.
  *

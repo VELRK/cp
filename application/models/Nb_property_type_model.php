@@ -167,6 +167,8 @@ class Nb_property_type_model extends CI_Model {
             'slug' => (string) $row->slug,
             'sort_order' => isset($row->sort_order) ? (int) $row->sort_order : 0,
             'is_active' => !empty($row->is_active) ? 1 : 0,
+            'image' => isset($row->image) && $row->image !== '' ? nb_public_asset_url($row->image) : null,
+            'image_url' => isset($row->image) && $row->image !== '' ? nb_public_asset_url($row->image) : null,
         );
     }
 

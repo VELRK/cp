@@ -207,6 +207,21 @@ class Property extends CI_Controller
             $row['video_url'] = $this->security->xss_clean($input['video_url'] ?? $input['video'] ?? '');
         }
 
+        nb_ensure_property_map_columns();
+        if ($this->db->field_exists('latitude', 'nb_properties')) {
+            $row['latitude'] = $this->_parse_latitude($input['latitude'] ?? $input['lat'] ?? null);
+        }
+        if ($this->db->field_exists('longitude', 'nb_properties')) {
+            $row['longitude'] = $this->_parse_longitude($input['longitude'] ?? $input['lng'] ?? null);
+        }
+        if ($this->db->field_exists('google_place_id', 'nb_properties')) {
+            $row['google_place_id'] = $this->_parse_google_place_id($input['google_place_id'] ?? $input['place_id'] ?? null);
+        }
+        if ($this->db->field_exists('map_url', 'nb_properties')) {
+            $map_url = trim((string) ($input['map_url'] ?? $input['mapUrl'] ?? ''));
+            $row['map_url'] = $map_url !== '' ? substr($map_url, 0, 500) : null;
+        }
+
         $upload_errors = array();
 
         if (!empty($_FILES['location_image']['name'])) {

@@ -17,7 +17,7 @@ class Api_nb_app extends CI_Controller
         $this->load->database();
         $this->load->library('session');
         $this->load->library('form_validation');
-        $this->load->model(array('Nb_user_model', 'Nb_property_model', 'Nb_city_model', 'Nb_delete_request_model', 'User_model', 'Banner_model', 'Nb_property_type_model'));
+        $this->load->model(array('Nb_user_model', 'Nb_property_model', 'Nb_city_model', 'Nb_delete_request_model', 'User_model', 'Banner_model', 'Nb_property_type_model', 'Site_visit_model'));
         $this->output->set_content_type('application/json');
         $this->_cors();
     }
@@ -61,13 +61,28 @@ class Api_nb_app extends CI_Controller
         return nb_city_image_url($path);
     }
 
+    private function _resolve_api_role($user)
+    {
+        $user_type = isset($user->user_type) ? trim(strtolower((string) $user->user_type)) : '';
+        $db_role = isset($user->role) ? trim(strtolower((string) $user->role)) : 'tenant';
+        if ($db_role === 'admin') {
+            return 'admin';
+        }
+        if ($user_type === 'agent') {
+            return 'agent';
+        }
+        if ($db_role === 'tenant') {
+            return 'tenant';
+        }
+        if ($db_role === 'owner') {
+            return 'owner';
+        }
+        return 'tenant';
+    }
+
     private function _user_public($user)
     {
-        $apiRole = isset($user->user_type) ? trim(strtolower((string) $user->user_type)) : '';
-        if ($apiRole !== 'agent' && $apiRole !== 'customer') {
-            $dbRole = isset($user->role) ? trim(strtolower((string) $user->role)) : 'tenant';
-            $apiRole = ($dbRole === 'owner') ? 'agent' : 'customer';
-        }
+        $apiRole = $this->_resolve_api_role($user);
         // Return full nb_users row (except password), plus API role mapping keys.
         $row = array();
         foreach ((array) $user as $k => $v) {
@@ -79,6 +94,7 @@ class Api_nb_app extends CI_Controller
             }
             $row[$k] = $v;
         }
+        $row['role'] = $apiRole;
         $row['api_role'] = $apiRole;
         $row['api_user_type'] = $apiRole;
         $row['is_verified'] = isset($row['is_verified']) ? (int) $row['is_verified'] : 0;
@@ -235,7 +251,7 @@ class Api_nb_app extends CI_Controller
         $password = isset($input['password']) ? (string) $input['password'] : '';
         $password2 = isset($input['password_confirm']) ? (string) $input['password_confirm'] : $password;
         $accept = $this->_parse_accept_terms($input);
-        // Accept user_type or role from app payload, but only customer/agent values.
+        // Accept user_type or role: agent | tenant | owner (customer = tenant).
         $roleInput = '';
         if (isset($input['user_type'])) {
             $roleInput = trim(strtolower((string) $input['user_type']));
@@ -243,14 +259,32 @@ class Api_nb_app extends CI_Controller
             $roleInput = trim(strtolower((string) $input['role']));
         }
         if ($roleInput === '') {
-            $roleInput = 'customer';
+            $roleInput = 'tenant';
         }
-        if (!in_array($roleInput, array('customer', 'owner', 'agent'), true)) {
-            return $this->_json(array('success' => false, 'message' => 'role (or user_type) must be customer, owner or agent'), 400);
+        $role_aliases = array('customer' => 'tenant', 'renter' => 'tenant');
+        if (isset($role_aliases[$roleInput])) {
+            $roleInput = $role_aliases[$roleInput];
         }
-        $user_type = $roleInput;
-        $role = ($user_type === 'customer') ? 'tenant' : 'owner';
-        $aadhar_no = isset($input['aadhar_no']) ? preg_replace('/\D+/', '', (string) $input['aadhar_no']) : '';
+        if (!in_array($roleInput, array('tenant', 'owner', 'agent'), true)) {
+            return $this->_json(array('success' => false, 'message' => 'role (or user_type) must be agent, tenant or owner'), 400);
+        }
+        if ($roleInput === 'agent') {
+            $user_type = 'agent';
+            $role = 'owner';
+        } elseif ($roleInput === 'tenant') {
+            $user_type = 'customer';
+            $role = 'tenant';
+        } else {
+            $user_type = 'customer';
+            $role = 'owner';
+        }
+        $aadhar_no = '';
+        foreach (array('aadhar_no', 'aadhaar_no', 'aadhaar', 'aadhar', 'aadhar_number') as $aadKey) {
+            if (!empty($input[$aadKey])) {
+                $aadhar_no = preg_replace('/\D+/', '', (string) $input[$aadKey]);
+                break;
+            }
+        }
         $experience_years = isset($input['experience_years']) && $input['experience_years'] !== '' ? (int) $input['experience_years'] : null;
         $aadhar_file = isset($input['aadhar_file']) ? trim((string) $input['aadhar_file']) : null;
         $profile_pic = '';
@@ -365,7 +399,16 @@ class Api_nb_app extends CI_Controller
             }
             $profile_pic = $savedProfile['path'];
         }
-        // Optional agent KYC/profile fields: validate only when provided.
+        // Agent KYC: Aadhaar required for agents.
+        if ($roleInput === 'agent') {
+            if ($aadhar_no === '' || !preg_match('/^\d{12}$/', $aadhar_no)) {
+                return $this->_json(array('success' => false, 'message' => 'aadhar_no (12 digits) is required for agent registration.'), 400);
+            }
+            if ($aadhar_file === null || trim((string) $aadhar_file) === '') {
+                return $this->_json(array('success' => false, 'message' => 'aadhar_file is required for agent registration.'), 400);
+            }
+        }
+        // Optional validation when provided for other roles.
         if ($aadhar_no !== '' && !preg_match('/^\d{12}$/', $aadhar_no)) {
             return $this->_json(array('success' => false, 'message' => 'aadhar_no must be a valid 12-digit number when provided.'), 400);
         }
@@ -409,9 +452,12 @@ class Api_nb_app extends CI_Controller
         if (!$user) {
             return $this->_json(array('success' => false, 'message' => 'Registration failed.'), 500);
         }
+        $token = $this->_issue_auth_token($user);
         $this->_json(array(
             'success' => true,
+            'token' => $token,
             'user' => $this->_user_public($user),
+            'message' => 'Registration successful.',
         ));
     }
 
@@ -731,6 +777,254 @@ class Api_nb_app extends CI_Controller
         }
 
         $this->_json(array('success' => true, 'user' => $this->_user_public($u)));
+    }
+
+    /** POST — request password reset OTP (email or phone). */
+    public function forgot_password()
+    {
+        if ($this->input->method() !== 'post') {
+            return $this->_json(array('success' => false, 'message' => 'POST only'), 405);
+        }
+        $input = $this->_input_json_or_post();
+        $login = trim((string) ($input['login'] ?? $input['email'] ?? $input['phone'] ?? ''));
+        if ($login === '') {
+            return $this->_json(array('success' => false, 'message' => 'email or phone is required.'), 400);
+        }
+        $user = strpos($login, '@') !== false
+            ? $this->Nb_user_model->get_by_email(strtolower($login))
+            : $this->Nb_user_model->get_by_phone($login);
+        if (!$user) {
+            return $this->_json(array('success' => false, 'message' => 'No account found for this email or phone.'), 404);
+        }
+        if (empty($user->phone)) {
+            return $this->_json(array('success' => false, 'message' => 'No phone on file. Contact support to reset password.'), 400);
+        }
+        $phone = $this->_normalize_phone($user->phone);
+        if (strlen($phone) !== 10) {
+            return $this->_json(array('success' => false, 'message' => 'Account phone number is invalid. Contact support.'), 400);
+        }
+        $otp = $this->_generate_otp($phone);
+        $ttl = $this->_otp_ttl_seconds();
+        $otp_expires_at = date('Y-m-d H:i:s', time() + $ttl);
+        if ($this->db->field_exists('otp', 'nb_users')) {
+            $this->Nb_user_model->update_otp((int) $user->id, $otp, $otp_expires_at);
+        }
+        $country_code = trim((string) ($input['country_code'] ?? '+91'));
+        $full_phone = ltrim($country_code, '+') . $phone;
+        $send_result = $this->_dispatch_whatsapp_otp($full_phone, $otp, $phone);
+        if (!$send_result['success']) {
+            return $this->_json(array('success' => false, 'message' => $send_result['message']), 502);
+        }
+        $payload = array(
+            'success' => true,
+            'message' => 'OTP sent to your registered WhatsApp number.',
+            'phone_masked' => substr($phone, 0, 2) . '******' . substr($phone, -2),
+            'expires_in' => $ttl,
+        );
+        if (!empty($send_result['development_mode'])) {
+            $payload['development_mode'] = true;
+            $payload['otp'] = $otp;
+        }
+        $this->_json($payload);
+    }
+
+    /** POST — reset password using OTP from forgot-password. */
+    public function reset_password()
+    {
+        if ($this->input->method() !== 'post') {
+            return $this->_json(array('success' => false, 'message' => 'POST only'), 405);
+        }
+        $input = $this->_input_json_or_post();
+        $login = trim((string) ($input['login'] ?? $input['email'] ?? $input['phone'] ?? ''));
+        $otp = trim((string) ($input['otp'] ?? ''));
+        $password = (string) ($input['password'] ?? $input['new_password'] ?? '');
+        $password2 = (string) ($input['password_confirm'] ?? $input['new_password_confirm'] ?? $password);
+        if ($login === '' || $otp === '' || $password === '') {
+            return $this->_json(array('success' => false, 'message' => 'login, otp and password are required.'), 400);
+        }
+        if (strlen($password) < 6) {
+            return $this->_json(array('success' => false, 'message' => 'Password must be at least 6 characters.'), 400);
+        }
+        if ($password !== $password2) {
+            return $this->_json(array('success' => false, 'message' => 'Passwords do not match.'), 400);
+        }
+        $user = strpos($login, '@') !== false
+            ? $this->Nb_user_model->get_by_email(strtolower($login))
+            : $this->Nb_user_model->get_by_phone($login);
+        if (!$user) {
+            return $this->_json(array('success' => false, 'message' => 'Account not found.'), 404);
+        }
+        $phone = $this->_normalize_phone($user->phone);
+        $verified = $this->Nb_user_model->verify_otp($phone, $otp);
+        if (empty($verified['success'])) {
+            return $this->_json(array(
+                'success' => false,
+                'message' => $verified['message'] ?? 'Invalid or expired OTP.',
+            ), 400);
+        }
+        $this->Nb_user_model->update((int) $user->id, array(
+            'password' => password_hash($password, PASSWORD_BCRYPT),
+        ));
+        $user = $this->Nb_user_model->get_by_id((int) $user->id);
+        $token = $this->_issue_auth_token($user);
+        $this->_json(array(
+            'success' => true,
+            'message' => 'Password updated successfully.',
+            'token' => $token,
+            'user' => $this->_user_public($user),
+        ));
+    }
+
+    /** POST — change password (authenticated). */
+    public function change_password()
+    {
+        if ($this->input->method() !== 'post') {
+            return $this->_json(array('success' => false, 'message' => 'POST only'), 405);
+        }
+        $this->load->library('nb_api_token');
+        $token = $this->nb_api_token->read_token_from_request();
+        $user = $token !== '' ? $this->Nb_user_model->get_by_api_token($token) : null;
+        if (!$user) {
+            return $this->_json(array('success' => false, 'message' => 'Unauthorized'), 401);
+        }
+        $input = $this->_input_json_or_post();
+        $current = (string) ($input['current_password'] ?? $input['old_password'] ?? '');
+        $password = (string) ($input['new_password'] ?? $input['password'] ?? '');
+        $password2 = (string) ($input['new_password_confirm'] ?? $input['password_confirm'] ?? $password);
+        if ($current === '' || $password === '') {
+            return $this->_json(array('success' => false, 'message' => 'current_password and new_password are required.'), 400);
+        }
+        if (strlen($password) < 6) {
+            return $this->_json(array('success' => false, 'message' => 'New password must be at least 6 characters.'), 400);
+        }
+        if ($password !== $password2) {
+            return $this->_json(array('success' => false, 'message' => 'New passwords do not match.'), 400);
+        }
+        if (empty($user->password) || !password_verify($current, $user->password)) {
+            return $this->_json(array('success' => false, 'message' => 'Current password is incorrect.'), 401);
+        }
+        $this->Nb_user_model->update((int) $user->id, array(
+            'password' => password_hash($password, PASSWORD_BCRYPT),
+        ));
+        $this->_json(array('success' => true, 'message' => 'Password changed successfully.'));
+    }
+
+    /** GET — logged-in owner's listings including pending approval. */
+    public function my_properties()
+    {
+        $this->load->library('nb_api_token');
+        $token = $this->nb_api_token->read_token_from_request();
+        $user = $token !== '' ? $this->Nb_user_model->get_by_api_token($token) : null;
+        if (!$user) {
+            return $this->_json(array('success' => false, 'message' => 'Unauthorized'), 401);
+        }
+        $limit = max(1, min(100, (int) ($this->input->get('limit') ?: 50)));
+        $offset = max(0, (int) ($this->input->get('offset') ?: 0));
+        $filters = array(
+            'owner_id' => (int) $user->id,
+            'include_pending' => 1,
+        );
+        if ($this->input->get('is_active') !== null && $this->input->get('is_active') !== '') {
+            unset($filters['include_pending']);
+            $filters['is_active'] = (int) $this->input->get('is_active');
+        }
+        $rows = $this->Nb_property_model->search($filters, $limit, $offset);
+        $total = $this->Nb_property_model->count_search($filters);
+        $listings = array();
+        foreach ($rows as $row) {
+            $card = $this->_format_property_card($row);
+            $card['publication_status'] = !empty($row->is_active) ? 'published' : 'pending';
+            $listings[] = $card;
+        }
+        $this->_json(array(
+            'success' => true,
+            'listings' => $listings,
+            'total' => (int) $total,
+            'limit' => $limit,
+            'offset' => $offset,
+            'stats' => array(
+                'active' => count(array_filter($listings, function ($l) { return !empty($l['is_active']); })),
+                'pending' => count(array_filter($listings, function ($l) { return empty($l['is_active']); })),
+            ),
+        ));
+    }
+
+    /** POST — schedule a property site visit. */
+    public function site_visit_schedule()
+    {
+        if ($this->input->method() !== 'post') {
+            return $this->_json(array('success' => false, 'message' => 'POST only'), 405);
+        }
+        $this->load->library('nb_api_token');
+        $token = $this->nb_api_token->read_token_from_request();
+        $user = $token !== '' ? $this->Nb_user_model->get_by_api_token($token) : null;
+        if (!$user) {
+            return $this->_json(array('success' => false, 'message' => 'Login required to schedule a visit.'), 401);
+        }
+        $input = $this->_input_json_or_post();
+        $property_id = (int) ($input['property_id'] ?? 0);
+        $scheduled_at = trim((string) ($input['scheduled_at'] ?? $input['visit_date'] ?? ''));
+        $notes = trim((string) ($input['notes'] ?? $input['message'] ?? ''));
+        if ($property_id < 1 || $scheduled_at === '') {
+            return $this->_json(array('success' => false, 'message' => 'property_id and scheduled_at are required.'), 400);
+        }
+        $prop = $this->Nb_property_model->get_by_id($property_id);
+        if (!$prop) {
+            return $this->_json(array('success' => false, 'message' => 'Property not found.'), 404);
+        }
+        $ts = strtotime($scheduled_at);
+        if ($ts === false) {
+            return $this->_json(array('success' => false, 'message' => 'scheduled_at must be a valid date/time.'), 400);
+        }
+        $id = $this->Site_visit_model->create(array(
+            'property_id' => $property_id,
+            'user_id' => (int) $user->id,
+            'scheduled_at' => date('Y-m-d H:i:s', $ts),
+            'notes' => $notes !== '' ? $notes : null,
+            'status' => 'pending',
+        ));
+        $this->_json(array(
+            'success' => true,
+            'message' => 'Site visit scheduled. The owner will confirm shortly.',
+            'id' => $id,
+            'status' => 'pending',
+        ));
+    }
+
+    /** GET — list site visits for current user (tenant) or owner (?as_owner=1). */
+    public function site_visits()
+    {
+        $this->load->library('nb_api_token');
+        $token = $this->nb_api_token->read_token_from_request();
+        $user = $token !== '' ? $this->Nb_user_model->get_by_api_token($token) : null;
+        if (!$user) {
+            return $this->_json(array('success' => false, 'message' => 'Unauthorized'), 401);
+        }
+        $limit = max(1, min(100, (int) ($this->input->get('limit') ?: 50)));
+        $offset = max(0, (int) ($this->input->get('offset') ?: 0));
+        $property_id = (int) ($this->input->get('property_id') ?: 0);
+        $as_owner = !empty($this->input->get('as_owner'));
+        if ($as_owner) {
+            $rows = $this->Site_visit_model->for_property_owner((int) $user->id, $property_id > 0 ? $property_id : null, $limit, $offset);
+        } else {
+            $rows = $this->Site_visit_model->for_user((int) $user->id, $limit, $offset);
+        }
+        $visits = array();
+        foreach ($rows as $r) {
+            $visits[] = array(
+                'id' => (int) $r->id,
+                'property_id' => (int) $r->property_id,
+                'property_title' => isset($r->property_title) ? (string) $r->property_title : '',
+                'property_slug' => isset($r->property_slug) ? (string) $r->property_slug : '',
+                'scheduled_at' => (string) $r->scheduled_at,
+                'notes' => isset($r->notes) ? (string) $r->notes : null,
+                'status' => (string) $r->status,
+                'visitor_name' => isset($r->visitor_name) ? (string) $r->visitor_name : null,
+                'visitor_phone' => isset($r->visitor_phone) ? (string) $r->visitor_phone : null,
+                'city_name' => isset($r->city_name) ? (string) $r->city_name : null,
+            );
+        }
+        $this->_json(array('success' => true, 'visits' => $visits));
     }
 
     /**
@@ -1366,6 +1660,10 @@ class Api_nb_app extends CI_Controller
             'area_sqft' => isset($p->area_sqft) && $p->area_sqft !== null && $p->area_sqft !== '' ? (int) $p->area_sqft : null,
             'address' => isset($p->address) ? $p->address : '',
             'locality' => isset($p->locality) ? $p->locality : '',
+            'location' => isset($p->location) && $p->location !== '' ? (string) $p->location : null,
+            'map_url' => isset($p->map_url) && $p->map_url !== '' ? (string) $p->map_url : null,
+            'location_image_url' => (isset($p->location_image) && $p->location_image !== '')
+                ? $this->_asset_url_or_null($p->location_image) : null,
             'city_id' => isset($p->city_id) ? (int) $p->city_id : null,
             'latitude' => isset($p->latitude) && $p->latitude !== null && $p->latitude !== '' ? (float) $p->latitude : null,
             'longitude' => isset($p->longitude) && $p->longitude !== null && $p->longitude !== '' ? (float) $p->longitude : null,

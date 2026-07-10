@@ -1573,6 +1573,47 @@ class Broker_admin extends MY_Controller {
             'sort_order' => $this->input->post('sort_order') !== '' ? (int) $this->input->post('sort_order') : 0,
             'is_active'  => $this->input->post('is_active') ? 1 : 0,
         );
+        nb_ensure_property_type_image_column();
+        if ($this->db->field_exists('image', 'nb_property_types')) {
+            if ($this->input->post('remove_image')) {
+                if ($id > 0) {
+                    $oldRow = $this->Nb_property_type_model->get_by_id($id);
+                    if ($oldRow && !empty($oldRow->image) && is_file(FCPATH . $oldRow->image)) {
+                        @unlink(FCPATH . $oldRow->image);
+                    }
+                }
+                $data['image'] = null;
+            }
+            if (!empty($_FILES['image']['name'])) {
+                $upload_dir = FCPATH . 'assets/uploads/property_types/';
+                if (!is_dir($upload_dir)) {
+                    @mkdir($upload_dir, 0755, true);
+                }
+                $this->load->library('upload');
+                $cfg = array(
+                    'upload_path' => $upload_dir,
+                    'allowed_types' => 'jpg|jpeg|png|webp|gif',
+                    'max_size' => 2048,
+                    'encrypt_name' => true,
+                );
+                $this->upload->initialize($cfg);
+                if ($this->upload->do_upload('image')) {
+                    $upd = $this->upload->data();
+                    $newPath = 'assets/uploads/property_types/' . $upd['file_name'];
+                    if ($id > 0) {
+                        $oldRow = $this->Nb_property_type_model->get_by_id($id);
+                        if ($oldRow && !empty($oldRow->image) && is_file(FCPATH . $oldRow->image)) {
+                            @unlink(FCPATH . $oldRow->image);
+                        }
+                    }
+                    $data['image'] = $newPath;
+                } else {
+                    $this->session->set_flashdata('nb_err', 'Image upload failed: ' . strip_tags($this->upload->display_errors('', '')));
+                    redirect($id > 0 ? 'panel/property-type/edit/' . $id : 'panel/property-type/add');
+                    return;
+                }
+            }
+        }
         if ($this->Nb_property_type_model->has_parent_column()) {
             $data['parent_id'] = $is_sub ? $parent_id : null;
         }

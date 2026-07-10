@@ -51,11 +51,12 @@ class Property extends CI_Controller
         $content_type = (string) $this->input->server('CONTENT_TYPE');
         $is_multipart_form = stripos($content_type, 'multipart/form-data') !== false;
         $admin_save_request = $this->_is_panel_property_save_request($input);
+        $owner_save_request = $this->_is_owner_panel_save_request($input);
 
         $respond_json = $this->input->is_ajax_request()
             || stripos((string) $this->input->server('HTTP_ACCEPT'), 'application/json') !== false;
-        if ($admin_save_request) {
-            // Panel property form must redirect with flash messages, never return JSON.
+        if ($admin_save_request || $owner_save_request) {
+            // Browser panel forms redirect with flash; mobile/Next.js use JSON.
             $respond_json = false;
         } elseif ($this->nb_api_token->read_token_from_request() !== '') {
             $respond_json = true;
@@ -86,12 +87,15 @@ class Property extends CI_Controller
             return;
         }
 
-        // If not already JSON, force it for /api/ routes UNLESS it's an admin in the browser
+        // api/property/save: JSON for mobile/Next.js; browser multipart without Accept JSON may still need JSON when X-Api-Token is sent.
         if (!$respond_json && stripos((string) $this->input->server('REQUEST_URI'), '/api/') !== false) {
             $is_browser_admin = $is_admin && !$this->input->is_ajax_request();
             $has_admin_flag = !empty($input['admin_save']) || !empty($input['nb_admin_save']);
+            $wants_json_client = $this->input->is_ajax_request()
+                || stripos((string) $this->input->server('HTTP_ACCEPT'), 'application/json') !== false
+                || $this->nb_api_token->read_token_from_request() !== '';
 
-            if (!$is_browser_admin && !$has_admin_flag) {
+            if ($wants_json_client && !$is_browser_admin && !$has_admin_flag && !$owner_save_request) {
                 $respond_json = true;
             }
         }
@@ -122,13 +126,23 @@ class Property extends CI_Controller
         if ($id > 0) {
             $existing = $this->Nb_property_model->get_by_id($id);
             if (!$existing) {
-                return $this->_json(array('success' => false, 'message' => 'Property not found'), 404);
+                if ($respond_json) {
+                    return $this->_json(array('success' => false, 'message' => 'Property not found'), 404);
+                }
+                $this->session->set_flashdata('nb_err', 'Property not found.');
+                nb_redirect_path($this->_owner_form_redirect_path($id, $is_admin, $owner_save_request));
+                return;
             }
             if (!$is_admin && (int) $existing->owner_id !== $owner_id) {
-                return $this->_json(array(
-                    'success' => false,
-                    'message' => 'You can only edit your own listings.',
-                ), 400);
+                if ($respond_json) {
+                    return $this->_json(array(
+                        'success' => false,
+                        'message' => 'You can only edit your own listings.',
+                    ), 400);
+                }
+                $this->session->set_flashdata('nb_err', 'You can only edit your own listings.');
+                nb_redirect_path($this->_owner_form_redirect_path($id, $is_admin, $owner_save_request));
+                return;
             }
         }
 
@@ -158,10 +172,11 @@ class Property extends CI_Controller
             $this->session->set_flashdata('nb_err', trim($msg));
             // Redirect back to either edit or add form
             if ($id > 0) {
-                nb_redirect_path($is_admin ? ('panel/property/edit/' . $id) : ('owner/listing/edit/' . $id));
+                nb_redirect_path($this->_owner_form_redirect_path($id, $is_admin, $owner_save_request));
             } else {
-                nb_redirect_path($is_admin ? 'panel/property/add' : 'owner/listing/add');
+                nb_redirect_path($is_admin ? 'panel/property/add' : 'owner/property/add');
             }
+            return;
         }
 
         $amenities = isset($input['amenities']) ? $input['amenities'] : array();
@@ -321,9 +336,9 @@ class Property extends CI_Controller
             }
             $this->session->set_flashdata('nb_err', implode("\n", $upload_errors));
             if ($id > 0) {
-                nb_redirect_path($is_admin ? ('panel/property/edit/' . $id) : ('owner/listing/edit/' . $id));
+                nb_redirect_path($this->_owner_form_redirect_path($id, $is_admin, $owner_save_request));
             } else {
-                nb_redirect_path($is_admin ? 'panel/property/add' : 'owner/listing/add');
+                nb_redirect_path($is_admin ? 'panel/property/add' : 'owner/property/add');
             }
             return;
         }
@@ -416,7 +431,38 @@ class Property extends CI_Controller
             nb_redirect_path('panel/properties');
             return;
         }
+        if ($owner_save_request) {
+            nb_redirect_path('owner/listings');
+            return;
+        }
         nb_redirect_path('owner/listings');
+    }
+
+    /** Redirect target after owner panel validation/upload errors or non-JSON saves. */
+    private function _owner_form_redirect_path($property_id, $is_admin, $owner_save_request)
+    {
+        $property_id = (int) $property_id;
+        if ($is_admin) {
+            return $property_id > 0 ? ('panel/property/edit/' . $property_id) : 'panel/property/add';
+        }
+        if ($owner_save_request) {
+            return $property_id > 0 ? ('owner/property/edit/' . $property_id) : 'owner/property/add';
+        }
+        return $property_id > 0 ? ('owner/property/edit/' . $property_id) : 'owner/property/add';
+    }
+
+    /** Owner PHP panel browser form POST (redirect + flash, not JSON). */
+    private function _is_owner_panel_save_request($input)
+    {
+        if (!empty($input['owner_panel_save']) || !empty($input['nb_owner_panel_save'])) {
+            return true;
+        }
+        $uri = (string) $this->uri->uri_string();
+        if ($uri === 'owner/property/save' || strpos($uri, 'owner/property/save') === 0) {
+            return true;
+        }
+        $requestUri = (string) $this->input->server('REQUEST_URI');
+        return stripos($requestUri, '/owner/property/save') !== false;
     }
 
     /** Panel admin form POST (not owner/mobile JSON save). */

@@ -55,12 +55,19 @@ $nearbyCategoryOptions = array(
   <?php if (!$is_admin && !$is_edit) : ?>
   <div class="alert alert-info border-0 shadow-sm small mb-4">After you save, an admin must publish the listing before it appears in search and on the public site.</div>
   <?php endif; ?>
+  <?php if ($owner_panel) : ?>
+  <div id="nbOwnerSaveError" class="alert alert-danger border-0 shadow-sm d-none mb-4" role="alert"></div>
+  <?php endif; ?>
   <?php
   if ($is_admin) {
     // Same-origin relative action so session cookies are always sent (localhost:3000 or :8080).
     echo form_open_multipart('panel/property/save', array('action' => site_url('panel/property/save')));
   } else {
-    echo form_open_multipart('api/property/save');
+    echo form_open_multipart('owner/property/save', array(
+      'id' => 'nbOwnerPropertyForm',
+      'data-save-url' => site_url('api/property/save'),
+      'data-success-url' => site_url('owner/listings'),
+    ));
   }
   ?>
     <?php if ($is_admin) : ?>

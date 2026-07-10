@@ -94,6 +94,81 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
+    var ownerForm = document.getElementById('nbOwnerPropertyForm');
+    if (ownerForm) {
+      ownerForm.addEventListener('submit', function (ev) {
+        if (typeof window.fetch !== 'function') {
+          return;
+        }
+        ev.preventDefault();
+        var saveUrl = ownerForm.getAttribute('data-save-url') || ownerForm.action;
+        var successUrl = ownerForm.getAttribute('data-success-url') || '';
+        var errBox = document.getElementById('nbOwnerSaveError');
+        var btn = ownerForm.querySelector('button[type="submit"]');
+        if (btn) {
+          btn.disabled = true;
+        }
+        if (errBox) {
+          errBox.classList.add('d-none');
+          errBox.textContent = '';
+        }
+        var headers = { Accept: 'application/json' };
+        try {
+          var token = localStorage.getItem('nb_token');
+          if (token) {
+            headers['X-Api-Token'] = token;
+          }
+        } catch (e) {}
+        fetch(saveUrl, {
+          method: 'POST',
+          body: new FormData(ownerForm),
+          credentials: 'same-origin',
+          headers: headers,
+        })
+          .then(function (res) {
+            return res.json().then(function (data) {
+              return { ok: res.ok, data: data };
+            }).catch(function () {
+              return { ok: false, data: { success: false, message: 'Invalid server response.' } };
+            });
+          })
+          .then(function (result) {
+            if (result.data && result.data.success) {
+              if (successUrl) {
+                window.location.href = successUrl;
+              } else {
+                window.location.reload();
+              }
+              return;
+            }
+            var msg = (result.data && result.data.message) || 'Could not save property.';
+            if (result.data && result.data.upload_errors && result.data.upload_errors.length) {
+              msg += '\n' + result.data.upload_errors.join('\n');
+            }
+            if (errBox) {
+              errBox.textContent = msg;
+              errBox.classList.remove('d-none');
+              errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+              window.alert(msg);
+            }
+          })
+          .catch(function () {
+            if (errBox) {
+              errBox.textContent = 'Network error while saving. Please try again.';
+              errBox.classList.remove('d-none');
+            } else {
+              window.alert('Network error while saving. Please try again.');
+            }
+          })
+          .finally(function () {
+            if (btn) {
+              btn.disabled = false;
+            }
+          });
+      });
+    }
+
     var fileInput = qs('#nbPropImages');
     if (fileInput) {
       fileInput.addEventListener('change', buildNewPreviews);

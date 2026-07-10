@@ -12,6 +12,7 @@ RewriteRule ^admin/?(.*)$ index.php/admin/$1 [L,QSA]
 RewriteRule ^api/?(.*)$ index.php/api/$1 [L,QSA]
 
 # --- Owner PHP panel (sidebar, site visits, property add/edit) ---
+RewriteRule ^owner/auth/?$ index.php/owner/auth [L,QSA]
 RewriteRule ^owner/site-visits/?(.*)$ index.php/owner/site-visits$1 [L,QSA]
 RewriteRule ^owner/update-site-visit/?(.*)$ index.php/owner/update-site-visit$1 [L,QSA]
 RewriteRule ^owner/dashboard/?$ index.php/owner/dashboard [L,QSA]

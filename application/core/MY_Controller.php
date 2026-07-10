@@ -43,6 +43,14 @@ class MY_Controller extends CI_Controller
                 redirect(site_url('admin'));
                 return;
             }
+            if ($uri === 'owner/auth' || strpos($uri, 'owner/auth/') === 0) {
+                redirect(base_url() . '?modal=login');
+                return;
+            }
+            if ($uri === 'owner' || strpos($uri, 'owner/') === 0) {
+                redirect(site_url('owner/auth') . '?return=' . rawurlencode(current_url()));
+                return;
+            }
             redirect(base_url() . '?modal=login');
         }
     }

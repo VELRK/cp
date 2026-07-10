@@ -548,6 +548,7 @@ $nb_uri_priority = array(
     'property/tenant' => 'tenant/dashboard/index',
     'property/tenant/dashboard' => 'tenant/dashboard/index',
     'property/tenant/enquiries' => 'tenant/enquiries/index',
+    'owner/auth' => 'owner/auth/index',
     'owner/dashboard' => 'owner/dashboard/index',
     'owner/listings' => 'owner/listings/index',
     'owner/enquiries' => 'owner/enquiries/index',
@@ -564,6 +565,7 @@ $route = $nb_uri_priority + $route;
  * Re-assert owner/tenant routes last so nothing in $route overrides them. Optional: Dashboard::dashboard()
  * aliases exist on owner/tenant Dashboard controllers for odd URI mappings.
  */
+$route['owner/auth'] = 'owner/auth/index';
 $route['owner/dashboard'] = 'owner/dashboard/index';
 $route['owner/listings'] = 'owner/listings/index';
 $route['owner/enquiries'] = 'owner/enquiries/index';

@@ -28,6 +28,23 @@ if ($pending_visits < 1) {
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
   <link href="<?php echo base_url('assets/css/nb_admin.css'); ?>" rel="stylesheet">
   <link href="<?php echo base_url('assets/css/nb_owner_panel.css'); ?>" rel="stylesheet">
+  <script>
+  (function () {
+    try {
+      var t = localStorage.getItem('nb_token');
+      if (!t || document.cookie.indexOf('nb_token=') !== -1) {
+        return;
+      }
+      if (sessionStorage.getItem('nb_owner_auth_sync') === '1') {
+        return;
+      }
+      sessionStorage.setItem('nb_owner_auth_sync', '1');
+      var authBase = (typeof window.NB_BASE_URL === 'string' && window.NB_BASE_URL) ? window.NB_BASE_URL : '/';
+      var ret = window.location.pathname + window.location.search;
+      window.location.replace(authBase + 'owner/auth?token=' + encodeURIComponent(t) + '&return=' + encodeURIComponent(ret));
+    } catch (e) {}
+  })();
+  </script>
 </head>
 <body>
 <div class="nb-admin-layout nb-owner-panel">

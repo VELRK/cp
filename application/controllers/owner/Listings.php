@@ -18,9 +18,10 @@ class Listings extends MY_Controller {
     {
         $uid = (int) $this->session->userdata('nb_user_id');
         $data['page_title'] = 'My listings';
+        $data['owner_nav'] = 'listings';
         $data['listings'] = $this->Nb_property_model->for_owner($uid);
-        $this->load->view('nobroker/layout/header', $data);
+        $this->load->view('nobroker/owner/panel_header', $data);
         $this->load->view('nobroker/owner/listings', $data);
-        $this->load->view('nobroker/layout/footer', $data);
+        $this->load->view('nobroker/owner/panel_footer', $data);
     }
 }

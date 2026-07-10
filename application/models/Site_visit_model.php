@@ -37,10 +37,12 @@ class Site_visit_model extends CI_Model {
 
     public function for_property_owner($owner_id, $property_id = null, $limit = 50, $offset = 0)
     {
-        $this->db->select('sv.*, p.title AS property_title, p.slug AS property_slug, u.name AS visitor_name, u.phone AS visitor_phone');
+        $this->db->select('sv.*, p.title AS property_title, p.slug AS property_slug, p.locality,
+            c.name AS city_name, u.name AS visitor_name, u.phone AS visitor_phone, u.email AS visitor_email');
         $this->db->from($this->table . ' sv');
         $this->db->join('nb_properties p', 'p.id = sv.property_id', 'inner');
         $this->db->join('nb_users u', 'u.id = sv.user_id', 'left');
+        $this->db->join('nb_cities c', 'c.id = p.city_id', 'left');
         $this->db->where('p.owner_id', (int) $owner_id);
         if ($property_id !== null && (int) $property_id > 0) {
             $this->db->where('sv.property_id', (int) $property_id);
@@ -48,6 +50,27 @@ class Site_visit_model extends CI_Model {
         $this->db->order_by('sv.scheduled_at', 'DESC');
         $this->db->limit((int) $limit, max(0, (int) $offset));
         return $this->db->get()->result();
+    }
+
+    public function count_for_owner($owner_id, $status = null)
+    {
+        $this->db->from($this->table . ' sv');
+        $this->db->join('nb_properties p', 'p.id = sv.property_id', 'inner');
+        $this->db->where('p.owner_id', (int) $owner_id);
+        if ($status !== null && $status !== '') {
+            $this->db->where('sv.status', $status);
+        }
+        return (int) $this->db->count_all_results();
+    }
+
+    public function owner_can_manage($visit_id, $owner_id)
+    {
+        $this->db->select('sv.id');
+        $this->db->from($this->table . ' sv');
+        $this->db->join('nb_properties p', 'p.id = sv.property_id', 'inner');
+        $this->db->where('sv.id', (int) $visit_id);
+        $this->db->where('p.owner_id', (int) $owner_id);
+        return $this->db->get()->row() !== null;
     }
 
     public function update_status($id, $status)

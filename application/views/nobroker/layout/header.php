@@ -71,6 +71,8 @@ $nb_json_ld = isset($nb_json_ld) ? $nb_json_ld : '';
             <li class="nav-item"><a class="nav-link nb-nav-link"
                 href="<?php echo site_url('owner/dashboard'); ?>">Owner</a></li>
             <li class="nav-item"><a class="nav-link nb-nav-link"
+                href="<?php echo site_url('owner/site-visits'); ?>">Site Visits</a></li>
+            <li class="nav-item"><a class="nav-link nb-nav-link"
                 href="<?php echo site_url('owner/enquiries'); ?>">Enquiries</a></li>
             <li class="nav-item"><a class="nav-link nb-nav-link" href="<?php echo site_url('tenant/enquiries'); ?>">Sent
                 enquiries</a></li>

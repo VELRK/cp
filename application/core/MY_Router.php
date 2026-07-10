@@ -78,6 +78,7 @@ class MY_Router extends CI_Router
                 'property/owner/dashboard' => 'owner/dashboard/index',
                 'property/owner/listings' => 'owner/listings/index',
                 'property/owner/enquiries' => 'owner/enquiries/index',
+                'property/owner/site-visits' => 'owner/site_visits/index',
                 'property/owner/property/add' => 'owner/property/add',
                 'property/tenant' => 'tenant/dashboard/index',
                 'property/tenant/dashboard' => 'tenant/dashboard/index',

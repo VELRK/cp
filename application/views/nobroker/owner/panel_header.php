@@ -59,7 +59,7 @@ if ($pending_visits < 1) {
         <i class="bi bi-chat-dots"></i> Enquiries
       </a>
       <div class="nb-admin-nav-label mt-3">Actions</div>
-      <a class="nb-admin-nav-link" href="<?php echo site_url('owner/property/add'); ?>">
+      <a class="nb-admin-nav-link<?php echo $owner_nav === 'add_property' ? ' active' : ''; ?>" href="<?php echo site_url('owner/property/add'); ?>">
         <i class="bi bi-plus-circle"></i> Add Property
       </a>
     </nav>
@@ -84,7 +84,7 @@ if ($pending_visits < 1) {
         <a class="nb-admin-nav-link<?php echo $owner_nav === 'listings' ? ' active' : ''; ?>" href="<?php echo site_url('owner/listings'); ?>" data-bs-dismiss="offcanvas"><i class="bi bi-building"></i> My Listings</a>
         <a class="nb-admin-nav-link<?php echo $owner_nav === 'site_visits' ? ' active' : ''; ?>" href="<?php echo site_url('owner/site-visits'); ?>" data-bs-dismiss="offcanvas"><i class="bi bi-calendar-check"></i> Site Visits<?php if ($pending_visits > 0) : ?> <span class="badge bg-warning text-dark"><?php echo (int) $pending_visits; ?></span><?php endif; ?></a>
         <a class="nb-admin-nav-link<?php echo $owner_nav === 'enquiries' ? ' active' : ''; ?>" href="<?php echo site_url('owner/enquiries'); ?>" data-bs-dismiss="offcanvas"><i class="bi bi-chat-dots"></i> Enquiries</a>
-        <a class="nb-admin-nav-link" href="<?php echo site_url('owner/property/add'); ?>" data-bs-dismiss="offcanvas"><i class="bi bi-plus-circle"></i> Add Property</a>
+        <a class="nb-admin-nav-link<?php echo $owner_nav === 'add_property' ? ' active' : ''; ?>" href="<?php echo site_url('owner/property/add'); ?>" data-bs-dismiss="offcanvas"><i class="bi bi-plus-circle"></i> Add Property</a>
       </nav>
       <div class="nb-admin-sidebar-foot border-top border-secondary border-opacity-25">
         <a class="nb-admin-nav-link" href="<?php echo site_url(''); ?>"><i class="bi bi-box-arrow-up-right"></i> Public site</a>

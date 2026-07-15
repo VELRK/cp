@@ -10,6 +10,7 @@ import {
   getWishlist,
   toggleWishlist,
 } from '@/lib/frontendApi';
+import { toFrontendAssetUrl } from '@/lib/cityImages';
 import { buildSearchUrlParams } from '@/lib/searchFilters';
 import { usePropertyTypeFilters } from '@/hooks/usePropertyTypeFilters';
 import { useAuth } from '@/hooks/useAuth';
@@ -165,12 +166,13 @@ export default function Home() {
           setHeroSlides(
             res.data.items
               .map((item: Property & { price_formatted?: string }) => {
-                const imageUrl =
+                const imageUrlRaw =
                   item.home_banner_image_url ||
                   item.thumbnail_url ||
                   (Array.isArray(item.image_urls) ? item.image_urls[0] : '') ||
                   '';
-                if (!imageUrl) return null;
+                if (!imageUrlRaw) return null;
+                const imageUrl = toFrontendAssetUrl(imageUrlRaw);
                 return {
                   id: item.id,
                   image_url: imageUrl,

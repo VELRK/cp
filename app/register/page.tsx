@@ -113,7 +113,7 @@ export default function RegisterPage() {
         <div className="col-md-7 col-lg-6">
           <div className="card border-0 shadow-lg rounded-3 p-4 bg-white">
             <div className="text-center mb-4">
-              <h1 className="h3 fw-extrabold text-primary mb-1" style={{ color: 'var(--nb-primary)' }}>
+              <h1 className="h3 fw-extrabold text-primary mb-1" style={{ color: '#0b2c56' }}>
                 Register Free Account
               </h1>
               <p className="text-muted small">Connect directly with owners or tenants in Coimbatore</p>

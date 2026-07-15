@@ -46,22 +46,28 @@ const HeroSlider: React.FC<HeroSliderProps> = ({
   };
 
   return (
-    <section className="nb-hero-slider-revamp">
+    <section className="nb-hero-slider">
       {slides.map((slide, index) => (
         <div
           key={slide.id}
-          className={`nb-hero-slide-revamp ${index === currentSlide ? 'active' : ''}`}
+          className={`nb-hero-slide ${index === currentSlide ? 'active' : ''}`}
           style={{ backgroundImage: `url('${slide.image_url}')` }}
         >
-          <div className="nb-hero-slide-overlay-rich" />
-          <div className="nb-hero-slide-content">
-            <span className="slide-premium-badge">Exclusive Property</span>
-            <h2 className="slide-main-title">{slide.title}</h2>
-            <p className="slide-location">
-              {slide.bedrooms} BHK {getPropertyTypeLabel(slide.property_type)} in <strong>{slide.locality}</strong>
+          <div className="nb-hero-slide-overlay" />
+          <div className="nb-hero-slide-info">
+            <span className="nb-hero-slide-badge">
+              {slide.property_type === 'plot'
+                ? 'Plot / Land'
+                : `${slide.bedrooms} BHK ${getPropertyTypeLabel(slide.property_type)}`}
+            </span>
+            <h1 className="nb-hero-slide-title">{slide.title}</h1>
+            <p className="nb-hero-slide-desc">
+              Located in the premium area of{' '}
+              <span className="text-accent fw-bold">{slide.locality}</span> | Start living your
+              dreams today.
             </p>
-            <div className="slide-footer-row">
-              <div className="slide-price-tag">{slide.price_label}</div>
+            <div className="d-flex justify-content-between align-items-center">
+              <div className="nb-hero-slide-price">{slide.price_label}</div>
               {slide.slug ? (
                 <Link
                   href={
@@ -69,10 +75,9 @@ const HeroSlider: React.FC<HeroSliderProps> = ({
                       ? `/${slide.slug}`
                       : `/property/${slide.slug}`
                   }
-                  className="slide-explore-btn"
+                  className="btn btn-outline-light btn-sm px-3 py-1.5 fw-semibold border-2 rounded-pill"
                 >
-                  <span>Discover Details</span>
-                  <span className="arrow-icon">→</span>
+                  Explore Now →
                 </Link>
               ) : null}
             </div>

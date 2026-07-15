@@ -33,8 +33,7 @@ const APP_BASE_PATH = '/cp';
 
 /** Next dev (:3000) rewrites /uploads and /assets to PHP; production static site needs /cp prefix. */
 function usesDevAssetProxy(): boolean {
-  if (typeof window === 'undefined') return false;
-  return window.location.port === '3000' || window.location.port === '3001';
+  return process.env.NODE_ENV === 'development';
 }
 
 /** Normalize uploads/assets paths for the current environment. */

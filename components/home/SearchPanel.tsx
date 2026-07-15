@@ -117,7 +117,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
       {/* Search Inputs Row */}
       <form onSubmit={handleSearchSubmit} className="nb-search-inputs-premium-row">
         {/* Sub type dropdown (main type chosen via tabs above) */}
-        {mainTypeSlug && subTypes.length > 0 && (
+        {/* {mainTypeSlug && subTypes.length > 0 && (
           <div className="nb-search-select-premium-wrap" style={{ width: '170px' }}>
             <select
               className="form-select"
@@ -134,7 +134,7 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
               ))}
             </select>
           </div>
-        )}
+        )} */}
 
         {/* City Selector */}
         <div className="nb-search-select-premium-wrap" style={{ width: '140px' }}>

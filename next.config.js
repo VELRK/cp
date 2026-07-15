@@ -21,6 +21,10 @@ const nextConfig = {
   webpack: (config, { isServer }) => {
     // Keep auth context singleton — duplicate bundles break useAuth on property/search pages.
     if (!isServer) {
+      config.optimization = config.optimization || {};
+      config.optimization.splitChunks = config.optimization.splitChunks || {};
+      config.optimization.splitChunks.cacheGroups = config.optimization.splitChunks.cacheGroups || {};
+
       config.optimization.splitChunks.cacheGroups.authContextStore = {
         test: /[\\/]lib[\\/]auth-context-store(\.|$)/,
         name: 'auth-context-store',
@@ -53,9 +57,14 @@ if (!isStaticExport) {
       { source: '/api/mobile/:path*', destination: `${phpBase}/api/mobile/:path*` },
       { source: '/panel', destination: `${phpBase}/panel` },
       { source: '/panel/:path*', destination: `${phpBase}/panel/:path*` },
+      { source: '/cp/panel', destination: `${phpBase}/panel` },
+      { source: '/cp/panel/:path*', destination: `${phpBase}/panel/:path*` },
       { source: '/admin', destination: `${phpBase}/admin` },
       { source: '/admin/:path*', destination: `${phpBase}/admin/:path*` },
+      { source: '/cp/admin', destination: `${phpBase}/admin` },
+      { source: '/cp/admin/:path*', destination: `${phpBase}/admin/:path*` },
       { source: '/logout', destination: `${phpBase}/logout` },
+      { source: '/cp/logout', destination: `${phpBase}/logout` },
     ],
     fallback: [
       { source: '/api/:path*', destination: `${phpBase}/api/:path*` },

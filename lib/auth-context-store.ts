@@ -5,7 +5,7 @@ export interface AuthUser {
   name: string;
   email: string;
   phone: string;
-  role: 'tenant' | 'customer' | 'owner' | 'admin';
+  role: 'tenant' | 'customer' | 'owner' | 'admin' | 'agent';
   status: 'pending' | 'approved' | 'rejected';
   city_id: number;
   profile_pic?: string;

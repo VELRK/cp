@@ -96,9 +96,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const response = await apiRegister(formData);
     if (response.data?.success) {
       const { token: receivedToken, user: receivedUser } = response.data;
-      localStorage.setItem('nb_token', receivedToken);
-      setToken(receivedToken);
-      setUser(receivedUser);
+      if (receivedToken) {
+        localStorage.setItem('nb_token', receivedToken);
+        setToken(receivedToken);
+        setUser(receivedUser);
+      }
       setAuthModalOpen(null);
     }
     return response.data;

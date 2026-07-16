@@ -36,7 +36,7 @@ api.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('nb_token');
-      if (token) {
+      if (token && token !== 'undefined' && token !== 'null') {
         config.headers['X-Api-Token'] = token;
       }
     }

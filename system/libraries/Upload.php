@@ -893,20 +893,22 @@ class CI_Upload
 		if (function_exists('getimagesize')) {
 			$D = @getimagesize($this->file_temp);
 
-			if ($this->max_width > 0 && $D[0] > $this->max_width) {
-				return FALSE;
-			}
+			if ($D !== FALSE) {
+				if ($this->max_width > 0 && $D[0] > $this->max_width) {
+					return FALSE;
+				}
 
-			if ($this->max_height > 0 && $D[1] > $this->max_height) {
-				return FALSE;
-			}
+				if ($this->max_height > 0 && $D[1] > $this->max_height) {
+					return FALSE;
+				}
 
-			if ($this->min_width > 0 && $D[0] < $this->min_width) {
-				return FALSE;
-			}
+				if ($this->min_width > 0 && $D[0] < $this->min_width) {
+					return FALSE;
+				}
 
-			if ($this->min_height > 0 && $D[1] < $this->min_height) {
-				return FALSE;
+				if ($this->min_height > 0 && $D[1] < $this->min_height) {
+					return FALSE;
+				}
 			}
 		}
 

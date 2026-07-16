@@ -26,7 +26,7 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
-  const [role, setRole] = useState<'tenant' | 'owner'>('tenant');
+  const [role, setRole] = useState<'tenant' | 'owner' | 'agent'>('tenant');
   const [cityId, setCityId] = useState('');
   const [aadharNo, setAadharNo] = useState('');
   const [aadharFile, setAadharFile] = useState<File | null>(null);
@@ -45,6 +45,8 @@ export default function RegisterPage() {
         router.push('/owner/dashboard');
       } else if (user.role === 'tenant') {
         router.push('/tenant/dashboard');
+      } else if (user.role === 'agent') {
+        router.push('/agent/dashboard');
       } else {
         router.push('/');
       }
@@ -215,10 +217,11 @@ export default function RegisterPage() {
                   <select
                     className="form-select"
                     value={role}
-                    onChange={(e) => setRole(e.target.value as 'tenant' | 'owner')}
+                    onChange={(e) => setRole(e.target.value as 'tenant' | 'owner' | 'agent')}
                   >
                     <option value="tenant">Tenant / Buyer</option>
                     <option value="owner">Property Owner</option>
+                    <option value="agent">Agent</option>
                   </select>
                 </div>
                 <div className="col-md-6">

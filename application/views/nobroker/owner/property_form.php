@@ -2,6 +2,7 @@
 $r = $row;
 $is_edit = !empty($edit_id);
 $is_admin = !empty($is_admin);
+$owner_panel = !empty($owner_panel);
 $hide_page_title = !empty($hide_page_title);
 $owners = isset($owners) && is_array($owners) ? $owners : array();
 $maxw = $is_admin ? 'none' : '720px';
@@ -12,8 +13,8 @@ if ($r && !empty($r->images)) {
     $existing_imgs = $d;
   }
 }
-$outer_class = $is_admin ? 'nb-admin-form-max nb-property-form--admin' : 'container py-4';
-$outer_style = $is_admin ? '' : ' style="max-width:' . $maxw . '"';
+$outer_class = ($is_admin || $owner_panel) ? 'nb-admin-form-max nb-property-form--admin' : 'container py-4';
+$outer_style = ($is_admin || $owner_panel) ? '' : ' style="max-width:' . $maxw . '"';
 $amenity_options = isset($amenity_options) && is_array($amenity_options) ? $amenity_options : array();
 $nearby_places = array();
 if ($r && !empty($r->nearby)) {
@@ -34,7 +35,15 @@ $nearbyCategoryOptions = array(
 );
 ?>
 <div class="<?php echo $outer_class; ?>"<?php echo $outer_style; ?>>
-  <?php if (!$hide_page_title) : ?>
+  <?php if ($owner_panel && !$hide_page_title) : ?>
+  <div class="nb-admin-page-head d-flex flex-wrap justify-content-between align-items-start gap-3">
+    <div>
+      <h1 class="nb-admin-page-title"><?php echo $is_edit ? 'Edit property' : 'Add property'; ?></h1>
+      <p class="nb-admin-page-desc mb-0">List your property from the owner panel. Admin must publish it before it appears in search.</p>
+    </div>
+    <a href="<?php echo site_url('owner/listings'); ?>" class="btn btn-sm btn-outline-secondary rounded-pill">Back to listings</a>
+  </div>
+  <?php elseif (!$hide_page_title) : ?>
   <h1 class="h3 mb-4"><?php
     if ($is_admin) {
       echo $is_edit ? 'Edit property (admin)' : 'Add property (admin)';
@@ -46,12 +55,19 @@ $nearbyCategoryOptions = array(
   <?php if (!$is_admin && !$is_edit) : ?>
   <div class="alert alert-info border-0 shadow-sm small mb-4">After you save, an admin must publish the listing before it appears in search and on the public site.</div>
   <?php endif; ?>
+  <?php if ($owner_panel) : ?>
+  <div id="nbOwnerSaveError" class="alert alert-danger border-0 shadow-sm d-none mb-4" role="alert"></div>
+  <?php endif; ?>
   <?php
   if ($is_admin) {
     // Same-origin relative action so session cookies are always sent (localhost:3000 or :8080).
     echo form_open_multipart('panel/property/save', array('action' => site_url('panel/property/save')));
   } else {
-    echo form_open_multipart('api/property/save');
+    echo form_open_multipart('owner/property/save', array(
+      'id' => 'nbOwnerPropertyForm',
+      'data-save-url' => site_url('api/property/save'),
+      'data-success-url' => site_url('owner/listings'),
+    ));
   }
   ?>
     <?php if ($is_admin) : ?>

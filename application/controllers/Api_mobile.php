@@ -842,10 +842,21 @@ class Api_mobile extends CI_Controller {
             $out['images'] = $urls;
         }
         if (!empty($out['location_image'])) {
-            $out['location_image'] = $this->_asset_url_or_null($out['location_image']);
+            $out['location_image_url'] = $this->_asset_url_or_null($out['location_image']);
         }
         if (!empty($out['home_banner_image'])) {
             $out['home_banner_image_url'] = $this->_asset_url_or_null($out['home_banner_image']);
+        }
+        if (isset($out['map_url']) && $out['map_url'] === '') {
+            $out['map_url'] = null;
+        }
+        foreach (array('brochure_url', 'audio_notes_url') as $mediaField) {
+            if (!empty($out[$mediaField])) {
+                $out[$mediaField] = $this->_asset_url_or_null($out[$mediaField]);
+            }
+        }
+        if (isset($out['is_active'])) {
+            $out['publication_status'] = !empty($out['is_active']) ? 'published' : 'pending';
         }
         return $out;
     }
@@ -1068,6 +1079,26 @@ class Api_mobile extends CI_Controller {
             }
         }
 
+        nb_ensure_property_map_columns();
+        if ($this->db->field_exists('latitude', 'nb_properties')) {
+            $row['latitude'] = $this->_parse_latitude($input['latitude'] ?? $input['lat'] ?? null);
+        }
+        if ($this->db->field_exists('longitude', 'nb_properties')) {
+            $row['longitude'] = $this->_parse_longitude($input['longitude'] ?? $input['lng'] ?? null);
+        }
+        if ($this->db->field_exists('google_place_id', 'nb_properties')) {
+            $row['google_place_id'] = $this->_parse_google_place_id($input['google_place_id'] ?? $input['place_id'] ?? null);
+        }
+        if ($this->db->field_exists('map_url', 'nb_properties')) {
+            $map_url = trim((string) ($input['map_url'] ?? $input['mapUrl'] ?? ''));
+            $row['map_url'] = $map_url !== '' ? substr($map_url, 0, 500) : null;
+        }
+
+        $media_errors = $this->_apply_listing_media_uploads($row, $existing);
+        if (!empty($media_errors)) {
+            return $this->_json(array('success' => false, 'message' => implode(' ', $media_errors)), 400);
+        }
+
         if ($is_admin) {
             $row['owner_id'] = $owner_id;
             if ($this->db->field_exists('is_active', 'nb_properties')) {
@@ -1187,8 +1218,15 @@ class Api_mobile extends CI_Controller {
             }
         }
         if (isset($out['location_image']) && !empty($out['location_image'])) {
-            $li = $out['location_image'];
-            $out['location_image_url'] = preg_match('#^https?://#i', $li) ? $li : base_url($li);
+            $out['location_image_url'] = $this->_asset_url_or_null($out['location_image']);
+        }
+        if (isset($out['map_url']) && $out['map_url'] === '') {
+            $out['map_url'] = null;
+        }
+        foreach (array('brochure_url', 'audio_notes_url') as $mediaField) {
+            if (!empty($out[$mediaField])) {
+                $out[$mediaField] = $this->_asset_url_or_null($out[$mediaField]);
+            }
         }
         if (isset($out['images']) && is_array($out['images'])) {
             $out['image_urls'] = array();
@@ -1310,6 +1348,13 @@ class Api_mobile extends CI_Controller {
         if (!empty($params['is_featured'])) {
             $filters['is_featured'] = 1;
         }
+        if (!empty($params['include_pending']) || !empty($params['include_inactive'])) {
+            $filters['include_pending'] = 1;
+        }
+        $uid = $params['userId'] ?? $params['user_id'] ?? $params['owner_id'] ?? null;
+        if ($uid !== null && trim((string) $uid) !== '') {
+            $filters['owner_id'] = (int) $uid;
+        }
         return $filters;
     }
 
@@ -1392,6 +1437,9 @@ class Api_mobile extends CI_Controller {
         list($page, $limit, $offset) = $this->_pagination_from_request();
         $filters = $this->_property_filters_from_query();
         $filters['owner_id'] = $userId;
+        if (empty($filters['include_pending']) && ($this->input->get('is_active') === null || $this->input->get('is_active') === '')) {
+            $filters['include_pending'] = 1;
+        }
         return $this->_property_list_response($filters, $limit, $offset, $page);
     }
 
@@ -2330,5 +2378,99 @@ class Api_mobile extends CI_Controller {
         $this->output->set_content_type('text/html');
         $data = array('page_title' => 'Terms & Conditions', 'legal_view' => 'terms');
         $this->load->view('legal/mobile_layout', $data);
+    }
+
+    /** Upload brochure / audio notes on property create-update. @return string[] */
+    private function _apply_listing_media_uploads(array &$row, $existing)
+    {
+        $errors = array();
+
+        if ($this->db->field_exists('brochure_url', 'nb_properties')) {
+            if (!empty($this->input->post('remove_brochure'))) {
+                if ($existing && !empty($existing->brochure_url)) {
+                    $this->_unlink_uploaded_file($existing->brochure_url);
+                }
+                $row['brochure_url'] = null;
+            }
+            $brochure = $this->_upload_single_document('brochure', 'brochures', 'pdf|doc|docx|jpg|jpeg|png|webp', 10240);
+            if ($brochure['error'] !== null) {
+                $errors[] = $brochure['error'];
+            } elseif ($brochure['path'] !== null) {
+                if ($existing && !empty($existing->brochure_url)) {
+                    $this->_unlink_uploaded_file($existing->brochure_url);
+                }
+                $row['brochure_url'] = $brochure['path'];
+            }
+        }
+
+        if ($this->db->field_exists('audio_notes_url', 'nb_properties')) {
+            if (!empty($this->input->post('remove_audio_notes'))) {
+                if ($existing && !empty($existing->audio_notes_url)) {
+                    $this->_unlink_uploaded_file($existing->audio_notes_url);
+                }
+                $row['audio_notes_url'] = null;
+            }
+            $audio = $this->_upload_single_document('audio_notes', 'audio', 'mp3|wav|m4a|ogg|webm|aac', 15360);
+            if ($audio['error'] !== null) {
+                $errors[] = $audio['error'];
+            } elseif ($audio['path'] !== null) {
+                if ($existing && !empty($existing->audio_notes_url)) {
+                    $this->_unlink_uploaded_file($existing->audio_notes_url);
+                }
+                $row['audio_notes_url'] = $audio['path'];
+            }
+        }
+
+        return $errors;
+    }
+
+    /** @return array{path: string|null, error: string|null} */
+    private function _upload_single_document($field, $subdir, $allowed_types, $max_kb)
+    {
+        if (empty($_FILES[$field]['name'])) {
+            return array('path' => null, 'error' => null);
+        }
+        $label = ucfirst(str_replace('_', ' ', $field));
+        if (!empty($_FILES[$field]['error']) && $_FILES[$field]['error'] !== UPLOAD_ERR_OK) {
+            return array(
+                'path' => null,
+                'error' => $label . ': upload failed (code ' . (int) $_FILES[$field]['error'] . ').',
+            );
+        }
+        $upload_path = FCPATH . 'assets/uploads/nb_properties/' . trim($subdir, '/') . '/';
+        if (!is_dir($upload_path) && !@mkdir($upload_path, 0755, true) && !is_dir($upload_path)) {
+            return array('path' => null, 'error' => $label . ': could not create upload directory.');
+        }
+        $config = array(
+            'upload_path' => $upload_path,
+            'allowed_types' => $allowed_types,
+            'max_size' => (int) $max_kb,
+            'encrypt_name' => true,
+        );
+        $this->load->library('upload', $config);
+        $this->upload->initialize($config);
+        if (!$this->upload->do_upload($field)) {
+            return array(
+                'path' => null,
+                'error' => $label . ': ' . strip_tags($this->upload->display_errors('', '')),
+            );
+        }
+        $data = $this->upload->data();
+        return array(
+            'path' => 'assets/uploads/nb_properties/' . trim($subdir, '/') . '/' . $data['file_name'],
+            'error' => null,
+        );
+    }
+
+    private function _unlink_uploaded_file($relative_path)
+    {
+        $relative_path = trim((string) $relative_path);
+        if ($relative_path === '' || preg_match('#^https?://#i', $relative_path)) {
+            return;
+        }
+        $full = FCPATH . ltrim($relative_path, '/');
+        if (is_file($full)) {
+            @unlink($full);
+        }
     }
 }

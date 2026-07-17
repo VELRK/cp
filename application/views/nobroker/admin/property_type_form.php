@@ -30,7 +30,7 @@ $main_types = isset($main_types) && is_array($main_types) ? $main_types : array(
 
 <div class="nb-admin-panel">
   <div class="nb-admin-panel-body p-4">
-    <?php echo form_open(site_url($is_edit ? 'panel/property-type/edit/' . (int) $edit_id : 'panel/property-type/add')); ?>
+    <?php echo form_open_multipart(site_url($is_edit ? 'panel/property-type/edit/' . (int) $edit_id : 'panel/property-type/add')); ?>
       <input type="hidden" name="property_type_id" value="<?php echo (int) $edit_id; ?>">
       <input type="hidden" name="is_sub_type" value="<?php echo $is_sub_type ? '1' : '0'; ?>">
 
@@ -65,6 +65,20 @@ $main_types = isset($main_types) && is_array($main_types) ? $main_types : array(
       <div class="mb-3">
         <label class="form-label fw-semibold" for="nbPtSort">Sort order</label>
         <input type="number" name="sort_order" id="nbPtSort" class="form-control nb-admin-input" value="<?php echo $r ? (int) $r->sort_order : '0'; ?>">
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold" for="nbPtImage">Category image</label>
+        <?php if ($r && !empty($r->image)) : ?>
+          <div class="mb-2">
+            <img src="<?php echo html_escape(base_url($r->image)); ?>" alt="" class="rounded border" style="max-height:80px;max-width:120px;object-fit:cover;">
+          </div>
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" name="remove_image" value="1" id="nbPtRemoveImage">
+            <label class="form-check-label" for="nbPtRemoveImage">Remove current image</label>
+          </div>
+        <?php endif; ?>
+        <input type="file" name="image" id="nbPtImage" class="form-control nb-admin-input" accept="image/jpeg,image/png,image/webp,image/gif">
+        <div class="form-text">Shown in mobile Categories section (API: image_url).</div>
       </div>
       <div class="mb-4 form-check form-switch">
         <input class="form-check-input" type="checkbox" name="is_active" value="1" id="nbPtActive" <?php echo (!$r || !empty($r->is_active)) ? 'checked' : ''; ?>>

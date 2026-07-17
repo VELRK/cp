@@ -367,6 +367,21 @@ $route['api/mobile/referral/apply'] = 'Api_mobile/referral_apply';
 $route['api/mobile/referral/list'] = 'Api_mobile/referral_list';
 $route['api/mobile/referral/stats'] = 'Api_mobile/referral_stats';
 
+// Mobile auth & account (delegates to Api_nb_app)
+$route['api/mobile/register'] = 'api_nb_app/register';
+$route['api/mobile/login'] = 'api_nb_app/login';
+$route['api/mobile/forgot-password'] = 'api_nb_app/forgot_password';
+$route['api/mobile/forgot_password'] = 'api_nb_app/forgot_password';
+$route['api/mobile/reset-password'] = 'api_nb_app/reset_password';
+$route['api/mobile/reset_password'] = 'api_nb_app/reset_password';
+$route['api/mobile/change-password'] = 'api_nb_app/change_password';
+$route['api/mobile/change_password'] = 'api_nb_app/change_password';
+$route['api/mobile/my-properties'] = 'api_nb_app/my_properties';
+$route['api/mobile/my_properties'] = 'api_nb_app/my_properties';
+$route['api/mobile/site-visits'] = 'api_nb_app/site_visits';
+$route['api/mobile/site-visits/schedule'] = 'api_nb_app/site_visit_schedule';
+$route['api/mobile/site_visit_schedule'] = 'api_nb_app/site_visit_schedule';
+
 // ============ Coimbatore Properties platform (overrides; keep last) ============
 $route['default_controller'] = 'Nb_home';
 
@@ -402,6 +417,10 @@ $route['panel/property/delete/(:num)'] = 'broker_admin/property_delete/$1';
 $route['panel/property/save'] = 'nb_property_form/save';
 $route['panel/enquiries'] = 'broker_admin/enquiries';
 $route['panel/enquiry/(:num)'] = 'broker_admin/enquiry/$1';
+$route['panel/site-visits'] = 'broker_admin/site_visits';
+$route['panel/site-visit/(:num)'] = 'broker_admin/site_visit/$1';
+$route['panel/update-site-visit'] = 'broker_admin/update_site_visit';
+$route['panel/delete-site-visit'] = 'broker_admin/delete_site_visit';
 
 $route['panel/cities'] = 'broker_admin/cities';
 $route['panel/city/add'] = 'broker_admin/city_add';
@@ -492,6 +511,17 @@ $route['api/nb/notifications/(:num)'] = 'api_nb_app/notification/$1';
 $route['api/nb/cities'] = 'api_nb_app/cities';
 $route['api/nb/explore-cities'] = 'api_nb_app/explore_cities';
 $route['api/nb/property-type-counts'] = 'api_nb_app/property_type_counts';
+$route['api/nb/forgot-password'] = 'api_nb_app/forgot_password';
+$route['api/nb/forgot_password'] = 'api_nb_app/forgot_password';
+$route['api/nb/reset-password'] = 'api_nb_app/reset_password';
+$route['api/nb/reset_password'] = 'api_nb_app/reset_password';
+$route['api/nb/change-password'] = 'api_nb_app/change_password';
+$route['api/nb/change_password'] = 'api_nb_app/change_password';
+$route['api/nb/my-properties'] = 'api_nb_app/my_properties';
+$route['api/nb/my_properties'] = 'api_nb_app/my_properties';
+$route['api/nb/site-visits'] = 'api_nb_app/site_visits';
+$route['api/nb/site-visits/schedule'] = 'api_nb_app/site_visit_schedule';
+$route['api/nb/site_visit_schedule'] = 'api_nb_app/site_visit_schedule';
 
 // Next.js web API (production on PHP-only hosting — same paths as app/api/*)
 $route['api/feedback'] = 'api_web/feedback';
@@ -512,14 +542,19 @@ $nb_uri_priority = array(
     'property/owner/dashboard' => 'owner/dashboard/index',
     'property/owner/listings' => 'owner/listings/index',
     'property/owner/enquiries' => 'owner/enquiries/index',
+    'property/owner/site-visits' => 'owner/site_visits/index',
     'property/owner/property/add' => 'owner/property/add',
     'property/owner/property/edit/(:num)' => 'owner/property/edit/$1',
     'property/tenant' => 'tenant/dashboard/index',
     'property/tenant/dashboard' => 'tenant/dashboard/index',
     'property/tenant/enquiries' => 'tenant/enquiries/index',
+    'owner/auth' => 'owner/auth/index',
     'owner/dashboard' => 'owner/dashboard/index',
     'owner/listings' => 'owner/listings/index',
     'owner/enquiries' => 'owner/enquiries/index',
+    'owner/site-visits' => 'owner/site_visits/index',
+    'owner/update-site-visit' => 'owner/site_visits/update',
+    'owner/property/save' => 'nb_property_form/save',
     'owner/property/add' => 'owner/property/add',
     'owner/property/edit/(:num)' => 'owner/property/edit/$1',
     'tenant/dashboard' => 'tenant/dashboard/index',
@@ -531,9 +566,13 @@ $route = $nb_uri_priority + $route;
  * Re-assert owner/tenant routes last so nothing in $route overrides them. Optional: Dashboard::dashboard()
  * aliases exist on owner/tenant Dashboard controllers for odd URI mappings.
  */
+$route['owner/auth'] = 'owner/auth/index';
 $route['owner/dashboard'] = 'owner/dashboard/index';
 $route['owner/listings'] = 'owner/listings/index';
 $route['owner/enquiries'] = 'owner/enquiries/index';
+$route['owner/site-visits'] = 'owner/site_visits/index';
+$route['owner/update-site-visit'] = 'owner/site_visits/update';
+$route['owner/property/save'] = 'nb_property_form/save';
 $route['owner/property/add'] = 'owner/property/add';
 $route['owner/property/edit/(:num)'] = 'owner/property/edit/$1';
 $route['tenant/dashboard'] = 'tenant/dashboard/index';
@@ -542,6 +581,7 @@ $route['property/owner'] = 'owner/dashboard/index';
 $route['property/owner/dashboard'] = 'owner/dashboard/index';
 $route['property/owner/listings'] = 'owner/listings/index';
 $route['property/owner/enquiries'] = 'owner/enquiries/index';
+$route['property/owner/site-visits'] = 'owner/site_visits/index';
 $route['property/owner/property/add'] = 'owner/property/add';
 $route['property/owner/property/edit/(:num)'] = 'owner/property/edit/$1';
 $route['property/tenant'] = 'tenant/dashboard/index';

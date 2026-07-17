@@ -215,7 +215,13 @@ class Nb_property_model extends CI_Model {
         $this->db->from($this->table . ' p');
         $this->db->join('nb_cities c', 'c.id = p.city_id', 'left');
         $this->db->join('nb_users u', 'u.id = p.owner_id', 'left');
-        $this->db->where('p.is_active', 1);
+        if (!empty($filters['include_pending']) || !empty($filters['include_inactive'])) {
+            // Owner "my properties" — include pending (is_active = 0).
+        } elseif (isset($filters['is_active']) && $filters['is_active'] !== '' && $filters['is_active'] !== null) {
+            $this->db->where('p.is_active', (int) $filters['is_active']);
+        } else {
+            $this->db->where('p.is_active', 1);
+        }
 
         if (!empty($filters['city_id'])) {
             $this->db->where('p.city_id', (int) $filters['city_id']);
@@ -319,7 +325,13 @@ class Nb_property_model extends CI_Model {
     {
         $filters = nb_normalize_search_filters($filters);
         $this->db->from($this->table . ' p');
-        $this->db->where('p.is_active', 1);
+        if (!empty($filters['include_pending']) || !empty($filters['include_inactive'])) {
+            // include all statuses for owner listings
+        } elseif (isset($filters['is_active']) && $filters['is_active'] !== '' && $filters['is_active'] !== null) {
+            $this->db->where('p.is_active', (int) $filters['is_active']);
+        } else {
+            $this->db->where('p.is_active', 1);
+        }
         if (!empty($filters['posted_by_owner']) || !empty($filters['owner_only'])) {
             $this->db->join('nb_users u', 'u.id = p.owner_id', 'left');
         }

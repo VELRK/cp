@@ -5,18 +5,23 @@ import axios from 'axios';
 const backendBase =
   process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8080/cp';
 
+const APP_BASE_PATH = '/cp';
+
+/** App subfolder prefix (empty on Next dev — rewrites proxy /api/* to PHP). */
+function getAppBasePath(): string {
+  if (typeof window === 'undefined') {
+    return APP_BASE_PATH;
+  }
+  if (window.location.port === '3000' || window.location.port === '3001') {
+    return '';
+  }
+  return APP_BASE_PATH;
+}
+
 const getBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    // XAMPP on default HTTP/HTTPS ports — app lives under /cp
-    if (
-      window.location.port === '' ||
-      window.location.port === '80' ||
-      window.location.port === '443'
-    ) {
-      return `${window.location.origin}/cp`;
-    }
-    // Next.js dev (port 3000) — same origin; next.config.js rewrites proxy /api/* to PHP
-    return window.location.origin;
+    const base = getAppBasePath();
+    return base ? `${window.location.origin}${base}` : window.location.origin;
   }
   // SSR / server-side calls go directly to the PHP backend
   return backendBase;
@@ -67,19 +72,6 @@ export function formatApiErrorMessage(
     return [msg, ...uploadErrors].join('\n');
   }
   return msg;
-}
-
-const APP_BASE_PATH = '/cp';
-
-/** App subfolder prefix (empty on Next dev — rewrites proxy to PHP). */
-function getAppBasePath(): string {
-  if (typeof window === 'undefined') {
-    return APP_BASE_PATH;
-  }
-  if (window.location.port === '3000' || window.location.port === '3001') {
-    return '';
-  }
-  return APP_BASE_PATH;
 }
 
 /** App home URL after logout (respects /cp subfolder on production). */

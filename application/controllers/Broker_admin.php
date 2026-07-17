@@ -8,7 +8,7 @@ class Broker_admin extends MY_Controller {
         parent::__construct();
         $this->load->helper(array('url', 'form'));
         $this->load->database();
-        $this->load->model(array('Nb_user_model', 'Nb_property_model', 'Nb_enquiry_model', 'Nb_city_model', 'Nb_amenity_model', 'Nb_property_type_model', 'Wishlist_model', 'Live_update_model', 'Housing_news_model', 'Banner_model', 'Feedback_model', 'Notification_model', 'Nb_delete_request_model', 'Reelsvideo_model', 'Video_model'));
+        $this->load->model(array('Nb_user_model', 'Nb_property_model', 'Nb_enquiry_model', 'Nb_city_model', 'Nb_amenity_model', 'Nb_property_type_model', 'Wishlist_model', 'Live_update_model', 'Housing_news_model', 'Banner_model', 'Feedback_model', 'Notification_model', 'Nb_delete_request_model', 'Reelsvideo_model', 'Video_model', 'Site_visit_model'));
         $this->load->helper('nb');
     }
 
@@ -446,6 +446,42 @@ class Broker_admin extends MY_Controller {
         $data['admin_nav'] = 'enquiries';
         $this->load->view('nobroker/admin/header', $data);
         $this->load->view('nobroker/admin/enquiry_detail', $data);
+        $this->load->view('nobroker/admin/footer', $data);
+    }
+
+    public function site_visits()
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        $status = trim((string) $this->input->get('status'));
+        $filters = array();
+        if ($status !== '' && in_array($status, array('pending', 'confirmed', 'cancelled', 'completed'), true)) {
+            $filters['status'] = $status;
+        }
+        $data['page_title'] = 'Site Visits';
+        $data['rows'] = $this->Site_visit_model->list_admin($filters, 100, 0);
+        $data['status_filter'] = $status;
+        $data['admin_nav'] = 'site_visits';
+        $this->load->view('nobroker/admin/header', $data);
+        $this->load->view('nobroker/admin/site_visits', $data);
+        $this->load->view('nobroker/admin/footer', $data);
+    }
+
+    public function site_visit($id = null)
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        $id = (int) $id;
+        $row = $this->Site_visit_model->get_admin_detail($id);
+        if (!$row) {
+            show_404();
+        }
+        $data['page_title'] = 'Site Visit #' . $id;
+        $data['v'] = $row;
+        $data['property'] = $this->Nb_property_model->get_by_id((int) $row->property_id);
+        $data['admin_nav'] = 'site_visits';
+        $this->load->view('nobroker/admin/header', $data);
+        $this->load->view('nobroker/admin/site_visit_detail', $data);
         $this->load->view('nobroker/admin/footer', $data);
     }
 
@@ -1573,6 +1609,47 @@ class Broker_admin extends MY_Controller {
             'sort_order' => $this->input->post('sort_order') !== '' ? (int) $this->input->post('sort_order') : 0,
             'is_active'  => $this->input->post('is_active') ? 1 : 0,
         );
+        nb_ensure_property_type_image_column();
+        if ($this->db->field_exists('image', 'nb_property_types')) {
+            if ($this->input->post('remove_image')) {
+                if ($id > 0) {
+                    $oldRow = $this->Nb_property_type_model->get_by_id($id);
+                    if ($oldRow && !empty($oldRow->image) && is_file(FCPATH . $oldRow->image)) {
+                        @unlink(FCPATH . $oldRow->image);
+                    }
+                }
+                $data['image'] = null;
+            }
+            if (!empty($_FILES['image']['name'])) {
+                $upload_dir = FCPATH . 'assets/uploads/property_types/';
+                if (!is_dir($upload_dir)) {
+                    @mkdir($upload_dir, 0755, true);
+                }
+                $this->load->library('upload');
+                $cfg = array(
+                    'upload_path' => $upload_dir,
+                    'allowed_types' => 'jpg|jpeg|png|webp|gif',
+                    'max_size' => 2048,
+                    'encrypt_name' => true,
+                );
+                $this->upload->initialize($cfg);
+                if ($this->upload->do_upload('image')) {
+                    $upd = $this->upload->data();
+                    $newPath = 'assets/uploads/property_types/' . $upd['file_name'];
+                    if ($id > 0) {
+                        $oldRow = $this->Nb_property_type_model->get_by_id($id);
+                        if ($oldRow && !empty($oldRow->image) && is_file(FCPATH . $oldRow->image)) {
+                            @unlink(FCPATH . $oldRow->image);
+                        }
+                    }
+                    $data['image'] = $newPath;
+                } else {
+                    $this->session->set_flashdata('nb_err', 'Image upload failed: ' . strip_tags($this->upload->display_errors('', '')));
+                    redirect($id > 0 ? 'panel/property-type/edit/' . $id : 'panel/property-type/add');
+                    return;
+                }
+            }
+        }
         if ($this->Nb_property_type_model->has_parent_column()) {
             $data['parent_id'] = $is_sub ? $parent_id : null;
         }
@@ -1666,6 +1743,58 @@ class Broker_admin extends MY_Controller {
         }
         $update = array_merge(array('is_active' => 1), $this->Nb_property_model->slug_publish_patch($p));
         $this->Nb_property_model->update($pid, $update);
+        return $this->_panel_json(array('success' => true));
+    }
+
+    /**
+     * POST panel JSON — update site visit (admin).
+     */
+    public function update_site_visit()
+    {
+        if ($this->input->method() !== 'post') {
+            show_404();
+        }
+        if (!$this->_panel_nb_admin()) {
+            return $this->_panel_json(array('success' => false, 'message' => 'Forbidden'), 403);
+        }
+        $vid = (int) $this->input->post('site_visit_id');
+        $status = trim((string) $this->input->post('status'));
+        $notes = trim((string) $this->input->post('notes', true));
+        if ($vid < 1 || !in_array($status, array('pending', 'confirmed', 'cancelled', 'completed'), true)) {
+            return $this->_panel_json(array('success' => false, 'message' => 'Invalid input'), 400);
+        }
+        $row = $this->Site_visit_model->get_by_id($vid);
+        if (!$row) {
+            return $this->_panel_json(array('success' => false, 'message' => 'Not found'), 404);
+        }
+        $upd = array('status' => $status);
+        if ($this->db->field_exists('notes', 'nb_site_visits')) {
+            $upd['notes'] = $notes !== '' ? $notes : null;
+        }
+        $this->Site_visit_model->update($vid, $upd);
+        return $this->_panel_json(array('success' => true));
+    }
+
+    /**
+     * POST panel JSON — delete site visit (admin).
+     */
+    public function delete_site_visit()
+    {
+        if ($this->input->method() !== 'post') {
+            show_404();
+        }
+        if (!$this->_panel_nb_admin()) {
+            return $this->_panel_json(array('success' => false, 'message' => 'Forbidden'), 403);
+        }
+        $vid = (int) $this->input->post('site_visit_id');
+        if ($vid < 1) {
+            return $this->_panel_json(array('success' => false, 'message' => 'Invalid ID'), 400);
+        }
+        $row = $this->Site_visit_model->get_by_id($vid);
+        if (!$row) {
+            return $this->_panel_json(array('success' => false, 'message' => 'Not found'), 404);
+        }
+        $this->Site_visit_model->delete($vid);
         return $this->_panel_json(array('success' => true));
     }
 

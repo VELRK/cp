@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { getOwnerListings } from '@/lib/frontendApi';
-import { ArrowLeft, Plus, Eye, Edit, Home, Grid, MapPin, Layers, CheckCircle, Clock, BarChart2 } from 'lucide-react';
+import { ArrowLeft, Plus, Eye, Edit, Home, Grid, MapPin, Layers, CheckCircle, Clock, BarChart2, CalendarCheck } from 'lucide-react';
 
 interface Listing {
   id: number;
@@ -84,10 +84,16 @@ export default function OwnerListingsPage() {
           <div className="col-lg-11">
             
             {/* Back link */}
-            <Link href="/owner/dashboard" className="btn btn-link text-decoration-none text-muted small d-inline-flex align-items-center gap-1 mb-4 p-0 owner-back-btn">
-              <ArrowLeft size={14} />
-              <span>Back to Dashboard</span>
-            </Link>
+            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+              <Link href="/owner/dashboard" className="btn btn-link text-decoration-none text-muted small d-inline-flex align-items-center gap-1 p-0 owner-back-btn">
+                <ArrowLeft size={14} />
+                <span>Back to Dashboard</span>
+              </Link>
+              <Link href="/owner/site-visits" className="btn btn-sm btn-outline-secondary rounded-pill d-inline-flex align-items-center gap-1">
+                <CalendarCheck size={14} />
+                <span>Site Visits</span>
+              </Link>
+            </div>
 
             {/* Header Section */}
             <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
@@ -233,7 +239,7 @@ export default function OwnerListingsPage() {
                         {/* Right Side: Actions */}
                         <div className="d-flex align-items-center gap-2 flex-shrink-0">
                           {isPublished ? (
-                            <Link href={`/property-detail/${p.slug}`} className="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1">
+                            <Link href={`/property/${p.slug}/`} className="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1">
                               <Eye size={13} />
                               <span>View</span>
                             </Link>

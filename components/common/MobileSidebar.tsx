@@ -20,7 +20,8 @@ import {
   Key, 
   Search,
   Mail,
-  Phone
+  Phone,
+  Sparkles
 } from 'lucide-react';
 import './MobileSidebar.css';
 
@@ -87,23 +88,6 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
         {/* Sidebar Content */}
         <div className="sidebar-content">
           
-          {/* Post Property Banner */}
-          {(!user || user.role !== 'tenant') && (
-            <div className="sidebar-promo-banner">
-              <div className="promo-text-container">
-                <p className="promo-title">Sell or rent faster at the right price!</p>
-                <Link 
-                  href={user ? "/owner/property/add" : "/register"} 
-                  className="promo-btn"
-                  onClick={handleLinkClick}
-                >
-                  <PlusCircle size={16} />
-                  <span>Post Property <span className="free-badge">FREE</span></span>
-                </Link>
-              </div>
-            </div>
-          )}
-
           <div className="sidebar-menu-list">
             
             {/* For Buyers */}
@@ -241,7 +225,7 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
                 <div className={`menu-group-items ${accountOpen ? 'expanded' : ''}`}>
                   <Link href="/user/profile" className="menu-item" onClick={handleLinkClick}>
                     <User size={16} />
-                    <span>Manage Profile</span>
+                    <span>Edit Profile</span>
                   </Link>
                   <Link href="/user/settings" className="menu-item" onClick={handleLinkClick}>
                     <Key size={16} />

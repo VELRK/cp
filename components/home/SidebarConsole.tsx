@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { User } from 'lucide-react';
+import { User, Sparkles } from 'lucide-react';
 
 interface SidebarConsoleProps {
   user: any;
@@ -93,23 +93,64 @@ const SidebarConsole: React.FC<SidebarConsoleProps> = ({
       </div>
 
       {/* Sell or Rent Promo Card */}
-      <div className="nb-sidebar-promo-card fade-in-up">
-        <h3 className="h6 fw-bold text-success mb-2" style={{ color: '#1b5e20' }}>
-          Sell or rent faster at the right price!
-        </h3>
-        <p className="text-secondary mb-3" style={{ fontSize: '0.75rem', lineHeight: '1.4' }}>
-          List your property now for free and reach thousands of genuine tenants/buyers in {cityName}.
+      <div
+        className="nb-sidebar-promo-card fade-in-up p-4 rounded-4 shadow-sm border position-relative overflow-hidden mt-3"
+        style={{
+          background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+          borderColor: '#e9ecef',
+          transition: 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease',
+          cursor: 'pointer'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-5px) scale(1.02)';
+          e.currentTarget.style.boxShadow = '0 15px 30px rgba(0,0,0,0.08)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0) scale(1)';
+          e.currentTarget.style.boxShadow = '0 0.125rem 0.25rem rgba(0,0,0,0.075)';
+        }}
+        onClick={() => {
+          if (user) {
+            router.push('/owner/property/add');
+          } else {
+            setAuthModalOpen('login');
+          }
+        }}
+      >
+        <div className="position-absolute pointer-events-none" style={{ top: '-15px', right: '-10px', transform: 'rotate(15deg)', opacity: 0.04, zIndex: 0 }}>
+          <Sparkles size={110} color="#1b5e20" />
+        </div>
+
+        <div className="d-flex align-items-center mb-2 position-relative z-index-1">
+          <div className="bg-success bg-opacity-10 p-2 rounded-circle me-2 d-flex align-items-center justify-content-center">
+            <Sparkles size={18} className="text-success" />
+          </div>
+          <h3 className="h6 fw-bold mb-0" style={{ color: '#1b5e20', letterSpacing: '0.2px' }}>
+            Sell or rent faster!
+          </h3>
+        </div>
+
+        <p className="text-secondary mb-4 position-relative z-index-1" style={{ fontSize: '0.85rem', lineHeight: '1.5' }}>
+          List your property now for <strong className="text-dark">FREE</strong> and reach thousands of genuine tenants/buyers in <span className="fw-semibold">{cityName}</span>.
         </p>
-        <div className="d-flex justify-content-between align-items-center">
+
+        <div className="d-flex justify-content-start align-items-center position-relative z-index-1">
           <button
             type="button"
-            className="nb-promo-btn"
-            onClick={() => {
-              if (user) {
-                router.push('/owner/property/add');
-              } else {
-                setAuthModalOpen('login');
-              }
+            className="btn rounded-pill px-4 py-2 fw-semibold w-100 shadow-sm d-flex justify-content-center align-items-center gap-2"
+            style={{
+              backgroundColor: '#1b5e20',
+              color: 'white',
+              border: 'none',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#144d18';
+              e.currentTarget.style.boxShadow = '0 5px 15px rgba(27, 94, 32, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#1b5e20';
+              e.currentTarget.style.boxShadow = '0 .125rem .25rem rgba(0,0,0,.075)';
             }}
           >
             Post Property, It's FREE

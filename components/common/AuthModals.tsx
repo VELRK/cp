@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { getCities } from '@/lib/frontendApi';
 import { getDashboardPathForRole } from '@/lib/dashboardPaths';
 import { X, Lock, Mail, User, Phone, CheckCircle, ShieldAlert, ArrowLeft, MessageCircle } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 interface City {
   id: number;
@@ -112,6 +113,11 @@ const AuthModals: React.FC = () => {
         if (result?.use_otp) setLoginMode('otp');
         return;
       }
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
       router.push(getDashboardPathForRole(result.user?.role));
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || 'Login failed. Please try again.');
@@ -172,6 +178,11 @@ const AuthModals: React.FC = () => {
         setErrorMsg(result.message || 'Invalid OTP.');
         return;
       }
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
       router.push(getDashboardPathForRole(result.user?.role));
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || 'Verification failed. Please try again.');
@@ -234,6 +245,11 @@ const AuthModals: React.FC = () => {
 
       const result = await registerUser(formData);
       if (result.success) {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
         setSuccessMsg('Registration successful! Waiting for admin approval.');
         setRegName('');
         setRegEmail('');
@@ -265,41 +281,56 @@ const AuthModals: React.FC = () => {
       tabIndex={-1}
       role="dialog"
     >
-      <div className="modal-dialog modal-dialog-centered" role="document">
-        <div className="modal-content border-0 shadow-lg rounded-4 animate-fade-in">
-          <div className="modal-header border-bottom-0 pb-0 d-flex justify-content-between align-items-center p-3">
-            <div>
-              <h2 className="modal-title h5 fw-bold text-primary mb-0" style={{ color: 'var(--nb-primary)' }}>
-                {isAuthModalOpen === 'login'
-                  ? loginMode === 'email'
-                    ? 'Sign in with Email'
-                    : loginStep === 'phone'
-                      ? 'Sign in with Phone'
-                      : 'Verify OTP'
-                  : 'Create an Account'}
-              </h2>
-              {isAuthModalOpen === 'login' && (
-                <p className="text-muted small mb-0 mt-1">
-                  {loginMode === 'email'
-                    ? 'Use your registered email and password'
-                    : loginStep === 'phone'
-                      ? 'We will send a 4-digit OTP to your WhatsApp'
-                      : `OTP sent to +91 ${loginPhone}`}
-                </p>
-              )}
+      <div className="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden animate-fade-in">
+          <div className="row g-0">
+            {/* Left Panel */}
+            <div className="col-md-5 d-none d-md-flex flex-column justify-content-between p-4" style={{ backgroundColor: 'var(--bs-primary, #0b2c56)', color: 'white' }}>
+              <div>
+                <h3 className="fw-bold mb-4 d-flex align-items-center gap-2">
+                  <span className="bg-white text-primary rounded d-flex align-items-center justify-content-center fw-bolder" style={{ width: '32px', height: '32px' }}>CP</span>
+                  Coimbatore Properties
+                </h3>
+              </div>
+              
+              <div className="text-center position-relative my-4 flex-grow-1 d-flex flex-column justify-content-center align-items-center">
+                <div className="position-relative overflow-hidden shadow-sm" style={{ width: '100%', maxWidth: '260px', aspectRatio: '1/1', margin: '0 auto', borderRadius: '30px' }}>
+                  <img src="/images/login-banner.png" alt="Happy family moving home" className="w-100 h-100 object-fit-cover" />
+                </div>
+                <div className="mt-4 text-center">
+                   <p className="fw-bold mb-0" style={{ fontSize: '1.2rem', letterSpacing: '0.5px' }}>
+                     Search, Settle, Joy Awaits
+                   </p>
+                </div>
+              </div>
             </div>
-            <button
-              type="button"
-              className="btn border-0 p-1 rounded-circle"
-              aria-label="Close"
-              onClick={() => setAuthModalOpen(null)}
-            >
-              <X size={20} />
-            </button>
-          </div>
 
-          <div className="modal-body p-4">
-            {errorMsg && (
+            {/* Right Panel */}
+            <div className="col-md-7 position-relative p-0 bg-white">
+              <button
+                type="button"
+                className="btn border-0 p-2 rounded-circle position-absolute"
+                style={{ top: '10px', right: '10px', zIndex: 10, backgroundColor: 'rgba(0,0,0,0.05)' }}
+                aria-label="Close"
+                onClick={() => setAuthModalOpen(null)}
+              >
+                <X size={20} className="text-dark" />
+              </button>
+
+              <div className="p-4 p-md-5 h-100 d-flex flex-column justify-content-center">
+                <div className="mb-4">
+                  <h2 className="modal-title h3 fw-bold text-dark mb-2">
+                    {isAuthModalOpen === 'login'
+                      ? <span>Signin to <span className="text-primary">Coimbatore Properties</span></span>
+                      : <span>Join <span className="text-primary">Coimbatore Properties</span></span>}
+                  </h2>
+                  <p className="text-muted small mb-0" style={{ fontSize: '0.9rem' }}>
+                    {isAuthModalOpen === 'login'
+                      ? 'Smart. Simple. Homeownership, redefined. Start your hassle-free journey now.'
+                      : 'Create an account to start your journey.'}
+                  </p>
+                </div>
+                {errorMsg && (
               <div className="alert alert-danger d-flex align-items-center gap-2 small py-2 mb-3">
                 <ShieldAlert size={16} />
                 <span>{errorMsg}</span>
@@ -678,6 +709,8 @@ const AuthModals: React.FC = () => {
                 </p>
               </form>
             )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

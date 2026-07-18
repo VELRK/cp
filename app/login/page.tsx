@@ -157,37 +157,58 @@ export default function LoginPage() {
   return (
     <div className="container py-5 mt-5">
       <div className="row justify-content-center">
-        <div className="col-md-5">
-          <div className="card border-0 shadow-lg rounded-3 p-4 bg-white mt-5">
-            <div className="text-center mb-4">
-              <h1 className="h3 fw-extrabold text-primary mb-1" style={{ color: 'var(--nb-primary)' }}>
-                Sign In
-              </h1>
-              <p className="text-muted small mb-3">
-                {mode === 'email'
-                  ? 'Use your registered email and password'
-                  : otpStep === 'phone'
-                    ? 'We will send a 4-digit OTP to your WhatsApp'
-                    : `OTP sent to +91 ${phone}`}
-              </p>
-
-              <div className="d-flex rounded-pill bg-light p-1 gap-1">
-                <button
-                  type="button"
-                  className={`btn btn-sm flex-fill rounded-pill fw-semibold ${mode === 'email' ? 'btn-danger text-dark' : 'btn-light border-0 text-muted'}`}
-                  onClick={() => switchMode('email')}
-                >
-                  Email & Password
-                </button>
-                <button
-                  type="button"
-                  className={`btn btn-sm flex-fill rounded-pill fw-semibold ${mode === 'otp' ? 'btn-danger text-dark' : 'btn-light border-0 text-muted'}`}
-                  onClick={() => switchMode('otp')}
-                >
-                  Phone OTP
-                </button>
+        <div className="col-lg-9 col-xl-8">
+          <div className="card border-0 shadow-lg rounded-4 overflow-hidden mt-5">
+            <div className="row g-0">
+              {/* Left Panel */}
+              <div className="col-md-5 d-none d-md-flex flex-column justify-content-between p-4" style={{ backgroundColor: 'var(--bs-primary, #0b2c56)', color: 'white' }}>
+                <div>
+                  <h3 className="fw-bold mb-4 d-flex align-items-center gap-2">
+                    <span className="bg-white text-primary rounded d-flex align-items-center justify-content-center fw-bolder" style={{ width: '32px', height: '32px' }}>CP</span>
+                    Coimbatore Properties
+                  </h3>
+                </div>
+                
+                <div className="text-center position-relative my-4 flex-grow-1 d-flex flex-column justify-content-center align-items-center">
+                  <div className="position-relative overflow-hidden shadow-sm" style={{ width: '100%', maxWidth: '260px', aspectRatio: '1/1', margin: '0 auto', borderRadius: '30px' }}>
+                    <img src="/images/login-banner.png" alt="Happy family moving home" className="w-100 h-100 object-fit-cover" />
+                  </div>
+                  <div className="mt-4 text-center">
+                     <p className="fw-bold mb-0" style={{ fontSize: '1.2rem', letterSpacing: '0.5px' }}>
+                       Search, Settle, Joy Awaits
+                     </p>
+                  </div>
+                </div>
               </div>
-            </div>
+
+              {/* Right Panel */}
+              <div className="col-md-7 position-relative p-0 bg-white">
+                <div className="p-4 p-md-5 h-100 d-flex flex-column justify-content-center">
+                  <div className="mb-4">
+                    <h2 className="h3 fw-bold text-dark mb-2">
+                      Signin to <span className="text-primary">Coimbatore Properties</span>
+                    </h2>
+                    <p className="text-muted small mb-0" style={{ fontSize: '0.9rem' }}>
+                      Smart. Simple. Homeownership, redefined. Start your hassle-free journey now.
+                    </p>
+                  </div>
+
+                  <div className="d-flex rounded-pill bg-light p-1 gap-1 mb-4">
+                    <button
+                      type="button"
+                      className={`btn btn-sm flex-fill rounded-pill fw-semibold ${mode === 'email' ? 'btn-danger text-dark' : 'btn-light border-0 text-muted'}`}
+                      onClick={() => switchMode('email')}
+                    >
+                      Email & Password
+                    </button>
+                    <button
+                      type="button"
+                      className={`btn btn-sm flex-fill rounded-pill fw-semibold ${mode === 'otp' ? 'btn-danger text-dark' : 'btn-light border-0 text-muted'}`}
+                      onClick={() => switchMode('otp')}
+                    >
+                      Phone OTP
+                    </button>
+                  </div>
 
             {errorMsg && (
               <div className="alert alert-danger d-flex align-items-center gap-2 small py-2 mb-3">
@@ -359,15 +380,18 @@ export default function LoginPage() {
               </form>
             )}
 
-            <p className="small text-muted text-center mt-4 mb-0">
-              Don&apos;t have an account?{' '}
-              <Link href="/register" className="fw-semibold text-decoration-none text-primary">
-                Register here
-              </Link>
-            </p>
+                <p className="small text-muted text-center mt-4 mb-0">
+                  Don&apos;t have an account?{' '}
+                  <Link href="/register" className="fw-semibold text-decoration-none text-primary">
+                    Register here
+                  </Link>
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
   );
 }

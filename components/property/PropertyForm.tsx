@@ -69,8 +69,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
   // Dual mode UI state: 'modern' | 'classic'
   const [uiMode, setUiMode] = useState<'modern' | 'classic'>('modern');
 
-  // Modern Step 0 Landing options page state (skipped for owner dashboard add)
-  const [isLandingMode, setIsLandingMode] = useState(!isEdit && !ownerMode);
+  // Modern Step 0 Landing options page state
+  const [isLandingMode, setIsLandingMode] = useState(!isEdit);
 
   // Modern landing custom options
   const [landingListingType, setLandingListingType] = useState<'sale' | 'rent' | 'pg'>('sale');
@@ -736,34 +736,34 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
 
       {/* 1. Header Dual-Mode Toggle Bar */}
       {!ownerMode && (
-      <div className="nb-post-option-toggle-bar">
-        <div className="btn-group border rounded-pill p-1 bg-white shadow-sm" role="group">
-          <button
-            type="button"
-            className={`btn btn-sm rounded-pill px-3 py-1.5 fw-semibold ${uiMode === 'modern' ? 'btn-primary text-white shadow-sm' : 'btn-light text-muted'}`}
-            onClick={() => {
-              setUiMode('modern');
-              setErrorMsg(null);
-            }}
-            style={{ fontSize: '0.8rem' }}
-          >
-            Premium CP Form
-          </button>
-          <button
-            type="button"
-            className={`btn btn-sm rounded-pill px-3 py-1.5 fw-semibold ${uiMode === 'classic' ? 'btn-primary text-white shadow-sm' : 'btn-light text-muted'}`}
-            onClick={() => {
-              setUiMode('classic');
-              setIsLandingMode(false);
-              setStep(1);
-              setErrorMsg(null);
-            }}
-            style={{ fontSize: '0.8rem' }}
-          >
-            Classic 4-Step Form
-          </button>
+        <div className="nb-post-option-toggle-bar">
+          <div className="btn-group border rounded-pill p-1 bg-white shadow-sm" role="group">
+            <button
+              type="button"
+              className={`btn btn-sm rounded-pill px-3 py-1.5 fw-semibold ${uiMode === 'modern' ? 'btn-primary text-white shadow-sm' : 'btn-light text-muted'}`}
+              onClick={() => {
+                setUiMode('modern');
+                setErrorMsg(null);
+              }}
+              style={{ fontSize: '0.8rem' }}
+            >
+              Premium CP Form
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm rounded-pill px-3 py-1.5 fw-semibold ${uiMode === 'classic' ? 'btn-primary text-white shadow-sm' : 'btn-light text-muted'}`}
+              onClick={() => {
+                setUiMode('classic');
+                setIsLandingMode(false);
+                setStep(1);
+                setErrorMsg(null);
+              }}
+              style={{ fontSize: '0.8rem' }}
+            >
+              Classic 4-Step Form
+            </button>
+          </div>
         </div>
-      </div>
       )}
 
       {/* 2. Step 0 Landing Option page (Modern Mode only) */}

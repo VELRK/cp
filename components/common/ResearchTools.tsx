@@ -304,12 +304,8 @@ export default function ResearchTools() {
     <div className="nb-research-section fade-in-up">
       <div className="nb-research-header d-flex justify-content-between align-items-end">
         <div>
-          <h2 className="nb-research-title" style={{ fontFamily: '"Playfair Display", "Georgia", serif', color: '#1a1a1a', letterSpacing: '0.5px', fontWeight: 'bold' }}>
-            User Property Research Tools
-          </h2>
-          <p className="nb-research-subtitle m-0" style={{ fontFamily: '"Lora", "Georgia", serif', color: '#4a4a4a', fontSize: '1.1rem', fontStyle: 'italic' }}>
-            Calculate your borrowing power and understand your financial options
-          </p>
+          <h2 className="h4 fw-bold text-dark m-0">User Property Research Tools</h2>
+          <p className="text-muted small m-0">Calculate your borrowing power and understand your financial options</p>
         </div>
         <div className="d-flex gap-2">
           {/* Scroll Arrows */}

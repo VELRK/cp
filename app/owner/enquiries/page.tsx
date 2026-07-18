@@ -87,7 +87,7 @@ export default function OwnerEnquiriesPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== 'owner')) {
+    if (!authLoading && (!user || (user.role !== 'owner' && user.role !== 'agent'))) {
       router.push('/login');
     }
   }, [user, authLoading, router]);

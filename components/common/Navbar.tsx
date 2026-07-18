@@ -87,14 +87,16 @@ const Navbar: React.FC = () => {
         <div className="d-flex align-items-center gap-2 ms-auto ms-lg-0 order-lg-last">
           
           {/* Post Property button (desktop only) */}
-          <Link 
-            href={user ? "/owner/property/add" : "/register"} 
-            className="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 fw-semibold d-none d-lg-flex align-items-center gap-1.5 post-property-btn-navbar"
-            style={{ border: '2px solid var(--nb-primary)', color: 'var(--nb-primary)', transition: 'all 0.2s ease' }}
-          >
-            <span>Post Property</span>
-            <span className="badge bg-success rounded-1" style={{ fontSize: '0.65rem' }}>FREE</span>
-          </Link>
+          {(!user || user.role !== 'tenant') && (
+            <Link 
+              href={user ? "/owner/property/add" : "/register"} 
+              className="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 fw-semibold d-none d-lg-flex align-items-center gap-1.5 post-property-btn-navbar"
+              style={{ border: '2px solid var(--nb-primary)', color: 'var(--nb-primary)', transition: 'all 0.2s ease' }}
+            >
+              <span>Post Property</span>
+              <span className="badge bg-success rounded-1" style={{ fontSize: '0.65rem' }}>FREE</span>
+            </Link>
+          )}
 
           {/* Support Dropdown */}
           <div className="dropdown">
@@ -145,15 +147,17 @@ const Navbar: React.FC = () => {
                   <span className="badge nb-role-pill text-uppercase">{user.role}</span>
                 </li>
 
-                <li>
-                  <Link href="/owner/property/add" className="dropdown-item d-flex justify-content-between align-items-center py-2 fw-semibold post-property-free-btn-dropdown">
-                    <div className="d-flex align-items-center gap-2">
-                      <PlusCircle size={16} />
-                      <span>Post Property</span>
-                    </div>
-                    <span className="badge bg-success rounded-1">FREE</span>
-                  </Link>
-                </li>
+                {(!user || user.role !== 'tenant') && (
+                  <li>
+                    <Link href="/owner/property/add" className="dropdown-item d-flex justify-content-between align-items-center py-2 fw-semibold post-property-free-btn-dropdown">
+                      <div className="d-flex align-items-center gap-2">
+                        <PlusCircle size={16} />
+                        <span>Post Property</span>
+                      </div>
+                      <span className="badge bg-success rounded-1">FREE</span>
+                    </Link>
+                  </li>
+                )}
 
                 {user.role === 'owner' && user.status === 'approved' && (
                   <>

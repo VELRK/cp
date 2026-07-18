@@ -88,19 +88,21 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
         <div className="sidebar-content">
           
           {/* Post Property Banner */}
-          <div className="sidebar-promo-banner">
-            <div className="promo-text-container">
-              <p className="promo-title">Sell or rent faster at the right price!</p>
-              <Link 
-                href={user ? "/owner/property/add" : "/register"} 
-                className="promo-btn"
-                onClick={handleLinkClick}
-              >
-                <PlusCircle size={16} />
-                <span>Post Property <span className="free-badge">FREE</span></span>
-              </Link>
+          {(!user || user.role !== 'tenant') && (
+            <div className="sidebar-promo-banner">
+              <div className="promo-text-container">
+                <p className="promo-title">Sell or rent faster at the right price!</p>
+                <Link 
+                  href={user ? "/owner/property/add" : "/register"} 
+                  className="promo-btn"
+                  onClick={handleLinkClick}
+                >
+                  <PlusCircle size={16} />
+                  <span>Post Property <span className="free-badge">FREE</span></span>
+                </Link>
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="sidebar-menu-list">
             
@@ -176,10 +178,12 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
                 {ownersOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
               </button>
               <div className={`menu-group-items ${ownersOpen ? 'expanded' : ''}`}>
-                <Link href="/owner/property/add" className="menu-item" onClick={handleLinkClick}>
-                  <PlusCircle size={16} />
-                  <span>Post Property</span>
-                </Link>
+                {(!user || user.role !== 'tenant') && (
+                  <Link href="/owner/property/add" className="menu-item" onClick={handleLinkClick}>
+                    <PlusCircle size={16} />
+                    <span>Post Property</span>
+                  </Link>
+                )}
                 {user && user.role === 'owner' && user.status === 'approved' && (
                   <>
                     <Link href="/owner/dashboard" className="menu-item" onClick={handleLinkClick}>

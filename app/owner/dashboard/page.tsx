@@ -33,8 +33,8 @@ export default function OwnerDashboard() {
 
   // Auth routing check
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== 'owner')) {
-      router.push('/login');
+    if (!authLoading && (!user || (user.role !== 'owner' && user.role !== 'agent'))) {
+      router.push('/login?redirect=/owner/dashboard');
     }
   }, [user, authLoading, router]);
 

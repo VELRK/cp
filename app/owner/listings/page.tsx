@@ -33,7 +33,7 @@ export default function OwnerListingsPage() {
 
   // Authenticate user
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== 'owner')) {
+    if (!authLoading && (!user || (user.role !== 'owner' && user.role !== 'agent'))) {
       router.push('/login');
     }
   }, [user, authLoading, router]);

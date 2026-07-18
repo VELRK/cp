@@ -41,6 +41,7 @@ export const API_PATHS = {
   propertySave: '/api/property/save',
   // Live updates (PHP mobile route, used by web modal)
   liveUpdateCreate: '/api/mobile/live-updates/create',
+  videos: '/api/mobile/videos',
   // Property detail (Next.js)
   property: (idOrSlug: string | number) => `/api/properties/${idOrSlug}`,
   // Owner dashboard (Next.js)
@@ -192,5 +193,9 @@ export const submitFeedback = (formData: FormData) =>
 
 export const createLiveUpdate = (formData: FormData) =>
   api.post(API_PATHS.liveUpdateCreate, formData);
+
+// ——— Videos ———
+
+export const getVideos = () => api.get(API_PATHS.videos);
 
 export default api;

@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getCities } from '@/lib/frontendApi';
-import { ShieldAlert, CheckCircle, User, Mail, Phone, Lock, FileText, Image as ImageIcon } from 'lucide-react';
+import { ShieldAlert, CheckCircle, CheckCircle2, User, Mail, Phone, Lock, FileText, Image as ImageIcon } from 'lucide-react';
 
 interface City {
   id: number;
@@ -111,8 +111,54 @@ export default function RegisterPage() {
 
   return (
     <div className="container py-5 mt-5">
-      <div className="row justify-content-center">
-        <div className="col-md-7 col-lg-6">
+      <div className="row justify-content-center align-items-stretch g-4">
+        {/* Left side informational panel */}
+        <div className="col-lg-5 d-none d-lg-block">
+          <div className="nb-post-landing-left h-100 rounded-3 d-flex flex-column justify-content-center w-100">
+            <h1 className="nb-post-landing-title">
+              Sell or Rent Property<br />
+              <span>online faster</span> with CP
+            </h1>
+            <ul className="nb-post-landing-list">
+              <li className="nb-post-landing-item">
+                <CheckCircle2 size={20} />
+                <span>Advertise for FREE</span>
+              </li>
+              <li className="nb-post-landing-item">
+                <CheckCircle2 size={20} />
+                <span>Get unlimited enquiries</span>
+              </li>
+              <li className="nb-post-landing-item">
+                <CheckCircle2 size={20} />
+                <span>Get shortlisted buyers and tenants</span>
+              </li>
+              <li className="nb-post-landing-item">
+                <CheckCircle2 size={20} />
+                <span>Assistance in co-ordinating site visits</span>
+              </li>
+            </ul>
+
+            {/* Laptop Vector Visual */}
+            <div className="nb-post-landing-ill mt-4">
+              <svg viewBox="0 0 500 300" className="w-100 h-auto" style={{ maxHeight: '240px' }} fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="500" height="300" rx="12" fill="#eff6ff" />
+                <path d="M120 180h260v12H120z" fill="#94a3b8" />
+                <path d="M130 80h240v100H130z" fill="#cbd5e1" />
+                <rect x="140" y="90" width="220" height="80" rx="4" fill="#fff" />
+                <path d="M160 110h80v8h-80zm0 15h120v6H160zm0 15h100v6H160z" fill="#cbd5e1" />
+                <rect x="290" y="105" width="60" height="50" rx="4" fill="#3b82f6" />
+                <path d="M305 130l8 8 16-16" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
+                <circle cx="250" cy="220" r="14" fill="#10b981" />
+                <path d="M246 220l3 3 6-6" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
+                <circle cx="150" cy="220" r="14" fill="#f59e0b" />
+                <circle cx="350" cy="220" r="14" fill="#3b82f6" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Right side form */}
+        <div className="col-lg-6">
           <div className="card border-0 shadow-lg rounded-3 p-4 bg-white">
             <div className="text-center mb-4">
               <h1 className="h3 fw-extrabold text-primary mb-1" style={{ color: '#0b2c56' }}>

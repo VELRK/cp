@@ -12,7 +12,7 @@ export default function AddPropertyPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!authLoading && (!user || user.role !== 'owner')) {
+    if (!authLoading && (!user || (user.role !== 'owner' && user.role !== 'agent'))) {
       router.push('/login?redirect=/owner/property/add');
     }
   }, [user, authLoading, router]);
@@ -27,7 +27,7 @@ export default function AddPropertyPage() {
     );
   }
 
-  if (!user || user.role !== 'owner') {
+  if (!user || (user.role !== 'owner' && user.role !== 'agent')) {
     return null;
   }
 

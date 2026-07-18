@@ -35,6 +35,7 @@ import PromoSection from '../components/home/PromoSection';
 import BlogsSection from '../components/home/BlogsSection';
 import SidebarConsole from '../components/home/SidebarConsole';
 import RecommendedSellers from '../components/home/RecommendedSellers';
+import PropertyVideos from '../components/home/PropertyVideos';
 
 interface City {
   id: number;
@@ -562,7 +563,6 @@ export default function Home() {
             />
 
             {/* Recommended Sellers Carousel */}
-            <RecommendedSellers properties={[...recommended, ...newlyLaunched, ...verified, ...featured]} />
 
             <NewlyLaunchedProjects
               items={newlyLaunched}
@@ -602,6 +602,7 @@ export default function Home() {
 
             {/* Explore Cities */}
             <ExploreCities />
+            <RecommendedSellers properties={[...recommended, ...newlyLaunched, ...verified, ...featured]} />
 
             {/* Featured Properties Grid View */}
             <FeaturedProperties
@@ -615,6 +616,9 @@ export default function Home() {
 
             {/* Why Choose Us Section */}
             <WhyChooseUs />
+
+            {/* Property Videos Section */}
+            <PropertyVideos />
 
             {/* Promo Section (Sell/Rent Faster Banner) */}
             <PromoSection

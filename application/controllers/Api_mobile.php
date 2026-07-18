@@ -1827,7 +1827,7 @@ class Api_mobile extends CI_Controller {
         if ($nb_user) {
             if ($this->db->field_exists('api_token', 'nb_users')) {
                 $token = bin2hex(random_bytes(32));
-                $this->Nb_user_model->update((int) $nb_user->id, array('api_token' => $token));
+                $this->Nb_user_model->set_api_token((int) $nb_user->id, $token);
             }
             $this->session->set_userdata('nb_user_id', (int) $nb_user->id);
             $this->session->set_userdata('nb_user', array(

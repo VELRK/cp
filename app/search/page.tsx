@@ -8,6 +8,7 @@ import {
   checkWishlist,
   toggleWishlist,
 } from '@/lib/frontendApi';
+import confetti from 'canvas-confetti';
 import { usePropertyTypeFilters } from '@/hooks/usePropertyTypeFilters';
 import { effectivePropertyTypeSlug } from '@/lib/propertyTypes';
 import {
@@ -19,22 +20,22 @@ import {
 import { PropertyTypeFilterFields } from '@/components/common/PropertyTypeSelects';
 import OwnerPhoneModal from '@/components/common/OwnerPhoneModal';
 import { useAuth } from '@/hooks/useAuth';
-import { 
-  Filter, 
-  Sliders, 
-  RefreshCw, 
-  X, 
-  ChevronDown, 
-  ListFilter, 
-  Search, 
-  MapPin, 
-  Heart, 
-  Eye, 
-  Phone, 
-  FileText, 
-  Sparkles, 
-  CheckCircle2, 
-  ShieldAlert 
+import {
+  Filter,
+  Sliders,
+  RefreshCw,
+  X,
+  ChevronDown,
+  ListFilter,
+  Search,
+  MapPin,
+  Heart,
+  Eye,
+  Phone,
+  FileText,
+  Sparkles,
+  CheckCircle2,
+  ShieldAlert
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -410,6 +411,12 @@ function SearchContent() {
         if (wishlistIds.includes(propertyId)) {
           setWishlistIds((prev) => prev.filter((id) => id !== propertyId));
         } else {
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#ef4444', '#f87171', '#fca5a5', '#0b2c56', '#f2b203']
+          });
           setWishlistIds((prev) => [...prev, propertyId]);
         }
       }
@@ -655,7 +662,7 @@ function SearchContent() {
 
   return (
     <div className="nb-search-page bg-light" style={{ minHeight: '100vh', paddingTop: '5.5rem' }}>
-      
+
       {/* Breadcrumbs and summary header */}
       <div className="container py-3">
         <nav aria-label="breadcrumb">
@@ -683,7 +690,7 @@ function SearchContent() {
 
       <div className="container pb-5">
         <div className="row g-4">
-          
+
           {/* Left Column Filters Sidebar */}
           <aside className="col-lg-3">
             {/* Applied filters widget */}
@@ -765,46 +772,46 @@ function SearchContent() {
 
           {/* Right Column: Search Results List */}
           <div className="col-lg-9">
-            
+
             {/* Top horizontal filter pills */}
             <div className="nb-search-horizontal-filters">
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className={`nb-search-filter-pill ${activeQuickFilters.includes('new_launch') ? 'active' : ''}`}
                 onClick={() => toggleQuickFilter('new_launch')}
               >
                 ★ NEW LAUNCH
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className={`nb-search-filter-pill ${activeQuickFilters.includes('owner') ? 'active' : ''}`}
                 onClick={() => toggleQuickFilter('owner')}
               >
                 Owner
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className={`nb-search-filter-pill ${activeQuickFilters.includes('verified') ? 'active' : ''}`}
                 onClick={() => toggleQuickFilter('verified')}
               >
                 Verified
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className={`nb-search-filter-pill ${activeQuickFilters.includes('under_const') ? 'active' : ''}`}
                 onClick={() => toggleQuickFilter('under_const')}
               >
                 Under Construction
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className={`nb-search-filter-pill ${activeQuickFilters.includes('ready_move') ? 'active' : ''}`}
                 onClick={() => toggleQuickFilter('ready_move')}
               >
                 Ready To Move
               </button>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className={`nb-search-filter-pill ${activeQuickFilters.includes('video') ? 'active' : ''}`}
                 onClick={() => toggleQuickFilter('video')}
               >
@@ -882,9 +889,9 @@ function SearchContent() {
                             <div className="nb-search-list-card__img-wrap">
                               <Link href={`/property/${p.slug}`} className="nb-search-list-card__img-link">
                                 {thumbnail ? (
-                                  <img 
-                                    src={thumbnail} 
-                                    alt={p.title} 
+                                  <img
+                                    src={thumbnail}
+                                    alt={p.title}
                                   />
                                 ) : (
                                   <div className="nb-search-list-card__img-placeholder bg-light text-muted d-flex flex-column align-items-center justify-content-center">
@@ -892,7 +899,7 @@ function SearchContent() {
                                   </div>
                                 )}
                               </Link>
-                              
+
                               <div className="nb-search-list-card__shade" />
                               <span className="nb-search-list-card__img-tag text-uppercase">
                                 {p.listing_type === 'rent' ? 'For Rent' : 'For Sale'}
@@ -913,8 +920,8 @@ function SearchContent() {
                                 {formatPrice(p)}
                               </div>
 
-                              <button 
-                                type="button" 
+                              <button
+                                type="button"
                                 className="nb-search-list-card__wishlist-btn"
                                 onClick={(e) => handleWishlistToggle(p.id, e)}
                                 title="Add to wishlist"
@@ -1046,11 +1053,11 @@ function SearchContent() {
 
         </div>
       </div>
-      
+
       {/* Mobile filter drawer trigger button (sticky bottom) */}
       <div className="d-lg-none position-fixed bottom-0 start-50 translate-middle-x mb-3" style={{ zIndex: 1000 }}>
-        <button 
-          type="button" 
+        <button
+          type="button"
           className="btn btn-dark d-flex align-items-center gap-2 px-4 py-2.5 rounded-pill shadow-lg border-2 border-white text-white fw-bold"
           onClick={() => setShowMobileFilters(true)}
         >
@@ -1068,8 +1075,8 @@ function SearchContent() {
                 <Filter size={16} />
                 <span>Filters &amp; Sort</span>
               </h3>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="btn btn-light rounded-circle p-1 d-flex"
                 onClick={() => setShowMobileFilters(false)}
               >

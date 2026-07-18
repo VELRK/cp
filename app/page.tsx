@@ -12,6 +12,7 @@ import {
 } from '@/lib/frontendApi';
 import { toFrontendAssetUrl } from '@/lib/cityImages';
 import { buildSearchUrlParams } from '@/lib/searchFilters';
+import confetti from 'canvas-confetti';
 import { usePropertyTypeFilters } from '@/hooks/usePropertyTypeFilters';
 import { useAuth } from '@/hooks/useAuth';
 import ResearchTools from '@/components/common/ResearchTools';
@@ -33,6 +34,7 @@ import WhyChooseUs from '../components/home/WhyChooseUs';
 import PromoSection from '../components/home/PromoSection';
 import BlogsSection from '../components/home/BlogsSection';
 import SidebarConsole from '../components/home/SidebarConsole';
+import RecommendedSellers from '../components/home/RecommendedSellers';
 
 interface City {
   id: number;
@@ -412,11 +414,19 @@ export default function Home() {
         userId: user.id,
       });
       if (response.data?.success) {
-        setWishlistedIds((prev) =>
-          prev.includes(propertyId)
-            ? prev.filter((id) => id !== propertyId)
-            : [...prev, propertyId]
-        );
+        setWishlistedIds((prev) => {
+          const isWishlisted = prev.includes(propertyId);
+          if (!isWishlisted) {
+            confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: { y: 0.6 },
+              colors: ['#ef4444', '#f87171', '#fca5a5', '#0b2c56', '#f2b203']
+            });
+            return [...prev, propertyId];
+          }
+          return prev.filter((id) => id !== propertyId);
+        });
       }
     } catch (error) {
       console.error('Error toggling wishlist:', error);
@@ -550,6 +560,9 @@ export default function Home() {
               formatPrice={formatPrice}
               getPropertyTypeLabel={getPropertyTypeLabel}
             />
+
+            {/* Recommended Sellers Carousel */}
+            <RecommendedSellers properties={[...recommended, ...newlyLaunched, ...verified, ...featured]} />
 
             <NewlyLaunchedProjects
               items={newlyLaunched}

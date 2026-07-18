@@ -304,8 +304,12 @@ export default function ResearchTools() {
     <div className="nb-research-section fade-in-up">
       <div className="nb-research-header d-flex justify-content-between align-items-end">
         <div>
-          <h2 className="nb-research-title">User property research tools</h2>
-          <p className="nb-research-subtitle m-0">Calculate your borrowing power and understand your financial options</p>
+          <h2 className="nb-research-title" style={{ fontFamily: '"Playfair Display", "Georgia", serif', color: '#1a1a1a', letterSpacing: '0.5px', fontWeight: 'bold' }}>
+            User Property Research Tools
+          </h2>
+          <p className="nb-research-subtitle m-0" style={{ fontFamily: '"Lora", "Georgia", serif', color: '#4a4a4a', fontSize: '1.1rem', fontStyle: 'italic' }}>
+            Calculate your borrowing power and understand your financial options
+          </p>
         </div>
         <div className="d-flex gap-2">
           {/* Scroll Arrows */}
@@ -322,943 +326,934 @@ export default function ResearchTools() {
       <div className="nb-research-carousel-wrapper">
         <div className="nb-research-carousel" ref={carouselRef}>
           {/* Card 1: EMI Calculator */}
+
+          {/* Card 1: EMI Calculator */}
           <div
-            className={`nb-research-card ${activeTab === 'emi' ? 'active' : ''}`}
+            className={`nb-research-card border-0 rounded-4 p-4 transition-all ${activeTab === 'emi' ? 'active shadow' : 'shadow-sm'}`}
+            style={{
+              cursor: 'pointer',
+              backgroundColor: activeTab === 'emi' ? '#ffffff' : '#f8fafc',
+              transform: activeTab === 'emi' ? 'translateY(-5px)' : 'none',
+              border: activeTab === 'emi' ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+              flexShrink: 0
+            }}
             onClick={() => handleCardClick('emi')}
           >
-            <div className="nb-research-card-content">
-              <h3 className="nb-research-card-title">EMI Calculator</h3>
-              <p className="nb-research-card-desc">Find your monthly EMI</p>
-            </div>
-            <div className="nb-research-card-graphic">
-              <div className="nb-research-card-bg-circle" />
-              <svg width="100" height="90" viewBox="0 0 100 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* House */}
-                <path d="M55 45L78 28L101 45V78H55V45Z" fill="#F59E0B" fillOpacity="0.8" />
-                <rect x="71" y="58" width="14" height="20" fill="#B45309" />
-                {/* Phone */}
-                <rect x="15" y="10" width="34" height="68" rx="6" fill="#78350F" />
-                <rect x="18" y="15" width="28" height="52" fill="#FBBF24" />
-                <rect x="23" y="22" width="18" height="6" rx="1" fill="#78350F" />
-                <rect x="23" y="32" width="18" height="3" rx="0.5" fill="#78350F" />
-                <rect x="23" y="38" width="18" height="3" rx="0.5" fill="#78350F" />
-                <rect x="23" y="44" width="10" height="3" rx="0.5" fill="#78350F" />
-                <circle cx="32" cy="72" r="2.5" fill="#FFFFFF" />
-              </svg>
-            </div>
-            <div className="nb-research-card-arrow">
-              <ArrowRight size={14} />
+            <div className="d-flex flex-column h-100 justify-content-between position-relative z-1">
+              <div className="mb-4">
+                <h3 className="fw-bolder fs-5 text-dark mb-1">EMI Calculator</h3>
+                <p className="small text-secondary m-0" style={{ fontWeight: 500 }}>Find your monthly EMI</p>
+              </div>
+              <div className="d-flex justify-content-between align-items-end">
+                <div className="position-relative" style={{ width: '80px', height: '80px' }}>
+                  <div style={{ position: 'absolute', inset: -15, background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)', borderRadius: '50%' }} />
+                  <svg width="80" height="72" viewBox="0 0 100 90" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'relative', zIndex: 2, transform: 'translateY(8px)' }}>
+                    <path d="M55 45L78 28L101 45V78H55V45Z" fill="#3b82f6" fillOpacity="0.8" />
+                    <rect x="71" y="58" width="14" height="20" fill="#1e3a8a" />
+                    <rect x="15" y="10" width="34" height="68" rx="6" fill="#0f172a" />
+                    <rect x="18" y="15" width="28" height="52" fill="#60a5fa" />
+                    <rect x="23" y="22" width="18" height="6" rx="1" fill="#0f172a" />
+                    <rect x="23" y="32" width="18" height="3" rx="0.5" fill="#0f172a" />
+                    <rect x="23" y="38" width="18" height="3" rx="0.5" fill="#0f172a" />
+                    <rect x="23" y="44" width="10" height="3" rx="0.5" fill="#0f172a" />
+                    <circle cx="32" cy="72" r="2.5" fill="#FFFFFF" />
+                  </svg>
+                </div>
+                <div className={`rounded-circle p-2 d-flex align-items-center justify-content-center transition-all ${activeTab === 'emi' ? 'text-white shadow-sm' : 'bg-white text-secondary border'}`} style={{ width: '36px', height: '36px', backgroundColor: activeTab === 'emi' ? '#3b82f6' : '#fff' }}>
+                  <ArrowRight size={16} />
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Card 2: Eligibility Calculator */}
           <div
-            className={`nb-research-card ${activeTab === 'eligibility' ? 'active' : ''}`}
+            className={`nb-research-card border-0 rounded-4 p-4 transition-all ${activeTab === 'eligibility' ? 'active shadow' : 'shadow-sm'}`}
+            style={{
+              cursor: 'pointer',
+              backgroundColor: activeTab === 'eligibility' ? '#ffffff' : '#f8fafc',
+              transform: activeTab === 'eligibility' ? 'translateY(-5px)' : 'none',
+              border: activeTab === 'eligibility' ? '2px solid #10b981' : '1px solid #e2e8f0',
+              flexShrink: 0
+            }}
             onClick={() => handleCardClick('eligibility')}
           >
-            <div className="nb-research-card-content">
-              <h3 className="nb-research-card-title">Eligibility Calculator</h3>
-              <p className="nb-research-card-desc">Find your home loan limit</p>
-            </div>
-            <div className="nb-research-card-graphic">
-              <div className="nb-research-card-bg-circle" />
-              <svg width="100" height="90" viewBox="0 0 100 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* House */}
-                <path d="M55 48L75 32L95 48V78H55V48Z" fill="#F59E0B" fillOpacity="0.8" />
-                <rect x="68" y="58" width="12" height="20" fill="#B45309" />
-                {/* Clipboard */}
-                <rect x="18" y="12" width="32" height="62" rx="4" fill="#E2E8F0" stroke="#78350F" strokeWidth="2" />
-                <rect x="26" y="8" width="16" height="8" rx="2" fill="#78350F" />
-                {/* Checks */}
-                <path d="M24 28L28 32L36 24" stroke="#D97706" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M24 44L28 48L36 40" stroke="#D97706" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M24 60L28 64L36 56" stroke="#D97706" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
-            <div className="nb-research-card-arrow">
-              <ArrowRight size={14} />
+            <div className="d-flex flex-column h-100 justify-content-between position-relative z-1">
+              <div className="mb-4">
+                <h3 className="fw-bolder fs-5 text-dark mb-1">Eligibility Calculator</h3>
+                <p className="small text-secondary m-0" style={{ fontWeight: 500 }}>Find your home loan limit</p>
+              </div>
+              <div className="d-flex justify-content-between align-items-end">
+                <div className="position-relative" style={{ width: '80px', height: '80px' }}>
+                  <div style={{ position: 'absolute', inset: -15, background: 'radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%)', borderRadius: '50%' }} />
+                  <svg width="80" height="72" viewBox="0 0 100 90" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'relative', zIndex: 2, transform: 'translateY(8px)' }}>
+                    <path d="M55 48L75 32L95 48V78H55V48Z" fill="#10b981" fillOpacity="0.8" />
+                    <rect x="68" y="58" width="12" height="20" fill="#064e3b" />
+                    <rect x="18" y="12" width="32" height="62" rx="4" fill="#f1f5f9" stroke="#0f172a" strokeWidth="2" />
+                    <rect x="26" y="8" width="16" height="8" rx="2" fill="#0f172a" />
+                    <path d="M24 28L28 32L36 24" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M24 44L28 48L36 40" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M24 60L28 64L36 56" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <div className={`rounded-circle p-2 d-flex align-items-center justify-content-center transition-all ${activeTab === 'eligibility' ? 'text-white shadow-sm' : 'bg-white text-secondary border'}`} style={{ width: '36px', height: '36px', backgroundColor: activeTab === 'eligibility' ? '#10b981' : '#fff' }}>
+                  <ArrowRight size={16} />
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Card 3: Affordability Calculator */}
           <div
-            className={`nb-research-card ${activeTab === 'affordability' ? 'active' : ''}`}
+            className={`nb-research-card border-0 rounded-4 p-4 transition-all ${activeTab === 'affordability' ? 'active shadow' : 'shadow-sm'}`}
+            style={{
+              cursor: 'pointer',
+              backgroundColor: activeTab === 'affordability' ? '#ffffff' : '#f8fafc',
+              transform: activeTab === 'affordability' ? 'translateY(-5px)' : 'none',
+              border: activeTab === 'affordability' ? '2px solid #8b5cf6' : '1px solid #e2e8f0',
+              flexShrink: 0
+            }}
             onClick={() => handleCardClick('affordability')}
           >
-            <div className="nb-research-card-content">
-              <h3 className="nb-research-card-title">Affordability Calculator</h3>
-              <p className="nb-research-card-desc">Find the best budget for your home search</p>
-            </div>
-            <div className="nb-research-card-graphic">
-              <div className="nb-research-card-bg-circle" />
-              <svg width="100" height="90" viewBox="0 0 100 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* Pie chart/circle */}
-                <circle cx="70" cy="36" r="20" fill="#FDE68A" />
-                <path d="M70 36L70 16A20 20 0 0 1 90 36Z" fill="#F59E0B" />
-                {/* Wallet */}
-                <rect x="15" y="32" width="55" height="42" rx="6" fill="#78350F" />
-                <rect x="42" y="44" width="28" height="18" rx="3" fill="#B45309" />
-                <circle cx="49" cy="53" r="2.5" fill="#FBBF24" />
-                {/* Gold coins */}
-                <ellipse cx="28" cy="28" rx="8" ry="4" fill="#FBBF24" stroke="#78350F" strokeWidth="1.5" />
-                <ellipse cx="36" cy="22" rx="8" ry="4" fill="#FBBF24" stroke="#78350F" strokeWidth="1.5" />
-              </svg>
-            </div>
-            <div className="nb-research-card-arrow">
-              <ArrowRight size={14} />
-            </div>
-          </div>
-
-          {/* Card 4: Area Calculator */}
-          <div
-            className={`nb-research-card ${activeTab === 'area' ? 'active' : ''}`}
-            onClick={() => handleCardClick('area')}
-          >
-            <div className="nb-research-card-content">
-              <h3 className="nb-research-card-title">Area Calculator</h3>
-              <p className="nb-research-card-desc">Calculator for land area conversion</p>
-            </div>
-            <div className="nb-research-card-graphic">
-              <div className="nb-research-card-bg-circle" />
-              <svg width="100" height="90" viewBox="0 0 100 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* House */}
-                <path d="M58 48L76 32L94 48V78H58V48Z" fill="#F59E0B" fillOpacity="0.8" />
-                {/* Calculator */}
-                <rect x="15" y="18" width="36" height="56" rx="4" fill="#D97706" />
-                <rect x="19" y="22" width="28" height="14" fill="#FDE68A" />
-                {/* Screen digits */}
-                <text x="31" y="31" fill="#78350F" fontSize="9" fontWeight="bold" fontFamily="monospace">256</text>
-                {/* Keys */}
-                <rect x="19" y="42" width="6" height="5" rx="1" fill="#78350F" />
-                <rect x="29" y="42" width="6" height="5" rx="1" fill="#78350F" />
-                <rect x="39" y="42" width="6" height="5" rx="1" fill="#78350F" />
-                <rect x="19" y="52" width="6" height="5" rx="1" fill="#78350F" />
-                <rect x="29" y="52" width="6" height="5" rx="1" fill="#78350F" />
-                <rect x="39" y="52" width="6" height="5" rx="1" fill="#78350F" />
-                <rect x="19" y="62" width="6" height="5" rx="1" fill="#78350F" />
-                <rect x="29" y="62" width="16" height="5" rx="1" fill="#78350F" />
-              </svg>
-            </div>
-            <div className="nb-research-card-arrow">
-              <ArrowRight size={14} />
+            <div className="d-flex flex-column h-100 justify-content-between position-relative z-1">
+              <div className="mb-4">
+                <h3 className="fw-bolder fs-5 text-dark mb-1">Affordability</h3>
+                <p className="small text-secondary m-0" style={{ fontWeight: 500 }}>Best budget for home search</p>
+              </div>
+              <div className="d-flex justify-content-between align-items-end">
+                <div className="position-relative" style={{ width: '80px', height: '80px' }}>
+                  <div style={{ position: 'absolute', inset: -15, background: 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%)', borderRadius: '50%' }} />
+                  <svg width="80" height="72" viewBox="0 0 100 90" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'relative', zIndex: 2, transform: 'translateY(8px)' }}>
+                    <circle cx="70" cy="36" r="20" fill="#ddd6fe" />
+                    <path d="M70 36L70 16A20 20 0 0 1 90 36Z" fill="#8b5cf6" />
+                    <rect x="15" y="32" width="55" height="42" rx="6" fill="#0f172a" />
+                    <rect x="42" y="44" width="28" height="18" rx="3" fill="#4c1d95" />
+                    <circle cx="49" cy="53" r="2.5" fill="#a78bfa" />
+                    <ellipse cx="28" cy="28" rx="8" ry="4" fill="#a78bfa" stroke="#0f172a" strokeWidth="1.5" />
+                    <ellipse cx="36" cy="22" rx="8" ry="4" fill="#a78bfa" stroke="#0f172a" strokeWidth="1.5" />
+                  </svg>
+                </div>
+                <div className={`rounded-circle p-2 d-flex align-items-center justify-content-center transition-all ${activeTab === 'affordability' ? 'text-white shadow-sm' : 'bg-white text-secondary border'}`} style={{ width: '36px', height: '36px', backgroundColor: activeTab === 'affordability' ? '#8b5cf6' : '#fff' }}>
+                  <ArrowRight size={16} />
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Card 5: Valuation Calculator */}
           <div
-            className={`nb-research-card ${activeTab === 'valuation' ? 'active' : ''}`}
+            className={`nb-research-card border-0 rounded-4 p-4 transition-all ${activeTab === 'valuation' ? 'active shadow' : 'shadow-sm'}`}
+            style={{
+              cursor: 'pointer',
+              backgroundColor: activeTab === 'valuation' ? '#ffffff' : '#f8fafc',
+              transform: activeTab === 'valuation' ? 'translateY(-5px)' : 'none',
+              border: activeTab === 'valuation' ? '2px solid #6366f1' : '1px solid #e2e8f0',
+              flexShrink: 0
+            }}
             onClick={() => handleCardClick('valuation')}
           >
-            <div className="nb-research-card-content">
-              <h3 className="nb-research-card-title">Valuation Calculator</h3>
-              <p className="nb-research-card-desc">Calculate the value of your property</p>
-            </div>
-            <div className="nb-research-card-graphic">
-              <div className="nb-research-card-bg-circle" />
-              <svg width="100" height="90" viewBox="0 0 100 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* House */}
-                <path d="M50 48L68 32L86 48V76H50V48Z" fill="#F59E0B" fillOpacity="0.8" />
-                {/* Magnifier */}
-                <path d="M12 66L30 48" stroke="#78350F" strokeWidth="6" strokeLinecap="round" />
-                <circle cx="36" cy="38" r="20" fill="#FFFFFF" stroke="#78350F" strokeWidth="4" />
-                <circle cx="36" cy="38" r="16" fill="#FEF3C7" />
-                <text x="31" y="44" fill="#B45309" fontSize="16" fontWeight="bold">₹</text>
-              </svg>
-            </div>
-            <div className="nb-research-card-arrow">
-              <ArrowRight size={14} />
+            <div className="d-flex flex-column h-100 justify-content-between position-relative z-1">
+              <div className="mb-4">
+                <h3 className="fw-bolder fs-5 text-dark mb-1">Valuation Calculator</h3>
+                <p className="small text-secondary m-0" style={{ fontWeight: 500 }}>Calculate property value</p>
+              </div>
+              <div className="d-flex justify-content-between align-items-end">
+                <div className="position-relative" style={{ width: '80px', height: '80px' }}>
+                  <div style={{ position: 'absolute', inset: -15, background: 'radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%)', borderRadius: '50%' }} />
+                  <svg width="80" height="72" viewBox="0 0 100 90" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'relative', zIndex: 2, transform: 'translateY(8px)' }}>
+                    <path d="M50 48L68 32L86 48V76H50V48Z" fill="#6366f1" fillOpacity="0.8" />
+                    <path d="M12 66L30 48" stroke="#0f172a" strokeWidth="6" strokeLinecap="round" />
+                    <circle cx="36" cy="38" r="20" fill="#FFFFFF" stroke="#0f172a" strokeWidth="4" />
+                    <circle cx="36" cy="38" r="16" fill="#e0e7ff" />
+                    <text x="31" y="44" fill="#312e81" fontSize="16" fontWeight="bold">₹</text>
+                  </svg>
+                </div>
+                <div className={`rounded-circle p-2 d-flex align-items-center justify-content-center transition-all ${activeTab === 'valuation' ? 'text-white shadow-sm' : 'bg-white text-secondary border'}`} style={{ width: '36px', height: '36px', backgroundColor: activeTab === 'valuation' ? '#6366f1' : '#fff' }}>
+                  <ArrowRight size={16} />
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Card 6: Rent Value Calculator */}
           <div
-            className={`nb-research-card ${activeTab === 'rent' ? 'active' : ''}`}
+            className={`nb-research-card border-0 rounded-4 p-4 transition-all ${activeTab === 'rent' ? 'active shadow' : 'shadow-sm'}`}
+            style={{
+              cursor: 'pointer',
+              backgroundColor: activeTab === 'rent' ? '#ffffff' : '#f8fafc',
+              transform: activeTab === 'rent' ? 'translateY(-5px)' : 'none',
+              border: activeTab === 'rent' ? '2px solid #ec4899' : '1px solid #e2e8f0',
+              flexShrink: 0
+            }}
             onClick={() => handleCardClick('rent')}
           >
-            <div className="nb-research-card-content">
-              <h3 className="nb-research-card-title">Rent Value Calculator</h3>
-              <p className="nb-research-card-desc">Calculate the right rental value of your property</p>
-            </div>
-            <div className="nb-research-card-graphic">
-              <div className="nb-research-card-bg-circle" />
-              <svg width="100" height="90" viewBox="0 0 100 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* House */}
-                <path d="M55 48L74 32L93 48V78H55V48Z" fill="#F59E0B" fillOpacity="0.8" />
-                {/* Calendar */}
-                <rect x="15" y="18" width="34" height="52" rx="4" fill="#FFFFFF" stroke="#78350F" strokeWidth="2.5" />
-                <rect x="15" y="18" width="34" height="14" fill="#D97706" />
-                {/* Spiral loops */}
-                <circle cx="23" cy="18" r="2.5" fill="#78350F" />
-                <circle cx="41" cy="18" r="2.5" fill="#78350F" />
-                {/* Symbol */}
-                <text x="26" y="52" fill="#78350F" fontSize="16" fontWeight="bold">₹</text>
-              </svg>
-            </div>
-            <div className="nb-research-card-arrow">
-              <ArrowRight size={14} />
+            <div className="d-flex flex-column h-100 justify-content-between position-relative z-1">
+              <div className="mb-4">
+                <h3 className="fw-bolder fs-5 text-dark mb-1">Rent Value Estimator</h3>
+                <p className="small text-secondary m-0" style={{ fontWeight: 500 }}>Calculate right rental value</p>
+              </div>
+              <div className="d-flex justify-content-between align-items-end">
+                <div className="position-relative" style={{ width: '80px', height: '80px' }}>
+                  <div style={{ position: 'absolute', inset: -15, background: 'radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, transparent 70%)', borderRadius: '50%' }} />
+                  <svg width="80" height="72" viewBox="0 0 100 90" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'relative', zIndex: 2, transform: 'translateY(8px)' }}>
+                    <path d="M55 48L74 32L93 48V78H55V48Z" fill="#ec4899" fillOpacity="0.8" />
+                    <rect x="15" y="18" width="34" height="52" rx="4" fill="#FFFFFF" stroke="#0f172a" strokeWidth="2.5" />
+                    <rect x="15" y="18" width="34" height="14" fill="#be185d" />
+                    <circle cx="23" cy="18" r="2.5" fill="#0f172a" />
+                    <circle cx="41" cy="18" r="2.5" fill="#0f172a" />
+                    <text x="26" y="52" fill="#0f172a" fontSize="16" fontWeight="bold">₹</text>
+                  </svg>
+                </div>
+                <div className={`rounded-circle p-2 d-flex align-items-center justify-content-center transition-all ${activeTab === 'rent' ? 'text-white shadow-sm' : 'bg-white text-secondary border'}`} style={{ width: '36px', height: '36px', backgroundColor: activeTab === 'rent' ? '#ec4899' : '#fff' }}>
+                  <ArrowRight size={16} />
+                </div>
+              </div>
             </div>
           </div>
-
         </div>
       </div>
 
       {/* Interactive Console */}
+
       {activeTab && (
-        <div className="nb-calc-console-container" ref={consoleRef}>
-          <div className="nb-calc-console">
-            {/* Breadcrumbs */}
-            <div className="nb-calc-breadcrumbs">
-              <span className="cursor-pointer" onClick={() => setActiveTab(null)}>Home</span>
-              <span className="mx-2">/</span>
-              <span>Home Loans</span>
-              <span className="mx-2">/</span>
-              <span className="text-capitalize">{activeTab} Calculator</span>
+        <div className="nb-calc-console-container mt-5" ref={consoleRef}>
+          <div className="nb-calc-console bg-white rounded-5 p-4 p-md-5 shadow-lg border-0" style={{ position: 'relative', overflow: 'hidden' }}>
+            {/* Subtle background pattern */}
+            <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0.03, pointerEvents: 'none', backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+            
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              {/* Breadcrumbs */}
+              <div className="nb-calc-breadcrumbs mb-4 d-flex align-items-center gap-2 small fw-semibold" style={{ color: '#64748b' }}>
+                <span className="cursor-pointer hover-text-primary transition-all" onClick={() => setActiveTab(null)}>Home</span>
+                <span className="opacity-50">/</span>
+                <span>Home Loans</span>
+                <span className="opacity-50">/</span>
+                <span className="text-capitalize text-dark">{activeTab} Calculator</span>
+              </div>
+
+              {/* Nav Tabs Inside Console for easy switching */}
+              <div className="d-flex flex-wrap gap-2 mb-5 p-2 rounded-4 justify-content-center" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                {[
+                  { id: 'emi', label: 'EMI' },
+                  { id: 'eligibility', label: 'Eligibility' },
+                  { id: 'affordability', label: 'Affordability' },
+                  { id: 'valuation', label: 'Valuation' },
+                  { id: 'rent', label: 'Rent Estimator' }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    className={`btn border-0 rounded-pill fw-bold px-4 py-2 transition-all`}
+                    style={activeTab === tab.id ? { 
+                      backgroundColor: '#ffffff', 
+                      color: '#0f172a',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                      transform: 'translateY(-1px)'
+                    } : {
+                      backgroundColor: 'transparent',
+                      color: '#64748b'
+                    }}
+                    onClick={() => setActiveTab(tab.id)}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* 1. EMI CALCULATOR */}
+              {activeTab === 'emi' && (
+                <div className="row g-5 align-items-center">
+                  <div className="col-lg-7">
+                    <h3 className="mb-4 fw-bolder" style={{ color: '#0f172a', fontSize: '1.75rem' }}>Home Loan EMI Calculator</h3>
+
+                    {/* Select Bank Dropdown */}
+                    <div className="mb-4">
+                      <label className="form-label fw-bold small text-uppercase" style={{ color: '#64748b', letterSpacing: '0.5px' }}>Select Bank (Optional)</label>
+                      <select
+                        className="form-select form-select-lg rounded-3 shadow-sm border-0"
+                        style={{ backgroundColor: '#f1f5f9', color: '#334155' }}
+                        value={selectedBank}
+                        onChange={(e) => handleBankChange(e.target.value)}
+                      >
+                        {bankOptions.map((bank, index) => (
+                          <option key={index} value={bank.name}>
+                            {bank.name} {bank.name !== 'Select Bank (Optional)' ? `(${bank.rate}%)` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Loan Amount Slider */}
+                    <div className="mb-4 p-3 rounded-4" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <label className="m-0 fw-bold" style={{ color: '#334155' }}>Loan Amount (₹)</label>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm text-end fw-bolder border-0 rounded-3"
+                          style={{ width: '120px', backgroundColor: '#e2e8f0', color: '#0f172a' }}
+                          value={`₹${formatIndianNumber(loanAmount)}`}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/[^0-9]/g, '');
+                            if (raw) setLoanAmount(Number(raw));
+                          }}
+                        />
+                      </div>
+                      <input
+                        type="range"
+                        className="w-100"
+                        style={{ accentColor: '#3b82f6' }}
+                        min={100000}
+                        max={50000000}
+                        step={50000}
+                        value={loanAmount}
+                        onChange={(e) => setLoanAmount(Number(e.target.value))}
+                      />
+                      <div className="d-flex justify-content-between mt-1 small fw-semibold text-muted opacity-75">
+                        <span>1L</span>
+                        <span>5Cr</span>
+                      </div>
+                    </div>
+
+                    {/* Tenure Slider */}
+                    <div className="mb-4 p-3 rounded-4" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <label className="m-0 fw-bold" style={{ color: '#334155' }}>Tenure (Years)</label>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm text-end fw-bolder border-0 rounded-3"
+                          style={{ width: '80px', backgroundColor: '#e2e8f0', color: '#0f172a' }}
+                          value={tenure}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/[^0-9]/g, '');
+                            if (raw) setTenure(Number(raw));
+                          }}
+                        />
+                      </div>
+                      <input
+                        type="range"
+                        className="w-100"
+                        style={{ accentColor: '#3b82f6' }}
+                        min={2}
+                        max={30}
+                        value={tenure}
+                        onChange={(e) => setTenure(Number(e.target.value))}
+                      />
+                      <div className="d-flex justify-content-between mt-1 small fw-semibold text-muted opacity-75">
+                        <span>2</span>
+                        <span>30</span>
+                      </div>
+                    </div>
+
+                    {/* Interest Rate Slider */}
+                    <div className="mb-4 p-3 rounded-4" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <label className="m-0 fw-bold" style={{ color: '#334155' }}>Rate of Interest (%)</label>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm text-end fw-bolder border-0 rounded-3"
+                          style={{ width: '80px', backgroundColor: '#e2e8f0', color: '#0f172a' }}
+                          value={interestRate}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/[^0-9.]/g, '');
+                            if (raw) setInterestRate(Number(raw));
+                          }}
+                        />
+                      </div>
+                      <input
+                        type="range"
+                        className="w-100"
+                        style={{ accentColor: '#3b82f6' }}
+                        min={7}
+                        max={15}
+                        step={0.05}
+                        value={interestRate}
+                        onChange={(e) => {
+                          setSelectedBank('Select Bank (Optional)');
+                          setInterestRate(Number(e.target.value));
+                        }}
+                      />
+                      <div className="d-flex justify-content-between mt-1 small fw-semibold text-muted opacity-75">
+                        <span>7%</span>
+                        <span>15%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-lg-5">
+                    <div className="rounded-5 p-4 p-lg-5 text-white h-100 d-flex flex-column justify-content-center position-relative overflow-hidden" 
+                         style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+                      <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', background: 'radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%' }}></div>
+                      
+                      <div className="text-center mb-4 position-relative z-1">
+                        <span className="text-white-50 fw-semibold text-uppercase d-block mb-2" style={{ letterSpacing: '1px', fontSize: '0.85rem' }}>Your EMI Per Month</span>
+                        <h4 className="display-6 fw-bolder text-white mb-0">₹{formatIndianNumber(emi)}</h4>
+                      </div>
+
+                      {/* Dynamic SVGPie Chart */}
+                      <div className="d-flex justify-content-center mb-4 position-relative z-1">
+                        <svg viewBox="0 0 120 120" width="160" height="160" style={{ transform: 'rotate(-90deg)' }}>
+                          {loanPct > 0 && (
+                            <circle cx="60" cy="60" r="50" fill="transparent" stroke="#3b82f6" strokeWidth="15" strokeDasharray={`${loanLen} ${circumference}`} strokeDashoffset={loanOffset} style={{ transition: 'stroke-dasharray 0.5s ease' }} />
+                          )}
+                          {interestPct > 0 && (
+                            <circle cx="60" cy="60" r="50" fill="transparent" stroke="#8b5cf6" strokeWidth="15" strokeDasharray={`${interestLen} ${circumference}`} strokeDashoffset={interestOffset} style={{ transition: 'stroke-dasharray 0.5s ease' }} />
+                          )}
+                          {feePct > 0 && (
+                            <circle cx="60" cy="60" r="50" fill="transparent" stroke="#ec4899" strokeWidth="15" strokeDasharray={`${feeLen} ${circumference}`} strokeDashoffset={feeOffset} style={{ transition: 'stroke-dasharray 0.5s ease' }} />
+                          )}
+                        </svg>
+                      </div>
+
+                      {/* Breakdown */}
+                      <div className="d-flex flex-column gap-3 position-relative z-1">
+                        <div className="d-flex justify-content-between align-items-center p-3 rounded-3" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+                          <div className="d-flex align-items-center gap-2">
+                            <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#8b5cf6' }}></div>
+                            <span className="text-white-50 small fw-semibold">Total Interest</span>
+                          </div>
+                          <span className="fw-bold">₹{formatIndianNumber(totalInterest)}</span>
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center p-3 rounded-3" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+                          <div className="d-flex align-items-center gap-2">
+                            <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#ec4899' }}></div>
+                            <span className="text-white-50 small fw-semibold">Processing Fees</span>
+                          </div>
+                          <span className="fw-bold">₹{formatIndianNumber(processingFee)}</span>
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center p-3 rounded-3" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+                          <div className="d-flex align-items-center gap-2">
+                            <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#3b82f6' }}></div>
+                            <span className="text-white-50 small fw-semibold">Loan Amount</span>
+                          </div>
+                          <span className="fw-bold">₹{formatIndianNumber(loanAmount)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 2. ELIGIBILITY CALCULATOR */}
+              {activeTab === 'eligibility' && (
+                <div className="row g-5 align-items-center">
+                  <div className="col-lg-7">
+                    <h3 className="mb-4 fw-bolder" style={{ color: '#0f172a', fontSize: '1.75rem' }}>Eligibility Calculator</h3>
+
+                    <div className="mb-4 p-3 rounded-4" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <label className="m-0 fw-bold" style={{ color: '#334155' }}>Gross Monthly Income (₹)</label>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm text-end fw-bolder border-0 rounded-3"
+                          style={{ width: '120px', backgroundColor: '#e2e8f0', color: '#0f172a' }}
+                          value={`₹${formatIndianNumber(monthlyIncome)}`}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/[^0-9]/g, '');
+                            if (raw) setMonthlyIncome(Number(raw));
+                          }}
+                        />
+                      </div>
+                      <input
+                        type="range"
+                        className="w-100"
+                        style={{ accentColor: '#10b981' }}
+                        min={10000}
+                        max={1000000}
+                        step={5000}
+                        value={monthlyIncome}
+                        onChange={(e) => setMonthlyIncome(Number(e.target.value))}
+                      />
+                      <div className="d-flex justify-content-between mt-1 small fw-semibold text-muted opacity-75">
+                        <span>10K</span>
+                        <span>10L</span>
+                      </div>
+                    </div>
+
+                    <div className="mb-4 p-3 rounded-4" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <label className="m-0 fw-bold" style={{ color: '#334155' }}>Existing EMIs (₹)</label>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm text-end fw-bolder border-0 rounded-3"
+                          style={{ width: '120px', backgroundColor: '#e2e8f0', color: '#0f172a' }}
+                          value={`₹${formatIndianNumber(existingEmi)}`}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/[^0-9]/g, '');
+                            if (raw) setExistingEmi(Number(raw));
+                          }}
+                        />
+                      </div>
+                      <input
+                        type="range"
+                        className="w-100"
+                        style={{ accentColor: '#10b981' }}
+                        min={0}
+                        max={500000}
+                        step={2000}
+                        value={existingEmi}
+                        onChange={(e) => setExistingEmi(Number(e.target.value))}
+                      />
+                      <div className="d-flex justify-content-between mt-1 small fw-semibold text-muted opacity-75">
+                        <span>0</span>
+                        <span>5L</span>
+                      </div>
+                    </div>
+
+                    <div className="row g-3">
+                      <div className="col-md-6">
+                        <div className="p-3 rounded-4 h-100" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                          <label className="mb-2 fw-bold d-block" style={{ color: '#334155' }}>Tenure (Years)</label>
+                          <div className="d-flex align-items-center gap-2">
+                            <input
+                              type="range"
+                              className="w-100"
+                              style={{ accentColor: '#10b981' }}
+                              min={5}
+                              max={30}
+                              value={eligibilityTenure}
+                              onChange={(e) => setEligibilityTenure(Number(e.target.value))}
+                            />
+                            <span className="fw-bolder" style={{ color: '#0f172a' }}>{eligibilityTenure}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="col-md-6">
+                        <div className="p-3 rounded-4 h-100" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                          <label className="mb-2 fw-bold d-block" style={{ color: '#334155' }}>Interest Rate (%)</label>
+                          <div className="d-flex align-items-center gap-2">
+                            <input
+                              type="range"
+                              className="w-100"
+                              style={{ accentColor: '#10b981' }}
+                              min={7}
+                              max={15}
+                              step={0.1}
+                              value={eligibilityRate}
+                              onChange={(e) => setEligibilityRate(Number(e.target.value))}
+                            />
+                            <span className="fw-bolder" style={{ color: '#0f172a' }}>{eligibilityRate}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-lg-5">
+                    <div className="rounded-5 p-4 p-lg-5 text-white h-100 d-flex flex-column justify-content-center position-relative overflow-hidden" 
+                         style={{ background: 'linear-gradient(135deg, #064e3b 0%, #0f172a 100%)', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+                      <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', background: 'radial-gradient(circle, rgba(16, 185, 129, 0.4) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%' }}></div>
+                      
+                      <div className="text-center mb-5 position-relative z-1">
+                        <span className="text-white-50 fw-semibold text-uppercase d-block mb-2" style={{ letterSpacing: '1px', fontSize: '0.85rem' }}>Maximum Loan Eligibility</span>
+                        <h4 className="display-6 fw-bolder text-white mb-0">₹{formatIndianNumber(calculateEligibility().eligibleLoan)}</h4>
+                      </div>
+
+                      <div className="d-flex flex-column gap-3 position-relative z-1">
+                        <div className="p-3 rounded-3" style={{ backgroundColor: 'rgba(255,255,255,0.05)', borderLeft: '4px solid #10b981' }}>
+                          <div className="d-flex justify-content-between mb-1">
+                            <span className="text-white-50 small fw-semibold">Disposable Income (50%)</span>
+                            <span className="fw-bold">₹{formatIndianNumber(monthlyIncome * 0.5)}</span>
+                          </div>
+                          <div className="d-flex justify-content-between mb-1">
+                            <span className="text-white-50 small fw-semibold">Adjusted EMI Capacity</span>
+                            <span className="fw-bold">₹{formatIndianNumber(calculateEligibility().estimatedEmi)}</span>
+                          </div>
+                          <div className="d-flex justify-content-between">
+                            <span className="text-white-50 small fw-semibold">Interest Rate</span>
+                            <span className="fw-bold">{eligibilityRate}%</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 p-3 rounded-3 d-flex gap-2 align-items-start" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)' }}>
+                        <Info size={18} color="#10b981" style={{ flexShrink: 0 }} />
+                        <p className="m-0 small text-white-50 lh-sm">Eligibility estimate assumes bank requirements of 50% fixed obligations ratio. Actual offers vary by client credit score.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 3. AFFORDABILITY CALCULATOR */}
+              {activeTab === 'affordability' && (
+                <div className="row g-5 align-items-center">
+                  <div className="col-lg-7">
+                    <h3 className="mb-4 fw-bolder" style={{ color: '#0f172a', fontSize: '1.75rem' }}>Affordability Calculator</h3>
+
+                    <div className="mb-4 p-3 rounded-4" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <label className="m-0 fw-bold" style={{ color: '#334155' }}>Down Payment Available (₹)</label>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm text-end fw-bolder border-0 rounded-3"
+                          style={{ width: '120px', backgroundColor: '#e2e8f0', color: '#0f172a' }}
+                          value={`₹${formatIndianNumber(downPayment)}`}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/[^0-9]/g, '');
+                            if (raw) setDownPayment(Number(raw));
+                          }}
+                        />
+                      </div>
+                      <input
+                        type="range"
+                        className="w-100"
+                        style={{ accentColor: '#f59e0b' }}
+                        min={100000}
+                        max={20000000}
+                        step={100000}
+                        value={downPayment}
+                        onChange={(e) => setDownPayment(Number(e.target.value))}
+                      />
+                      <div className="d-flex justify-content-between mt-1 small fw-semibold text-muted opacity-75">
+                        <span>1L</span>
+                        <span>2Cr</span>
+                      </div>
+                    </div>
+
+                    <div className="mb-4 p-3 rounded-4" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <label className="m-0 fw-bold" style={{ color: '#334155' }}>Monthly Savings for EMI (₹)</label>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm text-end fw-bolder border-0 rounded-3"
+                          style={{ width: '120px', backgroundColor: '#e2e8f0', color: '#0f172a' }}
+                          value={`₹${formatIndianNumber(monthlySavings)}`}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/[^0-9]/g, '');
+                            if (raw) setMonthlySavings(Number(raw));
+                          }}
+                        />
+                      </div>
+                      <input
+                        type="range"
+                        className="w-100"
+                        style={{ accentColor: '#f59e0b' }}
+                        min={5000}
+                        max={200000}
+                        step={2000}
+                        value={monthlySavings}
+                        onChange={(e) => setMonthlySavings(Number(e.target.value))}
+                      />
+                      <div className="d-flex justify-content-between mt-1 small fw-semibold text-muted opacity-75">
+                        <span>5K</span>
+                        <span>2L</span>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-4" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                      <label className="mb-2 fw-bold d-block" style={{ color: '#334155' }}>Loan Tenure (Years)</label>
+                      <div className="d-flex align-items-center gap-3">
+                        <input
+                          type="range"
+                          className="w-100"
+                          style={{ accentColor: '#f59e0b' }}
+                          min={5}
+                          max={30}
+                          value={affTenure}
+                          onChange={(e) => setAffTenure(Number(e.target.value))}
+                        />
+                        <span className="fw-bolder px-3 py-1 rounded-3" style={{ backgroundColor: '#e2e8f0', color: '#0f172a' }}>{affTenure}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-lg-5">
+                    <div className="rounded-5 p-4 p-lg-5 text-white h-100 d-flex flex-column justify-content-center position-relative overflow-hidden" 
+                         style={{ background: 'linear-gradient(135deg, #78350f 0%, #0f172a 100%)', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+                      <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', background: 'radial-gradient(circle, rgba(245, 158, 11, 0.4) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%' }}></div>
+                      
+                      <div className="text-center mb-5 position-relative z-1">
+                        <span className="text-white-50 fw-semibold text-uppercase d-block mb-2" style={{ letterSpacing: '1px', fontSize: '0.85rem' }}>Affordable Property Budget</span>
+                        <h4 className="display-6 fw-bolder text-white mb-0">₹{formatIndianNumber(calculateAffordability().affordableBudget)}</h4>
+                      </div>
+
+                      <div className="d-flex flex-column gap-3 position-relative z-1">
+                        <div className="p-3 rounded-3" style={{ backgroundColor: 'rgba(255,255,255,0.05)', borderLeft: '4px solid #f59e0b' }}>
+                          <div className="d-flex justify-content-between mb-2">
+                            <span className="text-white-50 small fw-semibold">Down Payment (Own Funds)</span>
+                            <span className="fw-bold">₹{formatIndianNumber(downPayment)}</span>
+                          </div>
+                          <div className="d-flex justify-content-between mb-2">
+                            <span className="text-white-50 small fw-semibold">Loan Capacity</span>
+                            <span className="fw-bold">₹{formatIndianNumber(calculateAffordability().loanRequired)}</span>
+                          </div>
+                          <div className="d-flex justify-content-between">
+                            <span className="text-white-50 small fw-semibold">Allocated Monthly EMI</span>
+                            <span className="fw-bold">₹{formatIndianNumber(monthlySavings)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 5. VALUATION CALCULATOR */}
+              {activeTab === 'valuation' && (
+                <div className="row g-5 align-items-center">
+                  <div className="col-lg-7">
+                    <h3 className="mb-4 fw-bolder" style={{ color: '#0f172a', fontSize: '1.75rem' }}>Property Valuation</h3>
+
+                    {/* Locality select */}
+                    <div className="mb-4">
+                      <label className="form-label fw-bold small text-uppercase" style={{ color: '#64748b', letterSpacing: '0.5px' }}>Select Locality</label>
+                      <select
+                        className="form-select form-select-lg rounded-3 shadow-sm border-0"
+                        style={{ backgroundColor: '#f1f5f9', color: '#334155' }}
+                        value={valuationLocality}
+                        onChange={(e) => setValuationLocality(e.target.value)}
+                      >
+                        <option value="Sitra">Sitra</option>
+                        <option value="Avinashi Road">Avinashi Road</option>
+                        <option value="Saravanampatti">Saravanampatti</option>
+                        <option value="Gandhipuram">Gandhipuram</option>
+                        <option value="Peelamedu">Peelamedu</option>
+                      </select>
+                    </div>
+
+                    {/* Builtup Area */}
+                    <div className="mb-4 p-3 rounded-4" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <label className="m-0 fw-bold" style={{ color: '#334155' }}>Property Area (Sq.Ft)</label>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm text-end fw-bolder border-0 rounded-3"
+                          style={{ width: '80px', backgroundColor: '#e2e8f0', color: '#0f172a' }}
+                          value={valuationArea}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/[^0-9]/g, '');
+                            if (raw) setValuationArea(Number(raw));
+                          }}
+                        />
+                      </div>
+                      <input
+                        type="range"
+                        className="w-100"
+                        style={{ accentColor: '#8b5cf6' }}
+                        min={500}
+                        max={8000}
+                        step={50}
+                        value={valuationArea}
+                        onChange={(e) => setValuationArea(Number(e.target.value))}
+                      />
+                      <div className="d-flex justify-content-between mt-1 small fw-semibold text-muted opacity-75">
+                        <span>500</span>
+                        <span>8000</span>
+                      </div>
+                    </div>
+
+                    {/* Property type & Quality */}
+                    <div className="row g-3">
+                      <div className="col-md-6">
+                        <div className="p-3 rounded-4 h-100" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                          <label className="mb-3 fw-bold d-block" style={{ color: '#334155' }}>Property Type</label>
+                          <div className="d-flex flex-column gap-2">
+                            {[
+                              { id: 'apartment', label: 'Apartment' },
+                              { id: 'villa', label: 'Villa/House' },
+                              { id: 'commercial', label: 'Commercial' }
+                            ].map(type => (
+                              <label key={type.id} className="d-flex align-items-center gap-2 cursor-pointer p-2 rounded-3 transition-all" style={{ backgroundColor: valuationType === type.id ? '#ede9fe' : 'transparent' }}>
+                                <input
+                                  type="radio"
+                                  name="val-type"
+                                  className="form-check-input mt-0"
+                                  style={{ accentColor: '#8b5cf6' }}
+                                  checked={valuationType === type.id}
+                                  onChange={() => setValuationType(type.id)}
+                                />
+                                <span className={`small fw-semibold ${valuationType === type.id ? 'text-primary' : 'text-secondary'}`}>{type.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="col-md-6">
+                        <div className="p-3 rounded-4 h-100" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                          <label className="mb-3 fw-bold d-block" style={{ color: '#334155' }}>Finishing Quality</label>
+                          <div className="d-flex flex-column gap-2">
+                            {[
+                              { id: 'standard', label: 'Standard' },
+                              { id: 'premium', label: 'Premium' },
+                              { id: 'luxury', label: 'Luxury' }
+                            ].map(qual => (
+                              <label key={qual.id} className="d-flex align-items-center gap-2 cursor-pointer p-2 rounded-3 transition-all" style={{ backgroundColor: valuationQuality === qual.id ? '#ede9fe' : 'transparent' }}>
+                                <input
+                                  type="radio"
+                                  name="val-quality"
+                                  className="form-check-input mt-0"
+                                  style={{ accentColor: '#8b5cf6' }}
+                                  checked={valuationQuality === qual.id}
+                                  onChange={() => setValuationQuality(qual.id)}
+                                />
+                                <span className={`small fw-semibold ${valuationQuality === qual.id ? 'text-primary' : 'text-secondary'}`}>{qual.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-lg-5">
+                    <div className="rounded-5 p-4 p-lg-5 text-white h-100 d-flex flex-column justify-content-center position-relative overflow-hidden" 
+                         style={{ background: 'linear-gradient(135deg, #4c1d95 0%, #0f172a 100%)', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+                      <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', background: 'radial-gradient(circle, rgba(139, 92, 246, 0.4) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%' }}></div>
+                      
+                      <div className="text-center mb-5 position-relative z-1">
+                        <span className="text-white-50 fw-semibold text-uppercase d-block mb-2" style={{ letterSpacing: '1px', fontSize: '0.85rem' }}>Estimated Property Value</span>
+                        <h4 className="display-6 fw-bolder text-white mb-0">₹{formatIndianNumber(calculateValuation().valuation)}</h4>
+                      </div>
+
+                      <div className="d-flex flex-column gap-3 position-relative z-1">
+                        <div className="p-3 rounded-3" style={{ backgroundColor: 'rgba(255,255,255,0.05)', borderLeft: '4px solid #8b5cf6' }}>
+                          <div className="d-flex justify-content-between mb-2">
+                            <span className="text-white-50 small fw-semibold">Base Rate (Locality)</span>
+                            <span className="fw-bold">₹{formatIndianNumber(calculateValuation().rate)} / Sq.Ft</span>
+                          </div>
+                          <div className="d-flex justify-content-between mb-2">
+                            <span className="text-white-50 small fw-semibold">Total Area</span>
+                            <span className="fw-bold">{valuationArea} Sq.Ft</span>
+                          </div>
+                          <div className="d-flex justify-content-between">
+                            <span className="text-white-50 small fw-semibold">Property Type</span>
+                            <span className="fw-bold text-capitalize">{valuationType}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 6. RENT ESTIMATOR */}
+              {activeTab === 'rent' && (
+                <div className="row g-5 align-items-center">
+                  <div className="col-lg-7">
+                    <h3 className="mb-4 fw-bolder" style={{ color: '#0f172a', fontSize: '1.75rem' }}>Rent Estimator</h3>
+
+                    <div className="row g-4 mb-4">
+                      {/* Locality select */}
+                      <div className="col-md-6">
+                        <label className="form-label fw-bold small text-uppercase" style={{ color: '#64748b', letterSpacing: '0.5px' }}>Select Locality</label>
+                        <select
+                          className="form-select form-select-lg rounded-3 shadow-sm border-0"
+                          style={{ backgroundColor: '#f1f5f9', color: '#334155' }}
+                          value={rentLocality}
+                          onChange={(e) => setRentLocality(e.target.value)}
+                        >
+                          <option value="Sitra">Sitra</option>
+                          <option value="Avinashi Road">Avinashi Road</option>
+                          <option value="Saravanampatti">Saravanampatti</option>
+                          <option value="Gandhipuram">Gandhipuram</option>
+                          <option value="Peelamedu">Peelamedu</option>
+                        </select>
+                      </div>
+                      
+                      {/* Bedrooms select */}
+                      <div className="col-md-6">
+                        <label className="form-label fw-bold small text-uppercase" style={{ color: '#64748b', letterSpacing: '0.5px' }}>Bedrooms (BHK)</label>
+                        <select
+                          className="form-select form-select-lg rounded-3 shadow-sm border-0"
+                          style={{ backgroundColor: '#f1f5f9', color: '#334155' }}
+                          value={rentBhk}
+                          onChange={(e) => setRentBhk(Number(e.target.value))}
+                        >
+                          <option value="1">1 BHK</option>
+                          <option value="2">2 BHK</option>
+                          <option value="3">3 BHK</option>
+                          <option value="4">4+ BHK</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Property Area */}
+                    <div className="mb-4 p-3 rounded-4" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <label className="m-0 fw-bold" style={{ color: '#334155' }}>Property Area (Sq.Ft)</label>
+                        <input
+                          type="text"
+                          className="form-control form-control-sm text-end fw-bolder border-0 rounded-3"
+                          style={{ width: '80px', backgroundColor: '#e2e8f0', color: '#0f172a' }}
+                          value={rentArea}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/[^0-9]/g, '');
+                            if (raw) setRentArea(Number(raw));
+                          }}
+                        />
+                      </div>
+                      <input
+                        type="range"
+                        className="w-100"
+                        style={{ accentColor: '#ec4899' }}
+                        min={400}
+                        max={5000}
+                        step={50}
+                        value={rentArea}
+                        onChange={(e) => setRentArea(Number(e.target.value))}
+                      />
+                      <div className="d-flex justify-content-between mt-1 small fw-semibold text-muted opacity-75">
+                        <span>400</span>
+                        <span>5000</span>
+                      </div>
+                    </div>
+
+                    {/* Furnishing select */}
+                    <div className="p-3 rounded-4" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                      <label className="mb-3 fw-bold d-block" style={{ color: '#334155' }}>Furnishing Status</label>
+                      <div className="d-flex flex-wrap gap-3">
+                        {[
+                          { id: 'unfurnished', label: 'Unfurnished' },
+                          { id: 'semi', label: 'Semi-Furnished' },
+                          { id: 'fully', label: 'Fully Furnished' }
+                        ].map(furnish => (
+                          <label key={furnish.id} className="d-flex align-items-center gap-2 cursor-pointer p-2 px-3 rounded-pill transition-all" style={{ backgroundColor: rentFurnishing === furnish.id ? '#fce7f3' : '#f1f5f9' }}>
+                            <input
+                              type="radio"
+                              name="rent-furnishing"
+                              className="form-check-input mt-0"
+                              style={{ accentColor: '#ec4899' }}
+                              checked={rentFurnishing === furnish.id}
+                              onChange={() => setRentFurnishing(furnish.id)}
+                            />
+                            <span className={`small fw-bold ${rentFurnishing === furnish.id ? 'text-pink-600' : 'text-secondary'}`} style={rentFurnishing === furnish.id ? { color: '#db2777' } : {}}>{furnish.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-lg-5">
+                    <div className="rounded-5 p-4 p-lg-5 text-white h-100 d-flex flex-column justify-content-center position-relative overflow-hidden" 
+                         style={{ background: 'linear-gradient(135deg, #831843 0%, #0f172a 100%)', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)' }}>
+                      <div style={{ position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', background: 'radial-gradient(circle, rgba(236, 72, 153, 0.4) 0%, rgba(0,0,0,0) 70%)', borderRadius: '50%' }}></div>
+                      
+                      <div className="text-center mb-5 position-relative z-1">
+                        <span className="text-white-50 fw-semibold text-uppercase d-block mb-2" style={{ letterSpacing: '1px', fontSize: '0.85rem' }}>Estimated Monthly Rental</span>
+                        <h4 className="display-6 fw-bolder text-white mb-0">₹{formatIndianNumber(calculateRent().rent)} <span className="fs-5 opacity-75 fw-normal">/ mo</span></h4>
+                      </div>
+
+                      <div className="d-flex flex-column gap-3 position-relative z-1">
+                        <div className="p-3 rounded-3" style={{ backgroundColor: 'rgba(255,255,255,0.05)', borderLeft: '4px solid #ec4899' }}>
+                          <div className="d-flex justify-content-between mb-2">
+                            <span className="text-white-50 small fw-semibold">Locality Rate Factor</span>
+                            <span className="fw-bold">₹{calculateRent().rate} / Sq.Ft</span>
+                          </div>
+                          <div className="d-flex justify-content-between mb-2">
+                            <span className="text-white-50 small fw-semibold">BHK</span>
+                            <span className="fw-bold">{rentBhk} BHK</span>
+                          </div>
+                          <div className="d-flex justify-content-between">
+                            <span className="text-white-50 small fw-semibold">Furnishing</span>
+                            <span className="fw-bold text-capitalize">{rentFurnishing.replace('-', ' ')}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-
-            {/* Nav Tabs Inside Console for easy switching */}
-            <div className="d-flex flex-wrap gap-2 mb-4 pb-3 border-bottom">
-              {[
-                { id: 'emi', label: 'EMI Calculator' },
-                { id: 'eligibility', label: 'Eligibility Calculator' },
-                { id: 'affordability', label: 'Affordability Calculator' },
-                { id: 'area', label: 'Area Calculator' },
-                { id: 'valuation', label: 'Valuation Calculator' },
-                { id: 'rent', label: 'Rent Estimator' }
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  className={`btn btn-sm px-3 rounded-pill fw-semibold border ${
-                    activeTab === tab.id
-                      ? 'btn-primary bg-primary text-white border-primary shadow-sm'
-                      : 'btn-light text-secondary border-light'
-                  }`}
-                  onClick={() => setActiveTab(tab.id)}
-                  style={activeTab === tab.id ? { backgroundColor: '#7c3aed', borderColor: '#7c3aed' } : {}}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {/* 1. EMI CALCULATOR */}
-            {activeTab === 'emi' && (
-              <div className="row g-5">
-                <div className="col-lg-7">
-                  <h3 className="nb-calc-title">Home Loan EMI Calculator</h3>
-
-                  {/* Select Bank Dropdown */}
-                  <div className="nb-calc-input-group">
-                    <label className="nb-calc-label">Select Bank (Optional)</label>
-                    <select
-                      className="nb-calc-select"
-                      value={selectedBank}
-                      onChange={(e) => handleBankChange(e.target.value)}
-                    >
-                      {bankOptions.map((bank, index) => (
-                        <option key={index} value={bank.name}>
-                          {bank.name} {bank.name !== 'Select Bank (Optional)' ? `(${bank.rate}%)` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Loan Amount Slider */}
-                  <div className="nb-calc-input-group">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                      <label className="nb-calc-label m-0">Loan Amount (₹)</label>
-                      <span className="fw-semibold text-secondary small">₹{formatIndianNumber(loanAmount)}</span>
-                    </div>
-                    <input
-                      type="range"
-                      className="nb-calc-slider"
-                      min={100000}
-                      max={50000000}
-                      step={50000}
-                      value={loanAmount}
-                      onChange={(e) => setLoanAmount(Number(e.target.value))}
-                    />
-                    <div className="nb-calc-slider-limits">
-                      <span>1L</span>
-                      <span>5Cr</span>
-                    </div>
-                    <input
-                      type="text"
-                      className="nb-calc-value-display"
-                      value={`₹${formatIndianNumber(loanAmount)}`}
-                      onChange={(e) => {
-                        const raw = e.target.value.replace(/[^0-9]/g, '');
-                        if (raw) setLoanAmount(Number(raw));
-                      }}
-                    />
-                  </div>
-
-                  {/* Tenure Slider */}
-                  <div className="nb-calc-input-group">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                      <label className="nb-calc-label m-0">Tenure (Years)</label>
-                      <span className="fw-semibold text-secondary small">{tenure} Years</span>
-                    </div>
-                    <input
-                      type="range"
-                      className="nb-calc-slider"
-                      min={2}
-                      max={30}
-                      value={tenure}
-                      onChange={(e) => setTenure(Number(e.target.value))}
-                    />
-                    <div className="nb-calc-slider-limits">
-                      <span>2</span>
-                      <span>30</span>
-                    </div>
-                    <input
-                      type="text"
-                      className="nb-calc-value-display"
-                      value={tenure}
-                      onChange={(e) => {
-                        const raw = e.target.value.replace(/[^0-9]/g, '');
-                        if (raw) setTenure(Number(raw));
-                      }}
-                    />
-                  </div>
-
-                  {/* Interest Rate Slider */}
-                  <div className="nb-calc-input-group">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                      <label className="nb-calc-label m-0">Rate of Interest (%)</label>
-                      <span className="fw-semibold text-secondary small">{interestRate}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      className="nb-calc-slider"
-                      min={7}
-                      max={15}
-                      step={0.05}
-                      value={interestRate}
-                      onChange={(e) => {
-                        setSelectedBank('Select Bank (Optional)');
-                        setInterestRate(Number(e.target.value));
-                      }}
-                    />
-                    <div className="nb-calc-slider-limits">
-                      <span>7%</span>
-                      <span>15%</span>
-                    </div>
-                    <input
-                      type="text"
-                      className="nb-calc-value-display"
-                      value={interestRate}
-                      onChange={(e) => {
-                        const raw = e.target.value.replace(/[^0-9.]/g, '');
-                        if (raw) setInterestRate(Number(raw));
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div className="col-lg-5">
-                  <div className="nb-calc-result-panel">
-                    <span className="nb-calc-emi-heading">Your EMI Per Month</span>
-                    <h4 className="nb-calc-emi-value" style={{ color: '#7c3aed' }}>₹{formatIndianNumber(emi)}</h4>
-
-                    {/* Dynamic SVGPie Chart */}
-                    <div className="nb-calc-chart-container">
-                      <svg viewBox="0 0 120 120" className="nb-calc-pie-chart-svg">
-                        {/* Slice 1: Loan Amount */}
-                        {loanPct > 0 && (
-                          <circle
-                            cx="60"
-                            cy="60"
-                            r="50"
-                            className="nb-calc-pie-slice"
-                            stroke="#312e81" // Dark Navy / Dark Indigo
-                            strokeDasharray={`${loanLen} ${circumference}`}
-                            strokeDashoffset={loanOffset}
-                          />
-                        )}
-                        {/* Slice 2: Total Interest */}
-                        {interestPct > 0 && (
-                          <circle
-                            cx="60"
-                            cy="60"
-                            r="50"
-                            className="nb-calc-pie-slice"
-                            stroke="#7c3aed" // Violet/Purple
-                            strokeDasharray={`${interestLen} ${circumference}`}
-                            strokeDashoffset={interestOffset}
-                          />
-                        )}
-                        {/* Slice 3: Processing Fees */}
-                        {feePct > 0 && (
-                          <circle
-                            cx="60"
-                            cy="60"
-                            r="50"
-                            className="nb-calc-pie-slice"
-                            stroke="#ec4899" // Pink
-                            strokeDasharray={`${feeLen} ${circumference}`}
-                            strokeDashoffset={feeOffset}
-                          />
-                        )}
-                      </svg>
-                    </div>
-
-                    {/* Breakdown */}
-                    <div className="nb-calc-breakdown-list">
-                      <div className="nb-calc-breakdown-item">
-                        <span className="nb-calc-legend-label">
-                          <span className="nb-calc-legend-dot" style={{ backgroundColor: '#7c3aed' }} />
-                          Total Interest
-                        </span>
-                        <span className="nb-calc-legend-val">₹{formatIndianNumber(totalInterest)}</span>
-                      </div>
-                      <div className="nb-calc-breakdown-item">
-                        <span className="nb-calc-legend-label">
-                          <span className="nb-calc-legend-dot" style={{ backgroundColor: '#ec4899' }} />
-                          Processing Fees
-                        </span>
-                        <span className="nb-calc-legend-val">₹{formatIndianNumber(processingFee)}</span>
-                      </div>
-                      <div className="nb-calc-breakdown-item">
-                        <span className="nb-calc-legend-label">
-                          <span className="nb-calc-legend-dot" style={{ backgroundColor: '#312e81' }} />
-                          Loan Amount
-                        </span>
-                        <span className="nb-calc-legend-val">₹{formatIndianNumber(loanAmount)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 2. ELIGIBILITY CALCULATOR */}
-            {activeTab === 'eligibility' && (
-              <div className="row g-5">
-                <div className="col-lg-7">
-                  <h3 className="nb-calc-title">Home Loan Eligibility Calculator</h3>
-
-                  {/* Monthly Income */}
-                  <div className="nb-calc-input-group">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                      <label className="nb-calc-label m-0">Gross Monthly Income (₹)</label>
-                      <span className="fw-semibold text-secondary small">₹{formatIndianNumber(monthlyIncome)}</span>
-                    </div>
-                    <input
-                      type="range"
-                      className="nb-calc-slider"
-                      min={10000}
-                      max={1000000}
-                      step={5000}
-                      value={monthlyIncome}
-                      onChange={(e) => setMonthlyIncome(Number(e.target.value))}
-                    />
-                    <div className="nb-calc-slider-limits">
-                      <span>10K</span>
-                      <span>10L</span>
-                    </div>
-                    <input
-                      type="text"
-                      className="nb-calc-value-display"
-                      value={`₹${formatIndianNumber(monthlyIncome)}`}
-                      onChange={(e) => {
-                        const raw = e.target.value.replace(/[^0-9]/g, '');
-                        if (raw) setMonthlyIncome(Number(raw));
-                      }}
-                    />
-                  </div>
-
-                  {/* Existing EMI */}
-                  <div className="nb-calc-input-group">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                      <label className="nb-calc-label m-0">Existing Monthly EMIs (if any) (₹)</label>
-                      <span className="fw-semibold text-secondary small">₹{formatIndianNumber(existingEmi)}</span>
-                    </div>
-                    <input
-                      type="range"
-                      className="nb-calc-slider"
-                      min={0}
-                      max={500000}
-                      step={2000}
-                      value={existingEmi}
-                      onChange={(e) => setExistingEmi(Number(e.target.value))}
-                    />
-                    <div className="nb-calc-slider-limits">
-                      <span>0</span>
-                      <span>5L</span>
-                    </div>
-                    <input
-                      type="text"
-                      className="nb-calc-value-display"
-                      value={`₹${formatIndianNumber(existingEmi)}`}
-                      onChange={(e) => {
-                        const raw = e.target.value.replace(/[^0-9]/g, '');
-                        if (raw) setExistingEmi(Number(raw));
-                      }}
-                    />
-                  </div>
-
-                  {/* Tenure */}
-                  <div className="nb-calc-input-group">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                      <label className="nb-calc-label m-0">Tenure (Years)</label>
-                      <span className="fw-semibold text-secondary small">{eligibilityTenure} Years</span>
-                    </div>
-                    <input
-                      type="range"
-                      className="nb-calc-slider"
-                      min={5}
-                      max={30}
-                      value={eligibilityTenure}
-                      onChange={(e) => setEligibilityTenure(Number(e.target.value))}
-                    />
-                    <div className="nb-calc-slider-limits">
-                      <span>5</span>
-                      <span>30</span>
-                    </div>
-                  </div>
-
-                  {/* Interest rate */}
-                  <div className="nb-calc-input-group">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                      <label className="nb-calc-label m-0">Expected Interest Rate (%)</label>
-                      <span className="fw-semibold text-secondary small">{eligibilityRate}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      className="nb-calc-slider"
-                      min={7}
-                      max={15}
-                      step={0.1}
-                      value={eligibilityRate}
-                      onChange={(e) => setEligibilityRate(Number(e.target.value))}
-                    />
-                    <div className="nb-calc-slider-limits">
-                      <span>7%</span>
-                      <span>15%</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="col-lg-5">
-                  <div className="nb-calc-result-panel text-center">
-                    <span className="nb-calc-emi-heading">Maximum Loan Eligibility</span>
-                    <h4 className="nb-calc-emi-value text-success" style={{ fontSize: '2.5rem', fontWeight: 800 }}>
-                      ₹{formatIndianNumber(calculateEligibility().eligibleLoan)}
-                    </h4>
-
-                    <div className="p-3 bg-light rounded-3 w-100 mb-3 text-start">
-                      <div className="d-flex justify-content-between mb-2 small text-secondary">
-                        <span>Disposable Income Limit (50% FOIR):</span>
-                        <span className="fw-semibold text-dark">₹{formatIndianNumber(monthlyIncome * 0.5)}</span>
-                      </div>
-                      <div className="d-flex justify-content-between mb-2 small text-secondary">
-                        <span>Adjusted EMI Capacity:</span>
-                        <span className="fw-semibold text-dark">₹{formatIndianNumber(calculateEligibility().estimatedEmi)}</span>
-                      </div>
-                      <div className="d-flex justify-content-between small text-secondary">
-                        <span>Calculated Interest Rate:</span>
-                        <span className="fw-semibold text-dark">{eligibilityRate}%</span>
-                      </div>
-                    </div>
-
-                    <div className="small text-muted text-start mt-2">
-                      <Info size={14} className="me-1 d-inline" />
-                      Eligibility estimate assumes bank requirements of 50% fixed obligations ratio. Actual offers vary by client credit score.
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 3. AFFORDABILITY CALCULATOR */}
-            {activeTab === 'affordability' && (
-              <div className="row g-5">
-                <div className="col-lg-7">
-                  <h3 className="nb-calc-title">Affordability Calculator</h3>
-
-                  {/* Cash Savings (Down Payment) */}
-                  <div className="nb-calc-input-group">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                      <label className="nb-calc-label m-0">Cash Available (Down Payment) (₹)</label>
-                      <span className="fw-semibold text-secondary small">₹{formatIndianNumber(downPayment)}</span>
-                    </div>
-                    <input
-                      type="range"
-                      className="nb-calc-slider"
-                      min={100000}
-                      max={20000000}
-                      step={100000}
-                      value={downPayment}
-                      onChange={(e) => setDownPayment(Number(e.target.value))}
-                    />
-                    <div className="nb-calc-slider-limits">
-                      <span>1L</span>
-                      <span>2Cr</span>
-                    </div>
-                  </div>
-
-                  {/* Monthly Savings for EMI */}
-                  <div className="nb-calc-input-group">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                      <label className="nb-calc-label m-0">Monthly Savings Allocated to EMI (₹)</label>
-                      <span className="fw-semibold text-secondary small">₹{formatIndianNumber(monthlySavings)}</span>
-                    </div>
-                    <input
-                      type="range"
-                      className="nb-calc-slider"
-                      min={5000}
-                      max={200000}
-                      step={2000}
-                      value={monthlySavings}
-                      onChange={(e) => setMonthlySavings(Number(e.target.value))}
-                    />
-                    <div className="nb-calc-slider-limits">
-                      <span>5K</span>
-                      <span>2L</span>
-                    </div>
-                  </div>
-
-                  {/* Tenure */}
-                  <div className="nb-calc-input-group">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                      <label className="nb-calc-label m-0">Loan Tenure (Years)</label>
-                      <span className="fw-semibold text-secondary small">{affTenure} Years</span>
-                    </div>
-                    <input
-                      type="range"
-                      className="nb-calc-slider"
-                      min={5}
-                      max={30}
-                      value={affTenure}
-                      onChange={(e) => setAffTenure(Number(e.target.value))}
-                    />
-                    <div className="nb-calc-slider-limits">
-                      <span>5</span>
-                      <span>30</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="col-lg-5">
-                  <div className="nb-calc-result-panel text-center">
-                    <span className="nb-calc-emi-heading">Affordable Property Price Budget</span>
-                    <h4 className="nb-calc-emi-value text-primary" style={{ fontSize: '2.5rem', fontWeight: 800, color: '#7c3aed' }}>
-                      ₹{formatIndianNumber(calculateAffordability().affordableBudget)}
-                    </h4>
-
-                    <div className="p-3 bg-light rounded-3 w-100 mb-3 text-start">
-                      <div className="d-flex justify-content-between mb-2 small text-secondary">
-                        <span>Down Payment (Own Funds):</span>
-                        <span className="fw-semibold text-dark">₹{formatIndianNumber(downPayment)}</span>
-                      </div>
-                      <div className="d-flex justify-content-between mb-2 small text-secondary">
-                        <span>Loan Capacity:</span>
-                        <span className="fw-semibold text-dark">₹{formatIndianNumber(calculateAffordability().loanRequired)}</span>
-                      </div>
-                      <div className="d-flex justify-content-between small text-secondary">
-                        <span>Allocated Monthly EMI:</span>
-                        <span className="fw-semibold text-dark">₹{formatIndianNumber(monthlySavings)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 4. AREA CALCULATOR */}
-            {activeTab === 'area' && (
-              <div>
-                <h3 className="nb-calc-title">Land Area Converter</h3>
-                <p className="text-secondary small mb-4">Enter a value in any unit to automatically convert it to all other units instantly.</p>
-
-                <div className="nb-calc-converter-grid">
-                  <div className="nb-calc-converter-box">
-                    <label className="nb-calc-converter-label">Square Feet (Sq.Ft)</label>
-                    <input
-                      type="text"
-                      className="form-control fw-bold fs-5 text-dark"
-                      value={areaSqFt}
-                      onChange={(e) => syncAreaUnits(e.target.value, 'sqft')}
-                    />
-                  </div>
-                  <div className="nb-calc-converter-box">
-                    <label className="nb-calc-converter-label">Square Yards</label>
-                    <input
-                      type="text"
-                      className="form-control fw-bold fs-5 text-dark"
-                      value={areaSqYards}
-                      onChange={(e) => syncAreaUnits(e.target.value, 'sqyards')}
-                    />
-                  </div>
-                  <div className="nb-calc-converter-box">
-                    <label className="nb-calc-converter-label">Cents (Coimbatore Standard)</label>
-                    <input
-                      type="text"
-                      className="form-control fw-bold fs-5 text-dark"
-                      value={areaCents}
-                      onChange={(e) => syncAreaUnits(e.target.value, 'cents')}
-                    />
-                  </div>
-                  <div className="nb-calc-converter-box">
-                    <label className="nb-calc-converter-label">Grounds</label>
-                    <input
-                      type="text"
-                      className="form-control fw-bold fs-5 text-dark"
-                      value={areaGrounds}
-                      onChange={(e) => syncAreaUnits(e.target.value, 'grounds')}
-                    />
-                  </div>
-                  <div className="nb-calc-converter-box">
-                    <label className="nb-calc-converter-label">Acres</label>
-                    <input
-                      type="text"
-                      className="form-control fw-bold fs-5 text-dark"
-                      value={areaAcres}
-                      onChange={(e) => syncAreaUnits(e.target.value, 'acres')}
-                    />
-                  </div>
-                  <div className="nb-calc-converter-box">
-                    <label className="nb-calc-converter-label">Guntha</label>
-                    <input
-                      type="text"
-                      className="form-control fw-bold fs-5 text-dark"
-                      value={areaGuntha}
-                      onChange={(e) => syncAreaUnits(e.target.value, 'guntha')}
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-4 p-3 bg-light rounded-3 small text-secondary">
-                  <strong>Conversion Cheat Sheet:</strong><br />
-                  • 1 Cent = 435.6 Sq.Ft | • 1 Ground = 2,400 Sq.Ft | • 1 Acre = 100 Cents = 43,560 Sq.Ft | • 1 Sq.Yard = 9 Sq.Ft | • 1 Guntha = 1,089 Sq.Ft
-                </div>
-              </div>
-            )}
-
-            {/* 5. VALUATION CALCULATOR */}
-            {activeTab === 'valuation' && (
-              <div className="row g-5">
-                <div className="col-lg-7">
-                  <h3 className="nb-calc-title">Property Valuation Estimator</h3>
-
-                  {/* Locality select */}
-                  <div className="nb-calc-input-group">
-                    <label className="nb-calc-label">Select Locality</label>
-                    <select
-                      className="nb-calc-select"
-                      value={valuationLocality}
-                      onChange={(e) => setValuationLocality(e.target.value)}
-                    >
-                      <option value="Sitra">Sitra</option>
-                      <option value="Avinashi Road">Avinashi Road</option>
-                      <option value="Saravanampatti">Saravanampatti</option>
-                      <option value="Gandhipuram">Gandhipuram</option>
-                      <option value="Peelamedu">Peelamedu</option>
-                    </select>
-                  </div>
-
-                  {/* Builtup Area */}
-                  <div className="nb-calc-input-group">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                      <label className="nb-calc-label m-0">Property Area (Sq.Ft)</label>
-                      <span className="fw-semibold text-secondary small">{valuationArea} Sq.Ft</span>
-                    </div>
-                    <input
-                      type="range"
-                      className="nb-calc-slider"
-                      min={500}
-                      max={8000}
-                      step={50}
-                      value={valuationArea}
-                      onChange={(e) => setValuationArea(Number(e.target.value))}
-                    />
-                    <div className="nb-calc-slider-limits">
-                      <span>500</span>
-                      <span>8000</span>
-                    </div>
-                  </div>
-
-                  {/* Property type */}
-                  <div className="mb-4">
-                    <label className="nb-calc-label">Property Type</label>
-                    <div className="d-flex gap-3">
-                      {[
-                        { id: 'apartment', label: 'Apartment' },
-                        { id: 'villa', label: 'Villa/House' },
-                        { id: 'commercial', label: 'Commercial' }
-                      ].map(type => (
-                        <label key={type.id} className="d-flex align-items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="val-type"
-                            className="form-check-input"
-                            checked={valuationType === type.id}
-                            onChange={() => setValuationType(type.id)}
-                          />
-                          <span className="small fw-semibold">{type.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Construction quality */}
-                  <div className="mb-4">
-                    <label className="nb-calc-label">Finishing Quality</label>
-                    <div className="d-flex gap-3">
-                      {[
-                        { id: 'standard', label: 'Standard' },
-                        { id: 'premium', label: 'Premium' },
-                        { id: 'luxury', label: 'Luxury' }
-                      ].map(qual => (
-                        <label key={qual.id} className="d-flex align-items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="val-quality"
-                            className="form-check-input"
-                            checked={valuationQuality === qual.id}
-                            onChange={() => setValuationQuality(qual.id)}
-                          />
-                          <span className="small fw-semibold">{qual.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="col-lg-5">
-                  <div className="nb-calc-result-panel text-center">
-                    <span className="nb-calc-emi-heading">Estimated Property Value</span>
-                    <h4 className="nb-calc-emi-value text-success" style={{ fontSize: '2.5rem', fontWeight: 800 }}>
-                      ₹{formatIndianNumber(calculateValuation().valuation)}
-                    </h4>
-
-                    <div className="p-3 bg-light rounded-3 w-100 mb-3 text-start">
-                      <div className="d-flex justify-content-between mb-2 small text-secondary">
-                        <span>Base Rate (Locality):</span>
-                        <span className="fw-semibold text-dark">₹{formatIndianNumber(calculateValuation().rate)} / Sq.Ft</span>
-                      </div>
-                      <div className="d-flex justify-content-between mb-2 small text-secondary">
-                        <span>Total Area:</span>
-                        <span className="fw-semibold text-dark">{valuationArea} Sq.Ft</span>
-                      </div>
-                      <div className="d-flex justify-content-between small text-secondary">
-                        <span>Property Type:</span>
-                        <span className="fw-semibold text-dark text-capitalize">{valuationType}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 6. RENT ESTIMATOR */}
-            {activeTab === 'rent' && (
-              <div className="row g-5">
-                <div className="col-lg-7">
-                  <h3 className="nb-calc-title">Rent Estimator</h3>
-
-                  {/* Locality select */}
-                  <div className="nb-calc-input-group">
-                    <label className="nb-calc-label">Select Locality</label>
-                    <select
-                      className="nb-calc-select"
-                      value={rentLocality}
-                      onChange={(e) => setRentLocality(e.target.value)}
-                    >
-                      <option value="Sitra">Sitra</option>
-                      <option value="Avinashi Road">Avinashi Road</option>
-                      <option value="Saravanampatti">Saravanampatti</option>
-                      <option value="Gandhipuram">Gandhipuram</option>
-                      <option value="Peelamedu">Peelamedu</option>
-                    </select>
-                  </div>
-
-                  {/* Property Area */}
-                  <div className="nb-calc-input-group">
-                    <div className="d-flex justify-content-between align-items-center mb-1">
-                      <label className="nb-calc-label m-0">Property Area (Sq.Ft)</label>
-                      <span className="fw-semibold text-secondary small">{rentArea} Sq.Ft</span>
-                    </div>
-                    <input
-                      type="range"
-                      className="nb-calc-slider"
-                      min={400}
-                      max={5000}
-                      step={50}
-                      value={rentArea}
-                      onChange={(e) => setRentArea(Number(e.target.value))}
-                    />
-                    <div className="nb-calc-slider-limits">
-                      <span>400</span>
-                      <span>5000</span>
-                    </div>
-                  </div>
-
-                  {/* Bedrooms select */}
-                  <div className="nb-calc-input-group">
-                    <label className="nb-calc-label">Bedrooms (BHK)</label>
-                    <select
-                      className="nb-calc-select"
-                      value={rentBhk}
-                      onChange={(e) => setRentBhk(Number(e.target.value))}
-                    >
-                      <option value="1">1 BHK</option>
-                      <option value="2">2 BHK</option>
-                      <option value="3">3 BHK</option>
-                      <option value="4">4+ BHK</option>
-                    </select>
-                  </div>
-
-                  {/* Furnishing select */}
-                  <div className="mb-4">
-                    <label className="nb-calc-label">Furnishing Status</label>
-                    <div className="d-flex gap-3">
-                      {[
-                        { id: 'unfurnished', label: 'Unfurnished' },
-                        { id: 'semi', label: 'Semi-Furnished' },
-                        { id: 'fully', label: 'Fully Furnished' }
-                      ].map(furnish => (
-                        <label key={furnish.id} className="d-flex align-items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="rent-furnishing"
-                            className="form-check-input"
-                            checked={rentFurnishing === furnish.id}
-                            onChange={() => setRentFurnishing(furnish.id)}
-                          />
-                          <span className="small fw-semibold">{furnish.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="col-lg-5">
-                  <div className="nb-calc-result-panel text-center">
-                    <span className="nb-calc-emi-heading">Estimated Monthly Rental</span>
-                    <h4 className="nb-calc-emi-value text-primary" style={{ fontSize: '2.5rem', fontWeight: 800, color: '#7c3aed' }}>
-                      ₹{formatIndianNumber(calculateRent().rent)} / month
-                    </h4>
-
-                    <div className="p-3 bg-light rounded-3 w-100 mb-3 text-start">
-                      <div className="d-flex justify-content-between mb-2 small text-secondary">
-                        <span>Locality Rate Factor:</span>
-                        <span className="fw-semibold text-dark">₹{calculateRent().rate} / Sq.Ft</span>
-                      </div>
-                      <div className="d-flex justify-content-between mb-2 small text-secondary">
-                        <span>BHK:</span>
-                        <span className="fw-semibold text-dark">{rentBhk} BHK</span>
-                      </div>
-                      <div className="d-flex justify-content-between small text-secondary">
-                        <span>Furnishing status:</span>
-                        <span className="fw-semibold text-dark text-capitalize">{rentFurnishing.replace('-', ' ')}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}

@@ -24,7 +24,7 @@ const NewlyLaunchedProjects: React.FC<NewlyLaunchedProjectsProps> = ({
 
   return (
     <div className="mb-5 fade-in-up">
-      <div className="p-4 rounded-4" style={{ backgroundColor: '#f0f7fb' }}>
+      <div className="p-4 rounded-4" style={{ backgroundColor: '#f9f6f0' }}>
         <div className="d-flex align-items-center mb-4">
           <div className="me-3">
             <img src="https://img.icons8.com/color/48/city-buildings.png" alt="Buildings" width="36" height="36" />
@@ -49,11 +49,11 @@ const NewlyLaunchedProjects: React.FC<NewlyLaunchedProjectsProps> = ({
 
                     {/* Top Tag */}
                     <div className="position-absolute" style={{ top: '15px', left: '-5px', zIndex: 2 }}>
-                      <div className="text-dark fw-bold px-3 py-1 text-uppercase" style={{ backgroundColor: '#ffe6a7', fontSize: '0.7rem', clipPath: 'polygon(0 0, 100% 0, 90% 50%, 100% 100%, 0 100%)', boxShadow: '2px 2px 5px rgba(0,0,0,0.1)', letterSpacing: '0.5px' }}>
+                      <div className="text-white fw-bold px-3 py-1 text-uppercase" style={{ backgroundColor: '#8b0000', fontSize: '0.7rem', clipPath: 'polygon(0 0, 100% 0, 90% 50%, 100% 100%, 0 100%)', boxShadow: '2px 2px 5px rgba(0,0,0,0.1)', letterSpacing: '0.5px' }}>
                         NEW {i % 2 === 0 ? 'ARRIVAL' : 'LAUNCH'}
                       </div>
                       {/* Fold effect corner */}
-                      <div style={{ width: '5px', height: '6px', backgroundColor: '#d1a000', position: 'absolute', bottom: '-6px', left: '0', clipPath: 'polygon(100% 0, 100% 100%, 0 0)' }}></div>
+                      <div style={{ width: '5px', height: '6px', backgroundColor: '#5c0000', position: 'absolute', bottom: '-6px', left: '0', clipPath: 'polygon(100% 0, 100% 100%, 0 0)' }}></div>
                     </div>
 
                     <div className="p-3 pt-5 pb-3 d-flex gap-3 align-items-start position-relative z-1">
@@ -62,7 +62,7 @@ const NewlyLaunchedProjects: React.FC<NewlyLaunchedProjectsProps> = ({
                         <div className="rounded-circle overflow-hidden shadow-sm" style={{ width: '70px', height: '70px', border: '1px solid #eaeaea' }}>
                           <img src={imgUrl} alt={proj.title} className="w-100 h-100 object-fit-cover" />
                         </div>
-                        <div className="position-absolute text-white fw-bold px-2 py-0.5 rounded text-uppercase text-center" style={{ backgroundColor: '#003366', bottom: '-8px', left: '50%', transform: 'translateX(-50%)', fontSize: '0.55rem', border: '2px solid white', whiteSpace: 'nowrap' }}>
+                        <div className="position-absolute text-white fw-bold px-2 py-0.5 rounded text-uppercase text-center" style={{ backgroundColor: '#2f4f4f', bottom: '-8px', left: '50%', transform: 'translateX(-50%)', fontSize: '0.55rem', border: '2px solid white', whiteSpace: 'nowrap' }}>
                           <span className="text-info d-inline-block me-1" style={{ fontSize: '0.65rem' }}>✓</span> RERA
                         </div>
                       </div>
@@ -76,17 +76,17 @@ const NewlyLaunchedProjects: React.FC<NewlyLaunchedProjectsProps> = ({
                           <span className="text-muted" style={{ fontSize: '0.8rem' }}>|</span>
                           <span className="text-muted text-truncate" style={{ fontSize: '0.8rem' }}>{proj.bedrooms ? `${proj.bedrooms}, ` : ''}{proj.bedrooms ? proj.bedrooms + 1 : 3} BHK {getPropertyTypeLabel(proj.property_type)}</span>
                         </div>
-                        <p className="m-0 fw-semibold text-truncate w-100" style={{ fontSize: '0.75rem', color: '#059669' }}>
+                        {/* <p className="m-0 fw-semibold text-truncate w-100" style={{ fontSize: '0.75rem', color: '#3c763d' }}>
                           {8.3 + i * 0.4}% price increase in last 3 months in {proj.locality || proj.city_name}
-                        </p>
+                        </p> */}
                       </div>
                     </div>
 
                     {/* Dotted Divider */}
                     <div className="position-relative w-100">
-                      <div style={{ borderTop: '1px dashed #d1d5db', margin: '0 15px' }}></div>
-                      <div className="position-absolute" style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#f0f7fb', left: '-8px', top: '-8px' }}></div>
-                      <div className="position-absolute" style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#f0f7fb', right: '-8px', top: '-8px' }}></div>
+                      <div style={{ borderTop: '1px dashed #cccccc', margin: '0 15px' }}></div>
+                      <div className="position-absolute" style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#f9f6f0', left: '-8px', top: '-8px' }}></div>
+                      <div className="position-absolute" style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: '#f9f6f0', right: '-8px', top: '-8px' }}></div>
                     </div>
 
                     {/* Footer */}
@@ -100,7 +100,7 @@ const NewlyLaunchedProjects: React.FC<NewlyLaunchedProjectsProps> = ({
                           <strong className="text-dark">@zero brokerage</strong>
                         </div>
                       </div>
-                      <button className="btn btn-primary btn-sm fw-bold px-3 py-1.5" style={{ backgroundColor: '#1877f2', border: 'none', borderRadius: '6px' }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                      <button className="btn btn-primary btn-sm fw-bold px-3 py-1.5" style={{ backgroundColor: '#1a365d', border: 'none', borderRadius: '6px' }} onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                         View Number
                       </button>
                     </div>

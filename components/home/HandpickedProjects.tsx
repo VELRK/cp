@@ -25,22 +25,57 @@ const HandpickedProjects: React.FC<HandpickedProjectsProps> = ({
             const imgUrl = proj.thumbnail_url || (proj.image_urls && proj.image_urls.length > 0 ? proj.image_urls[0] : 'https://placehold.co/400x300?text=No+Image');
             return (
               <Link key={proj.id} href={`/property-detail/${proj.slug}`} className="text-decoration-none d-block flex-shrink-0">
-                <div className="nb-handpicked-card nb-insight-card-hover" style={{ borderRadius: '16px', marginRight: '1rem' }}>
-                  <div className="nb-handpicked-img-wrap">
-                    <img src={imgUrl} alt={proj.title} className="w-100 h-100 object-fit-cover" />
-                    {proj.is_featured === 1 && (
-                      <span className="nb-handpicked-badge">Featured</span>
+                <div 
+                  className="card shadow-sm h-100 overflow-hidden group" 
+                  style={{ 
+                    width: '280px', 
+                    marginRight: '1rem', 
+                    borderRadius: '16px', 
+                    border: 'none',
+                    height: '340px',
+                    position: 'relative'
+                  }}
+                >
+                  <img 
+                    src={imgUrl} 
+                    alt={proj.title} 
+                    className="w-100 h-100 object-fit-cover" 
+                    style={{ transition: 'transform 0.4s ease' }} 
+                    onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                    onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                  />
+                  
+                  {/* Gradient Overlay */}
+                  <div 
+                    className="position-absolute top-0 start-0 w-100 h-100" 
+                    style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.9) 100%)', pointerEvents: 'none' }}
+                  ></div>
+
+                  {/* Badges */}
+                  <div className="position-absolute top-0 start-0 p-3 w-100 d-flex justify-content-between align-items-start" style={{ pointerEvents: 'none' }}>
+                    {proj.is_featured === 1 ? (
+                      <span className="badge bg-primary px-2 py-1" style={{ fontSize: '0.75rem', fontWeight: '600' }}>Featured</span>
+                    ) : (
+                      <span></span>
                     )}
-                    <div className="nb-handpicked-logo">
-                      <img src="https://img.icons8.com/color/96/real-estate.png" alt="Property Icon" />
+                    <div className="bg-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style={{ width: '32px', height: '32px' }}>
+                      <img src="https://img.icons8.com/color/96/real-estate.png" alt="Property Icon" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
                     </div>
                   </div>
-                  <div className="nb-handpicked-body bg-white text-dark">
-                    <h3 className="h6 fw-bold mb-1 text-truncate">{proj.title}</h3>
-                    <p className="text-muted small mb-2 text-truncate">{proj.property_type.replace('_', ' ')}, {proj.locality || proj.city_name}</p>
-                    <div className="fw-bold nb-text-brand mb-0" style={{ fontSize: '0.9rem' }}>
-                      ₹{proj.price.toLocaleString('en-IN')}
+
+                  {/* Content at Bottom */}
+                  <div className="position-absolute bottom-0 start-0 w-100 p-3 d-flex flex-column text-white" style={{ pointerEvents: 'none' }}>
+                    <div className="d-flex justify-content-between align-items-end mb-1">
+                      <h3 className="h6 fw-bold mb-0 text-truncate text-white" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.5)', maxWidth: '75%' }}>
+                        {proj.title}
+                      </h3>
+                      <div className="fw-bold text-white text-end" style={{ fontSize: '1rem', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
+                        ₹{proj.price.toLocaleString('en-IN')}
+                      </div>
                     </div>
+                    <p className="small mb-0 text-truncate text-white-50" style={{ fontSize: '0.8rem' }}>
+                      {proj.property_type.replace('_', ' ')}, {proj.locality || proj.city_name}
+                    </p>
                   </div>
                 </div>
               </Link>

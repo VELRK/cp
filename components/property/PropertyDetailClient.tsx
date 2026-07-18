@@ -7,6 +7,7 @@ import PropertyCard, { Property } from '@/components/property/PropertyCard';
 import { useAuth } from '@/hooks/useAuth';
 import { toFrontendAssetUrl } from '@/lib/cityImages';
 import { getPropertySlugFromPath, PROPERTY_PLACEHOLDER_SLUG } from '@/lib/propertySlug';
+import confetti from 'canvas-confetti';
 
 import { MapPin, Bed, Bath, Grid, Calendar, ShieldCheck, Heart, Eye, Play, ArrowLeft, Mail, Phone, ChevronLeft, ChevronRight, Check, Key, Star, Image as ImageIcon, Compass, Info, Tag, ExternalLink } from 'lucide-react';
 
@@ -93,7 +94,17 @@ export default function PropertyDetailClient({ slug: slugProp }: PropertyDetailC
         property_id: property.id,
         userId: user.id,
       });
-      if (response.data?.success) setIsWishlisted(!isWishlisted);
+      if (response.data?.success) {
+        if (!isWishlisted) {
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#ef4444', '#f87171', '#fca5a5', '#0b2c56', '#f2b203']
+          });
+        }
+        setIsWishlisted(!isWishlisted);
+      }
     } catch (error) {
       console.error('Error toggling wishlist:', error);
     }
@@ -206,8 +217,8 @@ export default function PropertyDetailClient({ slug: slugProp }: PropertyDetailC
   const videoEmbed = property.video_url ? getYoutubeEmbed(property.video_url) : null;
 
   const hasCoords = property.latitude && property.longitude;
-  const mapQuery = hasCoords 
-    ? `${property.latitude},${property.longitude}` 
+  const mapQuery = hasCoords
+    ? `${property.latitude},${property.longitude}`
     : `${property.address || property.locality || ''}, ${property.city_name || ''}`;
   const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
 
@@ -495,7 +506,7 @@ export default function PropertyDetailClient({ slug: slugProp }: PropertyDetailC
                   <MapPin size={17} />
                   <span>Property Location & Maps</span>
                 </h2>
-                
+
                 <p className="pd-location-text mb-3">
                   <MapPin size={14} className="text-danger flex-shrink-0 mt-1" />
                   <span>{property.address || property.locality}, {property.city_name}</span>

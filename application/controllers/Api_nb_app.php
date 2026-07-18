@@ -712,9 +712,7 @@ class Api_nb_app extends CI_Controller
     private function _issue_auth_token($user)
     {
         $token = bin2hex(random_bytes(32));
-        if ($this->db->field_exists('api_token', 'nb_users')) {
-            $this->Nb_user_model->update((int) $user->id, array('api_token' => $token));
-        }
+        $this->Nb_user_model->set_api_token((int) $user->id, $token);
         $this->session->set_userdata('nb_user_id', (int) $user->id);
         $this->session->set_userdata('nb_user', array(
             'id'     => (int) $user->id,

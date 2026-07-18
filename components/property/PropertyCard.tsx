@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { checkWishlist, toggleWishlist } from '@/lib/frontendApi';
 import { Heart, Image as ImageIcon, MapPin, Bed, Bath, Grid, ArrowRight } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 export interface Property {
   id: number;
@@ -76,7 +77,18 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
         property_id: property.id,
         userId: user.id,
       });
-      if (response.data?.success) setIsWishlisted(!isWishlisted);
+      if (response.data?.success) {
+        if (!isWishlisted) {
+          // Trigger confetti only when adding to wishlist
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#ef4444', '#f87171', '#fca5a5', '#0b2c56', '#f2b203']
+          });
+        }
+        setIsWishlisted(!isWishlisted);
+      }
     } catch (error) {
       console.error('Error toggling wishlist:', error);
     } finally {

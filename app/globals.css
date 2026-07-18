@@ -44,12 +44,14 @@ body,
   border-color: var(--nb-primary-dark) !important;
 }
 
-.nb-body .btn-outline-danger {
+.nb-body .btn-outline-danger,
+.nb-body .btn-outline-primary {
   color: var(--nb-primary) !important;
   border-color: var(--nb-primary) !important;
 }
 
-.nb-body .btn-outline-danger:hover {
+.nb-body .btn-outline-danger:hover,
+.nb-body .btn-outline-primary:hover {
   background-color: var(--nb-primary) !important;
   border-color: var(--nb-primary) !important;
   color: #fff !important;
@@ -2399,7 +2401,9 @@ body,
 
 /* 6. Magic Loans Banner */
 .nb-magic-loans-banner {
-  background: linear-gradient(135deg, #fffcf5 0%, #f4fdf8 100%);
+  background: linear-gradient(135deg, #fffcf5 0%, #f4fdf8 50%, #fffcf5 100%);
+  background-size: 200% 200%;
+  animation: bgGradientShift 10s ease infinite;
   border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 20px;
   padding: 2.5rem 3rem;
@@ -2410,11 +2414,44 @@ body,
   display: flex;
   align-items: center;
   justify-content: space-between;
+  transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.nb-magic-loans-banner:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+@keyframes bgGradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.nb-magic-loans-banner::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 60%);
+  opacity: 0;
+  transform: scale(0.5);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.nb-magic-loans-banner:hover::before {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .nb-magic-loans-content {
   max-width: 65%;
   z-index: 2;
+  position: relative;
 }
 
 .nb-magic-loans-logo {
@@ -2425,6 +2462,7 @@ body,
   display: flex;
   align-items: center;
   gap: 0.15rem;
+  animation: fadeInDown 0.8s ease-out;
 }
 
 .nb-magic-loans-logo span {
@@ -2436,6 +2474,7 @@ body,
   font-weight: 800;
   color: #111827;
   margin-bottom: 0.75rem;
+  animation: fadeInDown 0.8s ease-out 0.1s backwards;
 }
 
 .nb-magic-loans-features {
@@ -2445,12 +2484,18 @@ body,
   font-size: 0.95rem;
   margin-bottom: 1.5rem;
   font-weight: 500;
+  animation: fadeInDown 0.8s ease-out 0.2s backwards;
 }
 
 .nb-magic-loans-features span {
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  transition: transform 0.3s ease;
+}
+
+.nb-magic-loans-features span:hover {
+  transform: translateX(5px);
 }
 
 .nb-magic-loans-features .highlight {
@@ -2465,6 +2510,7 @@ body,
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.75rem;
+  animation: fadeInDown 0.8s ease-out 0.3s backwards;
 }
 
 .nb-magic-loans-banks-wrapper {
@@ -2474,6 +2520,7 @@ body,
   position: relative;
   mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
   -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+  animation: fadeIn 1s ease-out 0.4s backwards;
 }
 
 .nb-magic-loans-banks-track {
@@ -2488,32 +2535,58 @@ body,
 }
 
 @keyframes scrollBanks {
-  0% {
-    transform: translateX(0);
-  }
-
-  100% {
-    transform: translateX(calc(-50% - 0.5rem));
-  }
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(-50% - 0.5rem)); }
 }
 
 .nb-magic-loans-bank-card {
   background: #fff;
   border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 0.75rem 1.25rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 130px;
+  min-width: 140px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.nb-magic-loans-bank-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0) 100%);
+  transform: skewX(-25deg);
+  transition: left 0.5s ease;
+}
+
+.nb-magic-loans-bank-card:hover::after {
+  left: 150%;
+}
+
+.nb-magic-loans-bank-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+  border-color: rgba(16, 185, 129, 0.3);
 }
 
 .nb-magic-loans-bank-card img {
   height: 24px;
   object-fit: contain;
   margin-bottom: 0.5rem;
+  transition: transform 0.3s ease;
+}
+
+.nb-magic-loans-bank-card:hover img {
+  transform: scale(1.1);
 }
 
 .nb-magic-loans-bank-card p {
@@ -2527,6 +2600,7 @@ body,
   display: flex;
   align-items: center;
   gap: 1.5rem;
+  animation: fadeInDown 0.8s ease-out 0.5s backwards;
 }
 
 .nb-magic-loans-btn-outline {
@@ -2540,27 +2614,71 @@ body,
   gap: 0.5rem;
   padding: 0;
   cursor: pointer;
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.nb-magic-loans-btn-outline::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--nb-primary-dark);
+  transition: width 0.3s ease;
 }
 
 .nb-magic-loans-btn-outline:hover {
   color: var(--nb-primary-dark);
 }
 
+.nb-magic-loans-btn-outline:hover::after {
+  width: 100%;
+}
+
+.nb-magic-loans-btn-outline svg {
+  transition: transform 0.3s ease;
+}
+
+.nb-magic-loans-btn-outline:hover svg {
+  transform: translateX(4px);
+}
+
 .nb-magic-loans-btn-filled {
-  background: var(--nb-primary);
+  background: linear-gradient(135deg, var(--nb-primary) 0%, var(--nb-primary-dark) 100%);
   color: #fff;
   font-weight: 700;
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 30px;
   font-size: 0.95rem;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   cursor: pointer;
+  box-shadow: 0 4px 15px rgba(var(--nb-primary-rgb, 11, 44, 86), 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.nb-magic-loans-btn-filled::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
+  transform: skewX(-25deg);
+  transition: left 0.5s ease;
+}
+
+.nb-magic-loans-btn-filled:hover::before {
+  left: 150%;
 }
 
 .nb-magic-loans-btn-filled:hover {
-  background: var(--nb-primary-dark);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(var(--nb-primary-rgb, 11, 44, 86), 0.4);
 }
 
 .nb-magic-loans-image-wrapper {
@@ -2572,6 +2690,29 @@ body,
   display: flex;
   align-items: flex-end;
   pointer-events: none;
+  animation: floatImage 6s ease-in-out infinite;
+}
+
+@keyframes floatImage {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .nb-magic-loans-image-wrapper img {

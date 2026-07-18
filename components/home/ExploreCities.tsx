@@ -14,8 +14,6 @@ export interface ExploreCity {
   property_count: number;
 }
 
-const BG_COLORS = ['#fff9db', '#eef2ff', '#ebfbee', '#e3fafc', '#fff0f6'];
-
 function formatPropertyCount(count: number): string {
   if (count >= 1000) {
     return `${Math.floor(count / 1000) * 1000}+ Properties`;
@@ -39,14 +37,16 @@ function ExploreCityCard({ city, index }: { city: ExploreCity; index: number }) 
       className="text-decoration-none d-block flex-shrink-0"
     >
       <div
-        className="card border-0 shadow-sm p-3 rounded-4 h-100 nb-insight-card-hover d-flex flex-column overflow-hidden"
+        className="card shadow-sm h-100 nb-insight-card-hover overflow-hidden"
         style={{
-          width: '200px',
+          width: '220px',
           marginRight: '1rem',
-          background: BG_COLORS[index % BG_COLORS.length],
+          borderRadius: '12px',
+          border: '1px solid #eaeaea',
+          backgroundColor: '#fff',
         }}
       >
-        <div className="rounded-3 overflow-hidden mb-2" style={{ height: '72px' }}>
+        <div style={{ height: '130px', width: '100%' }}>
           <img
             src={imgSrc}
             alt={city.name}
@@ -54,14 +54,14 @@ function ExploreCityCard({ city, index }: { city: ExploreCity; index: number }) 
             onError={() => setImgSrc(getCityFallbackImage(city.name))}
           />
         </div>
-        <div className="mt-auto">
+        <div className="card-body p-3 d-flex flex-column mt-auto">
           <h3 className="h6 fw-bold text-dark mb-1 text-truncate">{city.name}</h3>
           {city.state && (
-            <p className="text-muted small m-0 text-truncate" style={{ fontSize: '0.7rem' }}>
+            <p className="text-muted small m-0 text-truncate" style={{ fontSize: '0.8rem' }}>
               {city.state}
             </p>
           )}
-          <p className="text-secondary small m-0 mt-1 fw-semibold" style={{ fontSize: '0.75rem' }}>
+          <p className="text-primary small m-0 mt-2 fw-semibold" style={{ fontSize: '0.8rem' }}>
             {formatPropertyCount(city.property_count)}
           </p>
         </div>

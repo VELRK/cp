@@ -109,9 +109,15 @@ class Api_nb_app extends CI_Controller
         if (nb_user_is_agent($user)) {
             $row['kyc_complete'] = nb_agent_kyc_complete($user);
             $row['kyc_missing'] = nb_agent_kyc_missing($user);
+            $row['kyc_status'] = nb_agent_kyc_status($user);
+            $row['kyc_approved'] = nb_agent_kyc_approved($user);
+            $row['kyc_rejection_reason'] = nb_agent_kyc_rejection_reason($user);
         } else {
             $row['kyc_complete'] = true;
             $row['kyc_missing'] = array();
+            $row['kyc_status'] = 'none';
+            $row['kyc_approved'] = true;
+            $row['kyc_rejection_reason'] = '';
         }
         return $row;
     }
@@ -473,8 +479,7 @@ class Api_nb_app extends CI_Controller
             'message' => 'Registration successful.',
         );
         if ($user_type === 'agent') {
-            $payload['kyc_complete'] = nb_agent_kyc_complete($user);
-            $payload['kyc_missing'] = nb_agent_kyc_missing($user);
+            $payload = array_merge($payload, $this->_agent_kyc_status_payload($user));
         }
         $this->_json($payload);
     }
@@ -517,8 +522,7 @@ class Api_nb_app extends CI_Controller
             'user' => $this->_user_public($user),
         );
         if (nb_user_is_agent($user)) {
-            $payload['kyc_complete'] = nb_agent_kyc_complete($user);
-            $payload['kyc_missing'] = nb_agent_kyc_missing($user);
+            $payload = array_merge($payload, $this->_agent_kyc_status_payload($user));
         }
         $this->_json($payload);
     }
@@ -658,8 +662,7 @@ class Api_nb_app extends CI_Controller
             'user' => $this->_user_public($user),
         );
         if (nb_user_is_agent($user)) {
-            $payload['kyc_complete'] = nb_agent_kyc_complete($user);
-            $payload['kyc_missing'] = nb_agent_kyc_missing($user);
+            $payload = array_merge($payload, $this->_agent_kyc_status_payload($user));
         }
         $this->_json($payload);
     }
@@ -1145,9 +1148,13 @@ class Api_nb_app extends CI_Controller
     /** KYC status block for agent API responses. */
     private function _agent_kyc_status_payload($user)
     {
+        $status = nb_agent_kyc_status($user);
         return array(
             'kyc_complete' => nb_agent_kyc_complete($user),
             'kyc_missing' => nb_agent_kyc_missing($user),
+            'kyc_status' => $status,
+            'kyc_approved' => nb_agent_kyc_approved($user),
+            'kyc_rejection_reason' => nb_agent_kyc_rejection_reason($user),
             'is_verified' => isset($user->is_verified) ? (int) $user->is_verified : 0,
             'requirements' => array(
                 'business_name' => array('required' => true, 'label' => 'Business name'),
@@ -1445,6 +1452,15 @@ class Api_nb_app extends CI_Controller
                     'kyc_missing' => $missing,
                 ), 400);
             }
+            if ($this->db->field_exists('kyc_status', 'nb_users')) {
+                $update['kyc_status'] = 'pending';
+                $update['kyc_rejection_reason'] = null;
+                $update['kyc_submitted_at'] = date('Y-m-d H:i:s');
+                $update['kyc_reviewed_at'] = null;
+            }
+            if ($this->db->field_exists('is_verified', 'nb_users')) {
+                $update['is_verified'] = 0;
+            }
         }
 
         $update['updated_at'] = date('Y-m-d H:i:s');
@@ -1453,7 +1469,11 @@ class Api_nb_app extends CI_Controller
         $updated = $this->Nb_user_model->get_by_id($id);
         $payload = array(
             'success' => true,
-            'message' => $kyc_only ? 'Agent KYC submitted successfully' : 'Profile updated successfully',
+            'message' => $kyc_only
+                ? 'Agent KYC submitted successfully. Awaiting admin approval.'
+                : ($kyc_submit && nb_user_is_agent($user)
+                    ? 'Profile updated. KYC submitted for admin approval.'
+                    : 'Profile updated successfully'),
             'user' => $this->_user_public($updated),
         );
         if (nb_user_is_agent($updated)) {

@@ -13,11 +13,22 @@ $status_badge = function ($s) {
   $m = array('approved' => 'nb-admin-badge-status-approved', 'rejected' => 'nb-admin-badge-status-rejected');
   return isset($m[$s]) ? $m[$s] : 'bg-secondary';
 };
+$kyc_badge = function ($s) {
+  $m = array(
+    'none' => 'bg-secondary',
+    'pending' => 'nb-admin-badge-status-pending',
+    'approved' => 'nb-admin-badge-status-approved',
+    'rejected' => 'nb-admin-badge-status-rejected',
+  );
+  return isset($m[$s]) ? $m[$s] : 'bg-secondary';
+};
+$user_type_val = isset($filters['user_type']) ? $filters['user_type'] : '';
+$kyc_status_val = isset($filters['kyc_status']) ? $filters['kyc_status'] : '';
 ?>
 <div class="nb-admin-page-head d-flex flex-wrap justify-content-between align-items-start gap-3">
   <div>
     <h1 class="nb-admin-page-title">Users</h1>
-    <p class="nb-admin-page-desc mb-0">Search users and manage verification status.</p>
+    <p class="nb-admin-page-desc mb-0">Search users and review agent KYC.</p>
   </div>
   <a class="btn btn-danger rounded-pill px-3" href="<?php echo site_url('panel/user/add'); ?>">Add user</a>
 </div>
@@ -29,12 +40,23 @@ $status_badge = function ($s) {
       <input type="text" name="q" class="form-control form-control-sm" placeholder="Name or email" value="<?php echo html_escape($filters['q']); ?>">
     </div>
     <div style="min-width: 130px;">
-      <label class="form-label small text-muted mb-1">Role</label>
-      <select name="role" class="form-select form-select-sm">
+      <label class="form-label small text-muted mb-1">Type</label>
+      <select name="user_type" class="form-select form-select-sm">
         <option value="">Any</option>
-        <option value="owner" <?php echo ($filters['role'] === 'owner') ? 'selected' : ''; ?>>Owner</option>
-        <option value="tenant" <?php echo ($filters['role'] === 'tenant') ? 'selected' : ''; ?>>Tenant</option>
-        <option value="admin" <?php echo ($filters['role'] === 'admin') ? 'selected' : ''; ?>>Admin</option>
+        <option value="owner" <?php echo ($user_type_val === 'owner') ? 'selected' : ''; ?>>Owner</option>
+        <option value="tenant" <?php echo ($user_type_val === 'tenant') ? 'selected' : ''; ?>>Tenant</option>
+        <option value="agent" <?php echo ($user_type_val === 'agent') ? 'selected' : ''; ?>>Agent</option>
+        <option value="admin" <?php echo ($user_type_val === 'admin') ? 'selected' : ''; ?>>Admin</option>
+      </select>
+    </div>
+    <div style="min-width: 130px;">
+      <label class="form-label small text-muted mb-1">KYC</label>
+      <select name="kyc_status" class="form-select form-select-sm">
+        <option value="">Any</option>
+        <option value="pending" <?php echo ($kyc_status_val === 'pending') ? 'selected' : ''; ?>>Pending review</option>
+        <option value="approved" <?php echo ($kyc_status_val === 'approved') ? 'selected' : ''; ?>>Approved</option>
+        <option value="rejected" <?php echo ($kyc_status_val === 'rejected') ? 'selected' : ''; ?>>Rejected</option>
+        <option value="none" <?php echo ($kyc_status_val === 'none') ? 'selected' : ''; ?>>Not submitted</option>
       </select>
     </div>
     <div style="min-width: 130px;">
@@ -59,10 +81,8 @@ $status_badge = function ($s) {
           <th>Name</th>
           <th>Email</th>
           <th>Phone</th>
-          <th>Aadhar No</th>
-          <th>Aadhar File</th>
           <th>Role</th>
-          <th>Status</th>
+          <th>KYC</th>
           <th>Verified</th>
           <th class="text-end">Actions</th>
         </tr>
@@ -70,31 +90,29 @@ $status_badge = function ($s) {
       <tbody>
         <?php if (empty($users)) : ?>
         <tr>
-          <td colspan="10" class="text-center text-muted py-5">No users match your filters.</td>
+          <td colspan="8" class="text-center text-muted py-5">No users match your filters.</td>
         </tr>
         <?php else : ?>
           <?php foreach ($users as $u) : ?>
+          <?php
+            $ut = isset($u->user_type) ? $u->user_type : (isset($u->role) ? $u->role : '');
+            $is_agent = strtolower((string) $ut) === 'agent';
+            $kyc_status = $is_agent ? nb_agent_kyc_status($u) : '';
+            $show_kyc_review = $is_agent && nb_agent_kyc_complete($u) && in_array($kyc_status, array('pending', 'rejected'), true);
+          ?>
           <tr>
             <td class="text-muted font-monospace small"><?php echo (int) $u->id; ?></td>
             <td class="fw-medium"><?php echo html_escape($u->name); ?></td>
             <td><?php echo html_escape($u->email); ?></td>
             <td><?php echo html_escape((string) (isset($u->phone) ? $u->phone : '')); ?></td>
+            <td><span class="nb-admin-badge <?php echo $role_badge($ut); ?>"><?php echo html_escape($ut); ?></span></td>
             <td>
-              <?php if (!empty($u->aadhar_no)) : ?>
-                <span class="font-monospace small"><?php echo html_escape($u->aadhar_no); ?></span>
+              <?php if ($is_agent) : ?>
+                <span class="nb-admin-badge <?php echo $kyc_badge($kyc_status); ?>"><?php echo html_escape(ucfirst($kyc_status)); ?></span>
               <?php else : ?>
                 <span class="text-muted small">—</span>
               <?php endif; ?>
             </td>
-            <td>
-              <?php if (!empty($u->aadhar_file)) : ?>
-                <a class="btn btn-sm btn-outline-secondary rounded-pill" href="<?php echo base_url($u->aadhar_file); ?>" target="_blank" rel="noopener">View</a>
-              <?php else : ?>
-                <span class="text-muted small">—</span>
-              <?php endif; ?>
-            </td>
-            <td><span class="nb-admin-badge <?php echo $role_badge($u->user_type); ?>"><?php echo html_escape($u->user_type); ?></span></td>
-            <td><span class="nb-admin-badge <?php echo $status_badge($u->status); ?>"><?php echo html_escape($u->status); ?></span></td>
             <td>
               <?php if (isset($u->is_verified) && (int) $u->is_verified === 1) : ?>
                 <span class="nb-admin-badge nb-admin-badge-status-approved">Yes</span>
@@ -103,7 +121,9 @@ $status_badge = function ($s) {
               <?php endif; ?>
             </td>
             <td class="text-end text-nowrap">
-              <?php if (!isset($u->is_verified) || (int) $u->is_verified !== 1) : ?>
+              <?php if ($show_kyc_review) : ?>
+                <a href="<?php echo site_url('panel/user/view/' . (int) $u->id); ?>" class="btn btn-sm btn-success rounded-pill me-1">Review KYC</a>
+              <?php elseif (!$is_agent && (!isset($u->is_verified) || (int) $u->is_verified !== 1)) : ?>
                 <button type="button" class="btn btn-sm btn-success rounded-pill nb-verify me-1" data-id="<?php echo (int) $u->id; ?>">Set verified</button>
               <?php endif; ?>
               <a href="<?php echo site_url('panel/user/view/' . (int) $u->id); ?>" class="btn btn-sm btn-outline-secondary rounded-pill me-1">View</a>
@@ -118,19 +138,6 @@ $status_badge = function ($s) {
   </div>
 </div>
 <script>
-function postStatus(id, status) {
-  var body = 'user_id=' + encodeURIComponent(id) + '&status=' + encodeURIComponent(status);
-  fetch('<?php echo site_url('panel/approve-user'); ?>', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: body, credentials: 'same-origin' })
-    .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
-    .then(function (x) {
-      if (x.ok && x.j && x.j.success) {
-        location.reload();
-        return;
-      }
-      alert(x.j && x.j.message ? x.j.message : 'Could not update user.');
-    })
-    .catch(function () { alert('Network error.'); });
-}
 document.querySelectorAll('.nb-verify').forEach(function (b) {
   b.addEventListener('click', function () {
     var body = 'user_id=' + encodeURIComponent(this.getAttribute('data-id')) + '&verified=1';

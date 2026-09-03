@@ -730,7 +730,7 @@ function nb_ensure_property_type_image_column()
     }
 }
 
-/** Agent KYC columns on nb_users (business_name, website). */
+/** Agent KYC columns on nb_users (business_name, website, review status). */
 function nb_ensure_agent_kyc_columns()
 {
     $CI =& get_instance();
@@ -750,6 +750,18 @@ function nb_ensure_agent_kyc_columns()
     }
     if (!$CI->db->field_exists('website', 'nb_users')) {
         $CI->db->query('ALTER TABLE `nb_users` ADD COLUMN `website` VARCHAR(500) NULL DEFAULT NULL AFTER `business_name`');
+    }
+    if (!$CI->db->field_exists('kyc_status', 'nb_users')) {
+        $CI->db->query("ALTER TABLE `nb_users` ADD COLUMN `kyc_status` ENUM('none','pending','approved','rejected') NOT NULL DEFAULT 'none' AFTER `website`");
+    }
+    if (!$CI->db->field_exists('kyc_rejection_reason', 'nb_users')) {
+        $CI->db->query('ALTER TABLE `nb_users` ADD COLUMN `kyc_rejection_reason` TEXT NULL DEFAULT NULL AFTER `kyc_status`');
+    }
+    if (!$CI->db->field_exists('kyc_submitted_at', 'nb_users')) {
+        $CI->db->query('ALTER TABLE `nb_users` ADD COLUMN `kyc_submitted_at` DATETIME NULL DEFAULT NULL AFTER `kyc_rejection_reason`');
+    }
+    if (!$CI->db->field_exists('kyc_reviewed_at', 'nb_users')) {
+        $CI->db->query('ALTER TABLE `nb_users` ADD COLUMN `kyc_reviewed_at` DATETIME NULL DEFAULT NULL AFTER `kyc_submitted_at`');
     }
 }
 
@@ -798,6 +810,84 @@ function nb_agent_kyc_missing($user)
 function nb_agent_kyc_complete($user)
 {
     return nb_user_is_agent($user) && empty(nb_agent_kyc_missing($user));
+}
+
+/** Agent KYC review status: none, pending, approved, rejected. */
+function nb_agent_kyc_status($user)
+{
+    if (!nb_user_is_agent($user)) {
+        return 'none';
+    }
+    $row = is_array($user) ? $user : (array) $user;
+    $status = isset($row['kyc_status']) ? strtolower(trim((string) $row['kyc_status'])) : 'none';
+    if (!in_array($status, array('none', 'pending', 'approved', 'rejected'), true)) {
+        return 'none';
+    }
+    return $status;
+}
+
+/** True when admin has approved agent KYC. */
+function nb_agent_kyc_approved($user)
+{
+    return nb_user_is_agent($user) && nb_agent_kyc_status($user) === 'approved';
+}
+
+/** Rejection reason for rejected agent KYC; empty string when not rejected. */
+function nb_agent_kyc_rejection_reason($user)
+{
+    if (!nb_user_is_agent($user) || nb_agent_kyc_status($user) !== 'rejected') {
+        return '';
+    }
+    $row = is_array($user) ? $user : (array) $user;
+    return trim((string) (isset($row['kyc_rejection_reason']) ? $row['kyc_rejection_reason'] : ''));
+}
+
+/** Email suitable for outbound mail; skips phone placeholder addresses. */
+function nb_user_deliverable_email($user)
+{
+    $row = is_array($user) ? $user : (array) $user;
+    $email = isset($row['email']) ? strtolower(trim((string) $row['email'])) : '';
+    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return '';
+    }
+    if (preg_match('/@phone\.cp$/i', $email)) {
+        return '';
+    }
+    return $email;
+}
+
+/** Notify agent by email when KYC is rejected. Returns true when send attempted successfully. */
+function nb_send_agent_kyc_rejection_email($user, $reason)
+{
+    $to = nb_user_deliverable_email($user);
+    if ($to === '') {
+        return false;
+    }
+    $CI =& get_instance();
+    if (!isset($CI->email)) {
+        $CI->load->library('email');
+    }
+    $name = isset($user->name) ? trim((string) $user->name) : (is_array($user) && isset($user['name']) ? trim((string) $user['name']) : 'Agent');
+    $from = $CI->config->item('nb_admin_email');
+    if (empty($from)) {
+        $from = 'noreply@localhost';
+    }
+    $site = $CI->config->item('base_url');
+    if (empty($site)) {
+        $site = site_url();
+    }
+    $reasonText = trim((string) $reason);
+    $body = "Hello {$name},\n\n"
+        . "Your agent KYC submission on Coimbatore Properties was reviewed and could not be approved.\n\n"
+        . "Reason:\n{$reasonText}\n\n"
+        . "Please sign in to the app, update your KYC details if needed, and submit again for review.\n\n"
+        . "— Coimbatore Properties\n{$site}";
+    $CI->email->clear(true);
+    $CI->email->from($from, 'Coimbatore Properties');
+    $CI->email->to($to);
+    $CI->email->subject('Agent KYC not approved — action required');
+    $CI->email->message($body);
+    return (bool) @$CI->email->send();
 }
 
 /**

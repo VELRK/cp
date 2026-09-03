@@ -20,6 +20,23 @@ $sample_user = array(
     'is_verified' => 0,
     'kyc_complete' => false,
     'kyc_missing' => array('business_name', 'aadhar_no', 'aadhar_file'),
+    'kyc_status' => 'none',
+    'kyc_approved' => false,
+    'kyc_rejection_reason' => '',
+);
+
+$sample_kyc_pending = array(
+    'kyc_status' => 'pending',
+    'kyc_approved' => false,
+    'kyc_rejection_reason' => '',
+    'is_verified' => 0,
+);
+
+$sample_kyc_rejected = array(
+    'kyc_status' => 'rejected',
+    'kyc_approved' => false,
+    'kyc_rejection_reason' => 'Aadhaar document is blurry. Please upload a clear scan.',
+    'is_verified' => 0,
 );
 
 $sample_property_card = array(
@@ -182,7 +199,7 @@ $config['api_catalog'] = array(
                     'path' => 'api/nb/verify-otp',
                     'auth' => false,
                     'body_type' => 'json',
-                    'description' => 'Verify 4-digit OTP and return session token + user. Agents include kyc_complete and kyc_missing. Test: phone 9876543210, otp 1234.',
+                    'description' => 'Verify 4-digit OTP and return session token + user. Agents include kyc_status, kyc_approved, kyc_rejection_reason. Test: phone 9876543210, otp 1234.',
                     'body' => array('phone' => '9876543210', 'country_code' => '+91', 'otp' => '1234'),
                     'sample_response' => array(
                         'success' => true,
@@ -191,6 +208,9 @@ $config['api_catalog'] = array(
                         'user' => $sample_user,
                         'kyc_complete' => false,
                         'kyc_missing' => array('business_name', 'aadhar_no', 'aadhar_file'),
+                        'kyc_status' => 'none',
+                        'kyc_approved' => false,
+                        'kyc_rejection_reason' => '',
                     ),
                 ),
                 array(
@@ -271,7 +291,7 @@ $config['api_catalog'] = array(
                     'path' => 'api/nb/update-profile',
                     'auth' => true,
                     'body_type' => 'form',
-                    'description' => 'Update profile. Agents: submit KYC with business_name, aadhar_no, aadhar_file (required) and website (optional). Set kyc_submit=true to validate all required KYC fields.',
+                    'description' => 'Update profile. Agents: submit KYC with business_name, aadhar_no, aadhar_file (required) and website (optional). Set kyc_submit=true — sets kyc_status=pending until admin approves.',
                     'body' => array(
                         'userId' => '3',
                         'business_name' => 'Dream Villa Agents',
@@ -281,17 +301,22 @@ $config['api_catalog'] = array(
                     ),
                     'sample_response' => array(
                         'success' => true,
-                        'message' => 'Profile updated successfully',
+                        'message' => 'Profile updated. KYC submitted for admin approval.',
                         'kyc_complete' => true,
                         'kyc_missing' => array(),
+                        'kyc_status' => 'pending',
+                        'kyc_approved' => false,
+                        'kyc_rejection_reason' => '',
                         'user' => array_merge($sample_user, array(
                             'name' => 'Demo Agent',
                             'business_name' => 'Dream Villa Agents',
                             'aadhar_no' => '123456789012',
-                            'is_verified' => 0,
                             'kyc_complete' => true,
                             'kyc_missing' => array(),
-                        )),
+                            'kyc_status' => 'pending',
+                            'kyc_approved' => false,
+                            'kyc_rejection_reason' => '',
+                        ), $sample_kyc_pending),
                     ),
                 ),
                 array(
@@ -301,12 +326,15 @@ $config['api_catalog'] = array(
                     'path' => 'api/nb/agent-kyc',
                     'auth' => true,
                     'body_type' => 'none',
-                    'description' => 'Returns agent KYC completion status, missing fields, and requirements. Auth: Bearer token.',
+                    'description' => 'Returns agent KYC status. kyc_status: none|pending|approved|rejected. When rejected, kyc_rejection_reason explains why. Auth: Bearer token.',
                     'query' => array(),
                     'sample_response' => array(
                         'success' => true,
                         'kyc_complete' => false,
                         'kyc_missing' => array('business_name', 'aadhar_no', 'aadhar_file'),
+                        'kyc_status' => 'none',
+                        'kyc_approved' => false,
+                        'kyc_rejection_reason' => '',
                         'is_verified' => 0,
                         'requirements' => array(
                             'business_name' => array('required' => true, 'label' => 'Business name'),
@@ -324,7 +352,7 @@ $config['api_catalog'] = array(
                     'path' => 'api/nb/agent-kyc',
                     'auth' => true,
                     'body_type' => 'form',
-                    'description' => 'Submit agent KYC (JSON or multipart). Required: business_name, aadhar_no, aadhar_file. Optional: website. Auth: Bearer token.',
+                    'description' => 'Submit agent KYC (JSON or multipart). Sets kyc_status=pending; admin must approve before kyc_approved=true. When rejected, resubmit to clear reason.',
                     'body' => array(
                         'business_name' => 'Dream Villa Agents',
                         'aadhar_no' => '123456789012',
@@ -333,17 +361,22 @@ $config['api_catalog'] = array(
                     ),
                     'sample_response' => array(
                         'success' => true,
-                        'message' => 'Agent KYC submitted successfully',
+                        'message' => 'Agent KYC submitted successfully. Awaiting admin approval.',
                         'kyc_complete' => true,
                         'kyc_missing' => array(),
-                        'is_verified' => 0,
+                        'kyc_status' => 'pending',
+                        'kyc_approved' => false,
+                        'kyc_rejection_reason' => '',
                         'user' => array_merge($sample_user, array(
                             'business_name' => 'Dream Villa Agents',
                             'aadhar_no' => '123456789012',
                             'website' => 'https://example.com',
                             'kyc_complete' => true,
                             'kyc_missing' => array(),
-                        )),
+                            'kyc_status' => 'pending',
+                            'kyc_approved' => false,
+                            'kyc_rejection_reason' => '',
+                        ), $sample_kyc_pending),
                     ),
                 ),
             ),

@@ -191,6 +191,16 @@ class Nb_user_model extends CI_Model {
         if (!empty($filters['status'])) {
             $this->db->where('status', $filters['status']);
         }
+        if (!empty($filters['kyc_status']) && $this->db->field_exists('kyc_status', $this->table)) {
+            $this->db->where('kyc_status', $filters['kyc_status']);
+        }
+        if (!empty($filters['user_type'])) {
+            if ($this->db->field_exists('user_type', $this->table)) {
+                $this->db->where('user_type', $filters['user_type']);
+            } else {
+                $this->db->where('role', $filters['user_type']);
+            }
+        }
 
         $this->db->order_by('created_at', 'DESC');
         $this->db->limit($limit, $offset);

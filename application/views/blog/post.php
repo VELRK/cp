@@ -7,7 +7,7 @@ if ($rawAuthor === '' && isset($post['author'])) {
 }
 $showAuthor = ($rawAuthor !== '' && strcasecmp($rawAuthor, 'Admin') !== 0);
 $category = isset($post['category']) ? trim((string) $post['category']) : '';
-$published = !empty($post['publishedDate']) ? date('F j, Y', strtotime($post['publishedDate'])) : '';
+$published = !empty($post['publishedDate']) ? nb_format_datetime($post['publishedDate'], true) : '';
 ?>
 
 <section class="flat-title-page flat-title-page--blog blog-single-hero">
@@ -114,7 +114,7 @@ $published = !empty($post['publishedDate']) ? date('F j, Y', strtotime($post['pu
                             <?php
                             $rid = isset($r['slug']) && $r['slug'] !== '' ? $r['slug'] : (isset($r['id']) ? $r['id'] : '');
                             $rtitle = isset($r['title']) ? $r['title'] : '';
-                            $rdate = !empty($r['publishedDate']) ? date('M j, Y', strtotime($r['publishedDate'])) : '';
+                            $rdate = !empty($r['publishedDate']) ? nb_format_datetime($r['publishedDate'], true) : '';
                             if ($rid === '' || $rtitle === '') {
                                 continue;
                             }

@@ -55,7 +55,7 @@
 
                             <div class="mb-3">
                                 <h6>Added to Wishlist</h6>
-                                <p><?php echo date('F d, Y at g:i A', strtotime($wishlist->created_at)); ?></p>
+                                <p><?php echo nb_format_datetime($wishlist->created_at); ?></p>
                             </div>
                         </div>
                     </div>
@@ -107,11 +107,11 @@
                         </tr>
                         <tr>
                             <td><strong>Added Date:</strong></td>
-                            <td><?php echo date('M d, Y', strtotime($wishlist->created_at)); ?></td>
+                            <td><?php echo nb_format_datetime($wishlist->created_at, true); ?></td>
                         </tr>
                         <tr>
                             <td><strong>Updated:</strong></td>
-                            <td><?php echo date('M d, Y', strtotime($wishlist->updated_at)); ?></td>
+                            <td><?php echo nb_format_datetime($wishlist->updated_at, true); ?></td>
                         </tr>
                     </table>
                 </div>

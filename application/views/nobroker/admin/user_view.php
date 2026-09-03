@@ -175,12 +175,12 @@ $kyc_missing_labels = array(
 
       <?php if (!empty($u->kyc_submitted_at)) : ?>
       <dt>KYC submitted</dt>
-      <dd><?php echo html_escape($u->kyc_submitted_at); ?></dd>
+      <dd><?php echo html_escape(nb_format_datetime($u->kyc_submitted_at)); ?> <span class="text-muted small">(IST)</span></dd>
       <?php endif; ?>
 
       <?php if (!empty($u->kyc_reviewed_at)) : ?>
       <dt>KYC reviewed</dt>
-      <dd><?php echo html_escape($u->kyc_reviewed_at); ?></dd>
+      <dd><?php echo html_escape(nb_format_datetime($u->kyc_reviewed_at)); ?> <span class="text-muted small">(IST)</span></dd>
       <?php endif; ?>
 
       <?php if ($kyc_status === 'rejected' && $kyc_rejection_reason !== '') : ?>
@@ -216,7 +216,7 @@ $kyc_missing_labels = array(
 
       <?php if (!empty($u->created_at)) : ?>
       <dt>Registered</dt>
-      <dd><?php echo html_escape($u->created_at); ?></dd>
+      <dd><?php echo html_escape(nb_format_datetime($u->created_at)); ?> <span class="text-muted small">(IST)</span></dd>
       <?php endif; ?>
     </dl>
   </div>

@@ -84,7 +84,12 @@ class Api_mobile extends CI_Controller {
     private function _format_housing_news($row)
     {
         $formatted = nb_housing_news_to_blog($row);
-        return is_array($formatted) ? $formatted : array();
+        if (!is_array($formatted)) {
+            return array();
+        }
+        return nb_api_add_datetime_display($formatted, array(
+            'created_at', 'updated_at', 'publishedDate' => true, 'date' => true,
+        ));
     }
 
     public function banners()
@@ -279,7 +284,7 @@ class Api_mobile extends CI_Controller {
         if (isset($item['image']) && $item['image'] !== '') {
             $out['image'] = $this->_asset_url_or_null($item['image']);
         }
-        return $out;
+        return nb_api_add_datetime_display($out, array('createdAt', 'created_at'));
     }
 
     public function contact()
@@ -576,7 +581,7 @@ class Api_mobile extends CI_Controller {
         if (isset($out['image'])) {
             $out['image'] = $this->_asset_url_or_null($out['image']);
         }
-        return $out;
+        return nb_api_add_datetime_display($out, array('liveTime', 'created_at', 'updated_at'));
     }
 
     public function live_updates()
@@ -858,7 +863,9 @@ class Api_mobile extends CI_Controller {
         if (isset($out['is_active'])) {
             $out['publication_status'] = !empty($out['is_active']) ? 'published' : 'pending';
         }
-        return $out;
+        return nb_api_add_datetime_display($out, array(
+            'created_at', 'updated_at', 'available_from' => true,
+        ));
     }
 
     public function properties_core()

@@ -30,14 +30,6 @@ $format_label = function ($value) {
   return ucwords(str_replace('_', ' ', $value));
 };
 
-$format_datetime = function ($value) {
-  $value = trim((string) $value);
-  if ($value === '') {
-    return '—';
-  }
-  $ts = strtotime($value);
-  return $ts ? date('d M Y, h:i A', $ts) : $value;
-};
 ?>
 <div class="nb-admin-page-head d-flex flex-wrap justify-content-between align-items-start gap-3">
   <div>
@@ -73,7 +65,7 @@ $format_datetime = function ($value) {
               <span class="badge bg-light text-dark border font-monospace">#<?php echo (int) $e->id; ?></span>
               <span class="badge rounded-pill <?php echo $status_badge($e->status); ?> text-capitalize"><?php echo html_escape($e->status); ?></span>
             </div>
-            <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i><?php echo html_escape($format_datetime($e->created_at)); ?></span>
+            <span class="text-muted small"><i class="bi bi-calendar3 me-1"></i><?php echo html_escape(nb_format_datetime($e->created_at)); ?></span>
           </div>
           <div class="p-4">
             <div class="row g-4">
@@ -146,7 +138,7 @@ $format_datetime = function ($value) {
               <div class="small text-secondary p-3 bg-light rounded-3 mb-0" style="white-space:pre-line"><?php echo html_escape($e->message ?: '—'); ?></div>
             </div>
             <?php if (!empty($e->updated_at) && $e->updated_at !== $e->created_at) : ?>
-              <p class="text-muted small mb-0 mt-3">Last updated: <?php echo html_escape($format_datetime($e->updated_at)); ?></p>
+              <p class="text-muted small mb-0 mt-3">Last updated: <?php echo html_escape(nb_format_datetime($e->updated_at)); ?></p>
             <?php endif; ?>
           </div>
         </div>

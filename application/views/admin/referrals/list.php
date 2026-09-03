@@ -78,7 +78,7 @@
                                     </td>
                                     <td><?php echo htmlspecialchars($referral->reward_points); ?></td>
                                     <td>₹<?php echo htmlspecialchars(number_format($referral->reward_amount, 2)); ?></td>
-                                    <td><?php echo date('M d, Y', strtotime($referral->created_at)); ?></td>
+                                    <td><?php echo nb_format_datetime($referral->created_at, true); ?></td>
                                     <td>
                                         <a href="<?php echo base_url('admin/referral_edit/'.$referral->id); ?>" class="btn btn-sm btn-warning" title="Edit">
                                             <i class="fas fa-edit"></i>

@@ -73,9 +73,11 @@
                                                                     <?php echo htmlspecialchars($item['propertyName'] ?? 'Property'); ?>
                                                                 </a>
                                                             </div>
-                                                            <div class="text-date">Enquiry: <?php 
-                                                                $date = isset($item['createdAt']) ? $item['createdAt'] : date('Y-m-d');
-                                                                echo date('M d, Y', strtotime($date)); 
+                                                            <div class="text-date">Enquiry: <?php
+                                                                $date = isset($item['created_at_display']) ? $item['created_at_display']
+                                                                    : (isset($item['createdAt_display']) ? $item['createdAt_display']
+                                                                    : nb_format_datetime(isset($item['createdAt']) ? $item['createdAt'] : '', true));
+                                                                echo html_escape($date);
                                                             ?></div>
                                                             <div class="text-btn text-primary"><?php
                                                                 $pp = $item['propertyPrice'] ?? '';
@@ -119,7 +121,7 @@
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <span class="text-muted"><?php echo date('M d, Y', strtotime($item['createdAt'])); ?></span>
+                                                    <span class="text-muted"><?php echo html_escape(isset($item['created_at_display']) ? $item['created_at_display'] : nb_format_datetime($item['createdAt'] ?? '', true)); ?></span>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>

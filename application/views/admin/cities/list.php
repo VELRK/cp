@@ -49,7 +49,7 @@
                                             <?php echo ucfirst($city->status); ?>
                                         </span>
                                     </td>
-                                    <td><?php echo date('M d, Y', strtotime($city->created_at)); ?></td>
+                                    <td><?php echo nb_format_datetime($city->created_at, true); ?></td>
                                     <td>
                                         <a href="<?php echo base_url('admin/city_edit/'.$city->id); ?>" class="btn btn-sm btn-warning">
                                             <i class="fas fa-edit"></i>

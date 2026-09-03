@@ -76,11 +76,11 @@ $sv_badge = function ($s) {
     <div class="row g-3 mb-3">
       <div class="col-md-6">
         <label class="form-label fw-semibold small text-muted">Scheduled date & time</label>
-        <div class="fw-medium"><?php echo html_escape($v->scheduled_at); ?></div>
+        <div class="fw-medium"><?php echo html_escape(nb_format_datetime($v->scheduled_at)); ?></div>
       </div>
       <div class="col-md-6">
         <label class="form-label fw-semibold small text-muted">Requested on</label>
-        <div><?php echo html_escape(isset($v->created_at) ? $v->created_at : '—'); ?></div>
+        <div><?php echo html_escape(isset($v->created_at) ? nb_format_datetime($v->created_at) : '—'); ?></div>
       </div>
     </div>
     <div class="mb-3">

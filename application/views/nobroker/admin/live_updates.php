@@ -33,7 +33,7 @@
           <td><?php echo html_escape((string) $r->title); ?></td>
           <td><?php echo html_escape((string) (isset($r->status) ? $r->status : 'upcoming')); ?></td>
           <td><?php echo html_escape((string) $r->platform); ?></td>
-          <td><?php echo html_escape((string) $r->liveTime); ?></td>
+          <td><?php echo html_escape(nb_format_datetime($r->liveTime)); ?></td>
           <td><?php echo html_escape((string) $r->createdAt); ?></td>
           <td class="text-nowrap">
             <a href="<?php echo site_url('panel/live-update/edit/' . (int) $r->id); ?>" class="btn btn-sm btn-outline-dark rounded-pill px-3">Edit</a>

@@ -4831,12 +4831,7 @@ $secondArray = array_slice($properties_by_location, 4, null, true);
                 <?php foreach ($blogs as $blog_category):
                     // Safely handle date
                     $publishedDate = isset($blog_category['publishedDate']) ? $blog_category['publishedDate'] : (isset($blog_category['date']) ? $blog_category['date'] : (isset($blog_category['created_at']) ? $blog_category['created_at'] : date('Y-m-d')));
-                    try {
-                        $dt = new DateTime($publishedDate);
-                        $formattedDate = $dt->format('F d, Y');
-                    } catch (Exception $e) {
-                        $formattedDate = date('F d, Y');
-                    }
+                    $formattedDate = nb_format_datetime($publishedDate, true);
 
                     $coverImage = isset($blog_category['coverImageUrl']) ? $blog_category['coverImageUrl'] : '';
                     $authorName = isset($blog_category['authorName']) ? trim((string) $blog_category['authorName']) : '';

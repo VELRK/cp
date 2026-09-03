@@ -95,8 +95,8 @@
                                 <div class="col-md-12">
                                     <h6 class="mb-2"><i class="fas fa-history me-2"></i>User History</h6>
                                     <small class="text-muted">
-                                        <div>Created: <?php echo date('M d, Y H:i', strtotime($user->created_at ?? 'now')); ?></div>
-                                        <div>Last Updated: <?php echo date('M d, Y H:i', strtotime($user->updated_at ?? 'now')); ?></div>
+                                        <div>Created: <?php echo nb_format_datetime($user->created_at ?? ''); ?></div>
+                                        <div>Last Updated: <?php echo nb_format_datetime($user->updated_at ?? ''); ?></div>
                                         <div>User ID: <code><?php echo htmlspecialchars($user->id); ?></code></div>
                                     </small>
                                 </div>
@@ -152,7 +152,7 @@
 
                     <h6>User Created:</h6>
                     <p class="text-muted mb-0">
-                        <?php echo isset($user) ? date('M d, Y', strtotime($user->created_at ?? 'now')) : 'N/A'; ?>
+                        <?php echo isset($user) ? nb_format_datetime($user->created_at ?? '', true) : 'N/A'; ?>
                     </p>
                 </div>
             </div>

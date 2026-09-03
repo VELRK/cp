@@ -51,7 +51,7 @@
                                         <?php endif; ?>
                                     </td>
                                     <td><?php echo $blog->author ?: '-'; ?></td>
-                                    <td><?php echo $blog->date ? date('M d, Y', strtotime($blog->date)) : '-'; ?></td>
+                                    <td><?php echo $blog->date ? nb_format_datetime($blog->date, true) : '-'; ?></td>
                                     <td>
                                         <?php if($gallery_count > 0): ?>
                                             <span class="badge bg-info">

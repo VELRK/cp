@@ -8,7 +8,7 @@
     <?php foreach ($enquiries as $e) : ?>
       <li class="list-group-item d-flex justify-content-between">
         <span><?php echo html_escape($e->property_title); ?> — <?php echo html_escape($e->status); ?></span>
-        <small class="text-muted"><?php echo html_escape($e->created_at); ?></small>
+        <small class="text-muted"><?php echo html_escape(nb_format_datetime($e->created_at)); ?></small>
       </li>
     <?php endforeach; ?>
     <?php if (empty($enquiries)) : ?>

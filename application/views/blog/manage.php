@@ -95,12 +95,12 @@
                                             </td>
                                             <td>
                                                 <span class="date-info">
-                                                    <?php echo date('M d, Y', strtotime($post['created_at'])); ?>
+                                                    <?php echo nb_format_datetime($post['created_at'], true); ?>
                                                 </span>
                                             </td>
                                             <td>
                                                 <span class="date-info">
-                                                    <?php echo date('M d, Y', strtotime($post['updated_at'])); ?>
+                                                    <?php echo nb_format_datetime($post['updated_at'], true); ?>
                                                 </span>
                                             </td>
                                             <td>

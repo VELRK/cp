@@ -36,7 +36,7 @@
           </td>
           <td><?php echo (int) $w->property_id; ?></td>
           <td><?php echo html_escape((string) $w->property_name); ?></td>
-          <td><?php echo html_escape((string) $w->created_at); ?></td>
+          <td><?php echo html_escape(nb_format_datetime($w->created_at)); ?></td>
         </tr>
       <?php endforeach; endif; ?>
       </tbody>

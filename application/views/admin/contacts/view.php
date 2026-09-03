@@ -32,7 +32,7 @@
             </div>
             <div class="row mb-3">
                 <div class="col-md-2"><strong>Date:</strong></div>
-                <div class="col-md-10"><?php echo date('F d, Y h:i A', strtotime($contact->created_at)); ?></div>
+                <div class="col-md-10"><?php echo nb_format_datetime($contact->created_at); ?></div>
             </div>
             <div class="row mb-3">
                 <div class="col-md-2"><strong>Message:</strong></div>

@@ -64,7 +64,7 @@
           </td>
           <td><?php echo $price !== null && $price !== '' ? '₹' . number_format((float) $price, 0, '.', ',') : '—'; ?></td>
           <td><?php echo html_escape($location); ?></td>
-          <td><?php echo html_escape((string) (isset($r->created_at) ? $r->created_at : '')); ?></td>
+          <td><?php echo html_escape(nb_format_datetime(isset($r->created_at) ? $r->created_at : '')); ?></td>
           <td class="text-end">
             <form action="<?php echo site_url('user/wishlist/remove/' . (int) $r->property_id); ?>" method="post" class="d-inline" onsubmit="return confirm('Remove from wishlist?');">
               <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>

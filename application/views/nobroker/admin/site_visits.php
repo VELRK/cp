@@ -67,7 +67,7 @@ $status_filter = isset($status_filter) ? (string) $status_filter : '';
             <td class="fw-medium"><?php echo html_escape($v->visitor_name ?: '—'); ?></td>
             <td class="small"><?php echo html_escape($v->property_title ?: '—'); ?></td>
             <td><?php echo html_escape($v->city_name ?: '—'); ?></td>
-            <td class="small text-nowrap"><?php echo html_escape($v->scheduled_at); ?></td>
+            <td class="small text-nowrap"><?php echo html_escape(nb_format_datetime($v->scheduled_at)); ?></td>
             <td><span class="badge <?php echo $sv_badge($v->status); ?>"><?php echo html_escape($v->status); ?></span></td>
             <td class="text-end text-nowrap">
               <a class="btn btn-sm btn-outline-secondary rounded-pill px-3 me-1" href="<?php echo site_url('panel/site-visit/' . (int) $v->id); ?>">View</a>

@@ -955,6 +955,49 @@ function nb_format_datetime($value, $date_only = false)
     }
 }
 
+/**
+ * Add *_display keys for API JSON (keeps raw MySQL values; adds IST 12-hour labels).
+ *
+ * @param array<string, mixed> $row
+ * @param array<int|string, bool|string> $fields field name, or field => date_only
+ * @return array<string, mixed>
+ */
+function nb_api_add_datetime_display(array $row, array $fields)
+{
+    foreach ($fields as $key => $dateOnly) {
+        if (is_int($key)) {
+            $field = $dateOnly;
+            $dateOnly = false;
+        } else {
+            $field = $key;
+        }
+        if (!array_key_exists($field, $row)) {
+            continue;
+        }
+        $v = $row[$field];
+        if ($v === null || $v === '') {
+            $row[$field . '_display'] = null;
+            continue;
+        }
+        $row[$field . '_display'] = nb_format_datetime($v, (bool) $dateOnly);
+    }
+    return $row;
+}
+
+/**
+ * @param array<int, object|array<string, mixed>> $rows
+ * @param array<int|string, bool|string> $fields
+ * @return array<int, array<string, mixed>>
+ */
+function nb_map_rows_datetime_display($rows, array $fields)
+{
+    $out = array();
+    foreach ($rows as $row) {
+        $out[] = nb_api_add_datetime_display(is_array($row) ? $row : (array) $row, $fields);
+    }
+    return $out;
+}
+
 /** Map / location columns on nb_properties (mobile TC_007). */
 function nb_ensure_property_map_columns()
 {

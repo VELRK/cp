@@ -6,7 +6,7 @@
       <div class="card-body">
         <h2 class="h6"><?php echo html_escape($e->property_title); ?> <span class="badge bg-secondary"><?php echo html_escape($e->city_name); ?></span></h2>
         <p class="mb-1 small"><?php echo nl2br(html_escape($e->message)); ?></p>
-        <small class="text-muted"><?php echo html_escape($e->created_at); ?> · Status: <strong><?php echo html_escape($e->status); ?></strong></small>
+        <small class="text-muted"><?php echo html_escape(nb_format_datetime($e->created_at)); ?> · Status: <strong><?php echo html_escape($e->status); ?></strong></small>
       </div>
     </div>
   <?php endforeach; ?>

@@ -28,7 +28,7 @@
                                 <?php endif; ?>
                                 <span class="date-post"><?php 
                                     $date = !empty($post['publishedDate']) ? $post['publishedDate'] : (isset($post['created_at']) ? $post['created_at'] : date('Y-m-d'));
-                                    echo date('F d, Y', strtotime($date)); 
+                                    echo nb_format_datetime($date, true);
                                 ?></span>
                             </div>
                             <div class="content-box">

@@ -56,7 +56,7 @@
                                             <?php echo ucfirst($category->status); ?>
                                         </span>
                                     </td>
-                                    <td><?php echo date('M d, Y', strtotime($category->created_at)); ?></td>
+                                    <td><?php echo nb_format_datetime($category->created_at, true); ?></td>
                                     <td>
                                         <a href="<?php echo base_url('admin/category_edit/'.$category->id); ?>" class="btn btn-sm btn-warning">
                                             <i class="fas fa-edit"></i>

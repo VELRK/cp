@@ -1,7 +1,7 @@
 <?php defined('BASEPATH') OR exit('No direct script access allowed');
 $CI =& get_instance();
-$posted = !empty($p->created_at) ? date('d/m/Y', strtotime($p->created_at)) : '';
-$avail = !empty($p->available_from) ? date('d/m/Y', strtotime($p->available_from)) : '';
+$posted = !empty($p->created_at) ? nb_format_datetime($p->created_at, true) : '';
+$avail = !empty($p->available_from) ? nb_format_datetime($p->available_from, true) : '';
 $price_line = nb_format_listing_price($p->price, $p->listing_type);
 $plot_l = isset($p->plot_length_ft) ? (float) $p->plot_length_ft : 0;
 $plot_w = isset($p->plot_width_ft) ? (float) $p->plot_width_ft : 0;

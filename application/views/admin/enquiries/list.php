@@ -47,7 +47,7 @@
                                             <?php echo ucfirst($enquiry->status); ?>
                                         </span>
                                     </td>
-                                    <td><?php echo date('M d, Y', strtotime($enquiry->created_at)); ?></td>
+                                    <td><?php echo nb_format_datetime($enquiry->created_at, true); ?></td>
                                     <td>
                                         <a href="<?php echo base_url('admin/enquiry_view/'.$enquiry->id); ?>" class="btn btn-sm btn-info">
                                             <i class="fas fa-eye"></i>

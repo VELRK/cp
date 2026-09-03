@@ -68,7 +68,7 @@
                                             <?php echo ucfirst($location->status); ?>
                                         </span>
                                     </td>
-                                    <td><?php echo date('M d, Y', strtotime($location->created_at)); ?></td>
+                                    <td><?php echo nb_format_datetime($location->created_at, true); ?></td>
                                     <td>
                                         <a href="<?php echo base_url('admin/location_edit/'.$location->id); ?>" class="btn btn-sm btn-warning">
                                             <i class="fas fa-edit"></i>

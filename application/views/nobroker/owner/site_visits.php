@@ -127,11 +127,11 @@ $initials = function ($name) {
                   </div>
                   <div class="col-md-6">
                     <span class="text-muted">Scheduled:</span>
-                    <span class="fw-medium text-dark"><i class="bi bi-clock me-1"></i><?php echo html_escape($v->scheduled_at); ?></span>
+                    <span class="fw-medium text-dark"><i class="bi bi-clock me-1"></i><?php echo html_escape(nb_format_datetime($v->scheduled_at)); ?></span>
                   </div>
                   <div class="col-md-6">
                     <span class="text-muted">Requested:</span>
-                    <?php echo html_escape(isset($v->created_at) ? $v->created_at : '—'); ?>
+                    <?php echo html_escape(isset($v->created_at) ? nb_format_datetime($v->created_at) : '—'); ?>
                   </div>
                 </div>
                 <?php if (!empty($v->notes)) : ?>

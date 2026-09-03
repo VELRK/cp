@@ -47,7 +47,7 @@
                                             <?php echo ucfirst($banner->status); ?>
                                         </span>
                                     </td>
-                                    <td><?php echo date('M d, Y', strtotime($banner->created_at)); ?></td>
+                                    <td><?php echo nb_format_datetime($banner->created_at, true); ?></td>
                                     <td>
                                         <a href="<?php echo base_url('admin/banner_toggle/'.$banner->id); ?>" class="btn btn-sm btn-<?php echo $banner->status == 'active' ? 'warning' : 'success'; ?>" title="Toggle Status">
                                             <i class="fas fa-<?php echo $banner->status == 'active' ? 'eye-slash' : 'eye'; ?>"></i>

@@ -45,7 +45,7 @@
                                             <?php echo ucfirst($contact->status); ?>
                                         </span>
                                     </td>
-                                    <td><?php echo date('M d, Y', strtotime($contact->created_at)); ?></td>
+                                    <td><?php echo nb_format_datetime($contact->created_at, true); ?></td>
                                     <td>
                                         <a href="<?php echo base_url('admin/contact_view/'.$contact->id); ?>" class="btn btn-sm btn-info">
                                             <i class="fas fa-eye"></i>

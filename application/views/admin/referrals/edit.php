@@ -67,8 +67,8 @@
                             <div class="col-md-12">
                                 <h6><i class="fas fa-clock me-2"></i>Timeline</h6>
                                 <small class="text-muted">
-                                    <div>Created: <?php echo date('M d, Y H:i', strtotime($referral->created_at)); ?></div>
-                                    <div>Updated: <?php echo date('M d, Y H:i', strtotime($referral->updated_at)); ?></div>
+                                    <div>Created: <?php echo nb_format_datetime($referral->created_at); ?></div>
+                                    <div>Updated: <?php echo nb_format_datetime($referral->updated_at); ?></div>
                                 </small>
                             </div>
                         </div>

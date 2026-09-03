@@ -119,7 +119,9 @@ class Api_nb_app extends CI_Controller
             $row['kyc_approved'] = true;
             $row['kyc_rejection_reason'] = '';
         }
-        return $row;
+        return nb_api_add_datetime_display($row, array(
+            'created_at', 'updated_at', 'kyc_submitted_at', 'kyc_reviewed_at',
+        ));
     }
 
     /** Merge pending profile update onto user row for KYC validation. */
@@ -1040,18 +1042,19 @@ class Api_nb_app extends CI_Controller
         }
         $visits = array();
         foreach ($rows as $r) {
-            $visits[] = array(
+            $visits[] = nb_api_add_datetime_display(array(
                 'id' => (int) $r->id,
                 'property_id' => (int) $r->property_id,
                 'property_title' => isset($r->property_title) ? (string) $r->property_title : '',
                 'property_slug' => isset($r->property_slug) ? (string) $r->property_slug : '',
                 'scheduled_at' => (string) $r->scheduled_at,
+                'created_at' => isset($r->created_at) ? (string) $r->created_at : null,
                 'notes' => isset($r->notes) ? (string) $r->notes : null,
                 'status' => (string) $r->status,
                 'visitor_name' => isset($r->visitor_name) ? (string) $r->visitor_name : null,
                 'visitor_phone' => isset($r->visitor_phone) ? (string) $r->visitor_phone : null,
                 'city_name' => isset($r->city_name) ? (string) $r->city_name : null,
-            );
+            ), array('scheduled_at', 'created_at'));
         }
         $this->_json(array('success' => true, 'visits' => $visits));
     }
@@ -1870,7 +1873,9 @@ class Api_nb_app extends CI_Controller
             'url' => nb_property_url($p),
         );
 
-        return $row;
+        return nb_api_add_datetime_display($row, array(
+            'created_at', 'updated_at', 'available_from' => true,
+        ));
     }
 
     /** @param object $p Property row with optional owner_user_type */
@@ -1938,14 +1943,14 @@ class Api_nb_app extends CI_Controller
                 $property = $this->_format_property_card($p);
             }
         }
-        return array(
+        return nb_api_add_datetime_display(array(
             'id' => isset($w->id) ? (string) $w->id : '',
             'userId' => isset($w->user_id) ? (string) $w->user_id : '',
             'propertyId' => isset($w->property_id) ? (string) $w->property_id : '',
             'createdAt' => isset($w->created_at) ? (string) $w->created_at : '',
             'propertyName' => isset($w->property_name) ? $w->property_name : null,
             'property' => $property,
-        );
+        ), array('createdAt'));
     }
 
     private function _notify_admin_enquiry($prop, $tenant, $message, $phone, $email)
@@ -1978,7 +1983,7 @@ class Api_nb_app extends CI_Controller
         $created_at = isset($n->created_at) ? (string) $n->created_at : null;
         $updated_at = isset($n->updated_at) ? (string) $n->updated_at : null;
 
-        return array(
+        return nb_api_add_datetime_display(array(
             'id' => isset($n->id) ? (int) $n->id : 0,
             'title' => isset($n->title) ? (string) $n->title : '',
             'description' => isset($n->description) && $n->description !== null ? (string) $n->description : '',
@@ -1989,7 +1994,7 @@ class Api_nb_app extends CI_Controller
             'video_url' => $video_url,
             'created_at' => $created_at,
             'updated_at' => $updated_at,
-        );
+        ), array('created_at', 'updated_at'));
     }
 
     /**

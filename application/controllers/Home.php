@@ -101,6 +101,8 @@ class Home extends CI_Controller {
                 'status' => $property->status,
                 'created_at' => isset($property->created_at) ? $property->created_at : '',
                 'createdAt' => isset($property->created_at) ? $property->created_at : '',
+                'created_at_display' => !empty($property->created_at) ? nb_format_datetime($property->created_at) : null,
+                'createdAt_display' => !empty($property->created_at) ? nb_format_datetime($property->created_at) : null,
                 'locationInfo' => array('locationName' => $property->location),
                 'cityInfo' => array('cityName' => $property->city),
                 'categoryInfo' => array('categoryName' => $property->category),
@@ -169,11 +171,14 @@ class Home extends CI_Controller {
                 'authorName' => isset($blog->author) ? $blog->author : 'Admin',
                 'date' => isset($blog->date) ? $blog->date : '',
                 'publishedDate' => $publishedDate,
+                'publishedDate_display' => nb_format_datetime($publishedDate, true),
                 'category' => '', // Blogs table doesn't have category in new schema
                 'slug' => isset($blog->slug) ? $blog->slug : '',
                 'status' => isset($blog->status) ? $blog->status : 'active',
                 'createdAt' => isset($blog->created_at) ? $blog->created_at : '',
-                'created_at' => isset($blog->created_at) ? $blog->created_at : ''
+                'created_at' => isset($blog->created_at) ? $blog->created_at : '',
+                'created_at_display' => !empty($blog->created_at) ? nb_format_datetime($blog->created_at) : null,
+                'createdAt_display' => !empty($blog->created_at) ? nb_format_datetime($blog->created_at) : null,
             );
         }
         

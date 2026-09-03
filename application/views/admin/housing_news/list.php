@@ -51,7 +51,7 @@
                                 </td>
                                 <td><span class="badge bg-info"><?php echo htmlspecialchars($item->category); ?></span></td>
                                 <td><?php echo !empty($item->authorName) ? htmlspecialchars($item->authorName) : '-'; ?></td>
-                                <td><?php echo !empty($item->createdAt) ? date('M d, Y H:i', strtotime($item->createdAt)) : '-'; ?></td>
+                                <td><?php echo !empty($item->createdAt) ? nb_format_datetime($item->createdAt) : '-'; ?></td>
                                 <td>
                                     <a href="<?php echo base_url('admin/housing_news_edit/' . (int) $item->id); ?>" class="btn btn-sm btn-warning">
                                         <i class="fas fa-edit"></i>

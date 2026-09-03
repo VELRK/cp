@@ -358,19 +358,20 @@ class Auth extends CI_Controller {
             $user = $this->User_model->get_by_id($user_id);
             
             if ($user) {
+                $userPayload = nb_api_add_datetime_display(array(
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->phone,
+                    'country_code' => $user->country_code,
+                    'address' => $user->address,
+                    'is_verified' => (bool) $user->is_verified,
+                    'status' => $user->status,
+                    'created_at' => $user->created_at,
+                ), array('created_at'));
                 $this->output->set_output(json_encode(array(
                     'success' => true,
-                    'user' => array(
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'phone' => $user->phone,
-                        'country_code' => $user->country_code,
-                        'address' => $user->address,
-                        'is_verified' => (bool)$user->is_verified,
-                        'status' => $user->status,
-                        'created_at' => $user->created_at
-                    )
+                    'user' => $userPayload,
                 )));
             } else {
                 $this->output->set_output(json_encode(array(

@@ -44,7 +44,7 @@
                 ?>
                 <span class="badge text-bg-<?php echo $badge; ?>"><?php echo ucfirst($req->status); ?></span>
               </td>
-              <td><?php echo date('d M Y, h:i A', strtotime($req->created_at)); ?></td>
+              <td><?php echo html_escape(nb_format_datetime($req->created_at)); ?></td>
               <td>
                 <form method="post" action="<?php echo site_url('panel/delete-request/status/' . (int) $req->id); ?>" class="d-flex gap-1 align-items-center">
                   <select name="status" class="form-select form-select-sm" style="min-width:110px;">

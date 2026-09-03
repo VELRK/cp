@@ -75,7 +75,7 @@
                 <tr>
                   <td class="fw-medium"><?php echo html_escape($v->visitor_name ?: '—'); ?></td>
                   <td class="small"><?php echo html_escape($v->property_title ?: '—'); ?></td>
-                  <td class="small text-nowrap"><?php echo html_escape($v->scheduled_at); ?></td>
+                  <td class="small text-nowrap"><?php echo html_escape(nb_format_datetime($v->scheduled_at)); ?></td>
                   <td><span class="badge bg-<?php echo $v->status === 'pending' ? 'warning text-dark' : ($v->status === 'confirmed' ? 'success' : 'secondary'); ?> text-capitalize"><?php echo html_escape($v->status); ?></span></td>
                 </tr>
               <?php endforeach; ?>

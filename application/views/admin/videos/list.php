@@ -93,7 +93,7 @@ $is_panel = isset($media_urls);
                                             <?php echo ucfirst($video->status); ?>
                                         </span>
                                     </td>
-                                    <td><?php echo $video->createdAt ? date('M d, Y', strtotime($video->createdAt)) : 'N/A'; ?></td>
+                                    <td><?php echo $video->createdAt ? nb_format_datetime($video->createdAt, true) : 'N/A'; ?></td>
                                     <td class="<?php echo $is_panel ? 'text-end' : ''; ?>">
                                         <?php if ($is_panel) : ?>
                                         <div class="d-inline-flex align-items-center gap-2 flex-nowrap">

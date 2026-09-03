@@ -73,7 +73,7 @@
                                             <?php echo ucfirst($notification->status); ?>
                                         </span>
                                     </td>
-                                    <td><?php echo date('M d, Y', strtotime($notification->created_at)); ?></td>
+                                    <td><?php echo nb_format_datetime($notification->created_at, true); ?></td>
                                     <td>
                                         <a href="<?php echo $is_panel_notifications ? site_url('panel/notification/toggle/'.$notification->id) : site_url('admin/notification_toggle/'.$notification->id); ?>" class="btn btn-sm btn-<?php echo $notification->status == 'active' ? 'warning' : 'success'; ?>" title="Toggle Status">
                                             <i class="fas fa-<?php echo $notification->status == 'active' ? 'eye-slash' : 'eye'; ?>"></i>

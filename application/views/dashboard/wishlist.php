@@ -42,7 +42,7 @@
                                                                     <?php echo htmlspecialchars($item['propertyName'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
                                                                 </a>
                                                             </div>
-                                                            <div class="text-date">Added: <?php echo date('M d, Y', strtotime($item['addedAt'])); ?></div>
+                                                            <div class="text-date">Added: <?php echo nb_format_datetime($item['addedAt'] ?? $item['createdAt'] ?? '', true); ?></div>
                                                             <div class="text-btn text-primary"><?php
                                                                 $pp = $item['propertyPrice'] ?? '';
                                                                 echo (is_numeric($pp) && (float) $pp > 0) ? dvm_format_price_inr((float) $pp, true) : htmlspecialchars((string) $pp);

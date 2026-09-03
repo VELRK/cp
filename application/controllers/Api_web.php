@@ -70,7 +70,8 @@ class Api_web extends CI_Controller
 
         if ($this->input->method() === 'get') {
             $rows = $this->Feedback_model->get_all((string) (int) $user->id, 100, 0);
-            return $this->_json(array('success' => true, 'feedbacks' => $rows));
+            $feedbacks = nb_map_rows_datetime_display($rows, array('createdAt', 'created_at'));
+            return $this->_json(array('success' => true, 'feedbacks' => $feedbacks));
         }
 
         if ($this->input->method() !== 'post') {
@@ -160,7 +161,7 @@ class Api_web extends CI_Controller
             $this->db->where_in('e.property_id', $pids);
             $this->db->order_by('e.created_at', 'DESC');
             $this->db->limit(5);
-            $recent_enquiries = $this->db->get()->result();
+            $recent_enquiries = nb_map_rows_datetime_display($recent_enquiries, array('created_at', 'updated_at'));
         }
 
         return $this->_json(array(
@@ -204,7 +205,9 @@ class Api_web extends CI_Controller
             $item['images'] = $images_list;
             $item['image_urls'] = $image_urls;
             $item['thumbnail_url'] = !empty($image_urls) ? $image_urls[0] : null;
-            $listings[] = $item;
+            $listings[] = nb_api_add_datetime_display($item, array(
+                'created_at', 'updated_at', 'available_from' => true,
+            ));
         }
 
         return $this->_json(array('success' => true, 'listings' => $listings));
@@ -232,7 +235,10 @@ class Api_web extends CI_Controller
         $this->db->order_by('e.created_at', 'DESC');
         $rows = $this->db->get()->result();
 
-        return $this->_json(array('success' => true, 'enquiries' => $rows));
+        return $this->_json(array(
+            'success' => true,
+            'enquiries' => nb_map_rows_datetime_display($rows, array('created_at', 'updated_at')),
+        ));
     }
 
     /** GET /api/tenant/enquiries */
@@ -251,7 +257,10 @@ class Api_web extends CI_Controller
         $this->db->order_by('e.created_at', 'DESC');
         $rows = $this->db->get()->result();
 
-        return $this->_json(array('success' => true, 'enquiries' => $rows));
+        return $this->_json(array(
+            'success' => true,
+            'enquiries' => nb_map_rows_datetime_display($rows, array('created_at', 'updated_at')),
+        ));
     }
 
     /** GET /api/properties/{idOrSlug} */
@@ -318,6 +327,11 @@ class Api_web extends CI_Controller
                 : base_url($li);
         }
 
-        return $this->_json(array('success' => true, 'property' => $property));
+        return $this->_json(array(
+            'success' => true,
+            'property' => nb_api_add_datetime_display($property, array(
+                'created_at', 'updated_at', 'available_from' => true,
+            )),
+        ));
     }
 }

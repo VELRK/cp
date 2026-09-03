@@ -89,7 +89,7 @@
                                             <span class="text-muted">No image</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td><?php echo date('M d, Y', strtotime($item->created_at)); ?></td>
+                                    <td><?php echo nb_format_datetime($item->created_at, true); ?></td>
                                     <td>
                                         <a href="<?php echo base_url('admin/wishlist_view/'.$item->id); ?>" class="btn btn-sm btn-info" title="View">
                                             <i class="fas fa-eye"></i>

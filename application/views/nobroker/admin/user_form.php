@@ -20,10 +20,14 @@ $has_utype    = $ci->db->field_exists('user_type', 'nb_users');
 $is_agent_edit = $is_edit && $u && nb_user_is_agent($u);
 $kyc_status = $is_agent_edit ? nb_agent_kyc_status($u) : 'none';
 $kyc_complete = $is_agent_edit ? nb_agent_kyc_complete($u) : false;
-$kyc_can_review = $is_agent_edit && $kyc_complete && $kyc_status === 'pending';
+$kyc_missing = $is_agent_edit ? nb_agent_kyc_missing($u) : array();
 $kyc_is_rejected = $is_agent_edit && $kyc_status === 'rejected';
 $kyc_rejection_reason = $kyc_is_rejected ? nb_agent_kyc_rejection_reason($u) : '';
-$kyc_show_actions = $kyc_can_review || $kyc_is_rejected;
+$kyc_missing_labels = array(
+  'business_name' => 'Business name',
+  'aadhar_no' => 'Aadhaar number',
+  'aadhar_file' => 'Aadhaar document',
+);
 $kyc_badge = function ($s) {
   $m = array(
     'none' => 'bg-secondary',
@@ -79,27 +83,38 @@ $kyc_badge = function ($s) {
       <dd class="col-sm-9 text-danger"><?php echo nl2br(html_escape($kyc_rejection_reason)); ?></dd>
       <?php endif; ?>
     </dl>
-    <?php if (!$kyc_complete) : ?>
-    <div class="alert alert-secondary border-0 rounded-3 mb-0 py-2 small">Agent has not submitted complete KYC yet (business name, Aadhaar number, and document).</div>
-    <?php elseif ($kyc_can_review) : ?>
-    <p class="text-muted small mb-3">Reject sends email to the agent (when a real email is on file). Use Approve KYC to verify the agent.</p>
-    <div class="d-flex flex-wrap gap-2">
-      <button type="button" class="btn btn-success rounded-pill px-4 nb-kyc-approve" data-id="<?php echo (int) $edit_id; ?>">Approve KYC</button>
-      <button type="button" class="btn btn-outline-danger rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#nbKycRejectModal">Reject KYC</button>
+    <?php if (!empty($kyc_missing)) : ?>
+    <div class="alert alert-warning border-0 rounded-3 py-2 small mb-3">
+      Missing KYC fields:
+      <?php
+        $missing_names = array();
+        foreach ($kyc_missing as $field) {
+          $missing_names[] = isset($kyc_missing_labels[$field]) ? $kyc_missing_labels[$field] : $field;
+        }
+        echo html_escape(implode(', ', $missing_names));
+      ?>
     </div>
-    <?php elseif ($kyc_is_rejected) : ?>
-    <p class="text-muted small mb-3">Edit the comment shown in the app without sending email again, or approve if corrected.</p>
+    <?php endif; ?>
+    <?php if ($kyc_status === 'approved' && !$kyc_complete) : ?>
+    <div class="alert alert-warning border-0 rounded-3 py-2 small mb-3">KYC is marked approved but required fields are still missing. You can reject with a reason or approve again after the agent updates details.</div>
+    <?php endif; ?>
+    <?php if ($kyc_is_rejected) : ?>
+    <p class="text-muted small mb-3">Edit the comment shown in the app (no email), or approve if the agent has corrected their details.</p>
     <div class="d-flex flex-wrap gap-2">
       <button type="button" class="btn btn-success rounded-pill px-4 nb-kyc-approve" data-id="<?php echo (int) $edit_id; ?>">Approve KYC</button>
       <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#nbKycEditRejectionModal">Edit rejection comment</button>
     </div>
-    <?php elseif ($kyc_status === 'approved') : ?>
-    <div class="alert alert-success border-0 rounded-3 mb-0 py-2 small">Agent KYC is approved.</div>
+    <?php else : ?>
+    <p class="text-muted small mb-3"><strong>Reject KYC</strong> asks for a reason (emailed to agent when possible). <strong>Approve KYC</strong> marks the agent verified.</p>
+    <div class="d-flex flex-wrap gap-2">
+      <button type="button" class="btn btn-success rounded-pill px-4 nb-kyc-approve" data-id="<?php echo (int) $edit_id; ?>">Approve KYC</button>
+      <button type="button" class="btn btn-outline-danger rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#nbKycRejectModal">Reject KYC</button>
+    </div>
     <?php endif; ?>
   </div>
 </div>
 
-<?php if ($kyc_can_review) : ?>
+<?php if ($is_agent_edit && !$kyc_is_rejected) : ?>
 <div class="modal fade" id="nbKycRejectModal" tabindex="-1" aria-labelledby="nbKycRejectModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -241,7 +256,7 @@ $kyc_badge = function ($s) {
     <?php echo form_close(); ?>
   </div>
 </div>
-<?php if ($kyc_show_actions) : ?>
+<?php if ($is_agent_edit) : ?>
 <script>
 (function () {
   function postKyc(url, body, okMsg) {

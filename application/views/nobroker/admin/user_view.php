@@ -28,10 +28,14 @@ $user_type = isset($u->user_type) ? $u->user_type : (isset($u->role) ? $u->role 
 $is_agent = strtolower((string) $user_type) === 'agent';
 $kyc_status = $is_agent ? nb_agent_kyc_status($u) : 'none';
 $kyc_complete = $is_agent ? nb_agent_kyc_complete($u) : false;
-$kyc_can_review = $is_agent && $kyc_complete && $kyc_status === 'pending';
+$kyc_missing = $is_agent ? nb_agent_kyc_missing($u) : array();
 $kyc_is_rejected = $is_agent && $kyc_status === 'rejected';
 $kyc_rejection_reason = $kyc_is_rejected ? nb_agent_kyc_rejection_reason($u) : '';
-$kyc_show_actions = $kyc_can_review || $kyc_is_rejected;
+$kyc_missing_labels = array(
+  'business_name' => 'Business name',
+  'aadhar_no' => 'Aadhaar number',
+  'aadhar_file' => 'Aadhaar document',
+);
 ?>
 <div class="nb-admin-page-head d-flex flex-wrap justify-content-between align-items-start gap-3">
   <div>
@@ -51,35 +55,45 @@ $kyc_show_actions = $kyc_can_review || $kyc_is_rejected;
   </div>
 </div>
 
-<?php if ($kyc_can_review) : ?>
+<?php if ($is_agent) : ?>
 <div class="nb-admin-panel mb-4">
   <div class="nb-admin-panel-body p-4">
-    <h2 class="h6 mb-3">Agent KYC review</h2>
-    <p class="text-muted small mb-3">Approve or reject this agent's KYC submission. On reject, the agent receives an email (when a real email is on file) and sees the reason in the app.</p>
-    <div class="d-flex flex-wrap gap-2">
-      <button type="button" class="btn btn-success rounded-pill px-4 nb-kyc-approve" data-id="<?php echo (int) $u->id; ?>">Approve KYC</button>
-      <button type="button" class="btn btn-outline-danger rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#nbKycRejectModal">Reject KYC</button>
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+      <h2 class="h6 mb-0">Agent KYC</h2>
+      <span class="nb-admin-badge <?php echo $kyc_badge($kyc_status); ?>"><?php echo html_escape(ucfirst($kyc_status)); ?></span>
     </div>
-  </div>
-</div>
-<?php elseif ($kyc_is_rejected) : ?>
-<div class="nb-admin-panel mb-4">
-  <div class="nb-admin-panel-body p-4">
-    <h2 class="h6 mb-3">Rejected agent KYC</h2>
-    <p class="text-muted small mb-3">Update the rejection comment shown in the app, or approve KYC if the agent has corrected their details.</p>
+    <?php if (!empty($kyc_missing)) : ?>
+    <div class="alert alert-warning border-0 rounded-3 py-2 small mb-3">
+      Missing KYC fields:
+      <?php
+        $missing_names = array();
+        foreach ($kyc_missing as $field) {
+          $missing_names[] = isset($kyc_missing_labels[$field]) ? $kyc_missing_labels[$field] : $field;
+        }
+        echo html_escape(implode(', ', $missing_names));
+      ?>
+    </div>
+    <?php endif; ?>
+    <?php if ($kyc_status === 'approved' && !$kyc_complete) : ?>
+    <div class="alert alert-warning border-0 rounded-3 py-2 small mb-3">KYC is marked approved but required fields are still missing.</div>
+    <?php endif; ?>
+    <?php if ($kyc_is_rejected) : ?>
+    <p class="text-muted small mb-3">Edit the rejection comment (no email) or approve if corrected.</p>
     <div class="d-flex flex-wrap gap-2">
       <button type="button" class="btn btn-success rounded-pill px-4 nb-kyc-approve" data-id="<?php echo (int) $u->id; ?>">Approve KYC</button>
       <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#nbKycEditRejectionModal">Edit rejection comment</button>
     </div>
+    <?php else : ?>
+    <p class="text-muted small mb-3"><strong>Reject KYC</strong> requires a reason (emailed when possible). <strong>Approve KYC</strong> verifies the agent.</p>
+    <div class="d-flex flex-wrap gap-2">
+      <button type="button" class="btn btn-success rounded-pill px-4 nb-kyc-approve" data-id="<?php echo (int) $u->id; ?>">Approve KYC</button>
+      <button type="button" class="btn btn-outline-danger rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#nbKycRejectModal">Reject KYC</button>
+    </div>
+    <?php endif; ?>
   </div>
 </div>
-<?php elseif ($is_agent && $kyc_status === 'approved') : ?>
-<div class="alert alert-success rounded-3 mb-4">Agent KYC is approved.</div>
-<?php elseif ($is_agent && !$kyc_complete) : ?>
-<div class="alert alert-secondary rounded-3 mb-4">Agent has not submitted complete KYC yet.</div>
-<?php endif; ?>
 
-<?php if ($kyc_can_review) : ?>
+<?php if (!$kyc_is_rejected) : ?>
 <div class="modal fade" id="nbKycRejectModal" tabindex="-1" aria-labelledby="nbKycRejectModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -119,6 +133,7 @@ $kyc_show_actions = $kyc_can_review || $kyc_is_rejected;
     </div>
   </div>
 </div>
+<?php endif; ?>
 <?php endif; ?>
 
 <div class="nb-admin-panel">
@@ -206,7 +221,7 @@ $kyc_show_actions = $kyc_can_review || $kyc_is_rejected;
     </dl>
   </div>
 </div>
-<?php if ($kyc_show_actions) : ?>
+<?php if ($is_agent) : ?>
 <script>
 (function () {
   function postKyc(url, body, okMsg) {

@@ -1754,12 +1754,6 @@ class Broker_admin extends MY_Controller {
         if (!nb_user_is_agent($user)) {
             return $this->_panel_json(array('success' => false, 'message' => 'Agent account required'), 400);
         }
-        if (!nb_agent_kyc_complete($user)) {
-            return $this->_panel_json(array(
-                'success' => false,
-                'message' => 'Agent has not completed KYC submission.',
-            ), 400);
-        }
         $update = array('updated_at' => date('Y-m-d H:i:s'));
         if ($this->db->field_exists('kyc_status', 'nb_users')) {
             $update['kyc_status'] = 'approved';
@@ -1807,12 +1801,6 @@ class Broker_admin extends MY_Controller {
             return $this->_panel_json(array(
                 'success' => false,
                 'message' => 'KYC is already rejected. Use Edit rejection comment to update the reason without sending email again.',
-            ), 400);
-        }
-        if (nb_agent_kyc_status($user) !== 'pending') {
-            return $this->_panel_json(array(
-                'success' => false,
-                'message' => 'Agent KYC is not pending review.',
             ), 400);
         }
         $update = array('updated_at' => date('Y-m-d H:i:s'));

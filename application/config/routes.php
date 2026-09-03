@@ -409,6 +409,7 @@ $route['panel/user/delete/(:num)'] = 'broker_admin/user_delete/$1';
 $route['panel/approve-user'] = 'broker_admin/approve_user';
 $route['panel/user/kyc-approve'] = 'broker_admin/approve_agent_kyc';
 $route['panel/user/kyc-reject'] = 'broker_admin/reject_agent_kyc';
+$route['panel/user/kyc-rejection-edit'] = 'broker_admin/update_agent_kyc_rejection';
 $route['panel/approve-property'] = 'broker_admin/approve_property';
 $route['panel/update-enquiry'] = 'broker_admin/update_enquiry';
 $route['panel/delete-enquiry'] = 'broker_admin/delete_enquiry';

@@ -28,7 +28,10 @@ $user_type = isset($u->user_type) ? $u->user_type : (isset($u->role) ? $u->role 
 $is_agent = strtolower((string) $user_type) === 'agent';
 $kyc_status = $is_agent ? nb_agent_kyc_status($u) : 'none';
 $kyc_complete = $is_agent ? nb_agent_kyc_complete($u) : false;
-$kyc_can_review = $is_agent && $kyc_complete && in_array($kyc_status, array('pending', 'rejected'), true);
+$kyc_can_review = $is_agent && $kyc_complete && $kyc_status === 'pending';
+$kyc_is_rejected = $is_agent && $kyc_status === 'rejected';
+$kyc_rejection_reason = $kyc_is_rejected ? nb_agent_kyc_rejection_reason($u) : '';
+$kyc_show_actions = $kyc_can_review || $kyc_is_rejected;
 ?>
 <div class="nb-admin-page-head d-flex flex-wrap justify-content-between align-items-start gap-3">
   <div>
@@ -48,7 +51,7 @@ $kyc_can_review = $is_agent && $kyc_complete && in_array($kyc_status, array('pen
   </div>
 </div>
 
-<?php if ($is_agent && $kyc_can_review) : ?>
+<?php if ($kyc_can_review) : ?>
 <div class="nb-admin-panel mb-4">
   <div class="nb-admin-panel-body p-4">
     <h2 class="h6 mb-3">Agent KYC review</h2>
@@ -59,7 +62,24 @@ $kyc_can_review = $is_agent && $kyc_complete && in_array($kyc_status, array('pen
     </div>
   </div>
 </div>
+<?php elseif ($kyc_is_rejected) : ?>
+<div class="nb-admin-panel mb-4">
+  <div class="nb-admin-panel-body p-4">
+    <h2 class="h6 mb-3">Rejected agent KYC</h2>
+    <p class="text-muted small mb-3">Update the rejection comment shown in the app, or approve KYC if the agent has corrected their details.</p>
+    <div class="d-flex flex-wrap gap-2">
+      <button type="button" class="btn btn-success rounded-pill px-4 nb-kyc-approve" data-id="<?php echo (int) $u->id; ?>">Approve KYC</button>
+      <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#nbKycEditRejectionModal">Edit rejection comment</button>
+    </div>
+  </div>
+</div>
+<?php elseif ($is_agent && $kyc_status === 'approved') : ?>
+<div class="alert alert-success rounded-3 mb-4">Agent KYC is approved.</div>
+<?php elseif ($is_agent && !$kyc_complete) : ?>
+<div class="alert alert-secondary rounded-3 mb-4">Agent has not submitted complete KYC yet.</div>
+<?php endif; ?>
 
+<?php if ($kyc_can_review) : ?>
 <div class="modal fade" id="nbKycRejectModal" tabindex="-1" aria-labelledby="nbKycRejectModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -78,10 +98,27 @@ $kyc_can_review = $is_agent && $kyc_complete && in_array($kyc_status, array('pen
     </div>
   </div>
 </div>
-<?php elseif ($is_agent && $kyc_status === 'approved') : ?>
-<div class="alert alert-success rounded-3 mb-4">Agent KYC is approved.</div>
-<?php elseif ($is_agent && !$kyc_complete) : ?>
-<div class="alert alert-secondary rounded-3 mb-4">Agent has not submitted complete KYC yet.</div>
+<?php endif; ?>
+
+<?php if ($kyc_is_rejected) : ?>
+<div class="modal fade" id="nbKycEditRejectionModal" tabindex="-1" aria-labelledby="nbKycEditRejectionModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="nbKycEditRejectionModalLabel">Edit rejection comment</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label" for="nb-kyc-edit-rejection-reason">Rejection comment (shown in app only — no email sent)</label>
+        <textarea id="nb-kyc-edit-rejection-reason" class="form-control" rows="4" minlength="5" placeholder="Update the reason shown to the agent…"><?php echo html_escape($kyc_rejection_reason); ?></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-dark rounded-pill nb-kyc-edit-rejection" data-id="<?php echo (int) $u->id; ?>">Save comment</button>
+      </div>
+    </div>
+  </div>
+</div>
 <?php endif; ?>
 
 <div class="nb-admin-panel">
@@ -131,9 +168,9 @@ $kyc_can_review = $is_agent && $kyc_complete && in_array($kyc_status, array('pen
       <dd><?php echo html_escape($u->kyc_reviewed_at); ?></dd>
       <?php endif; ?>
 
-      <?php if ($kyc_status === 'rejected' && !empty($u->kyc_rejection_reason)) : ?>
+      <?php if ($kyc_status === 'rejected' && $kyc_rejection_reason !== '') : ?>
       <dt>Rejection reason</dt>
-      <dd class="text-danger"><?php echo nl2br(html_escape($u->kyc_rejection_reason)); ?></dd>
+      <dd class="text-danger" id="nb-kyc-rejection-display"><?php echo nl2br(html_escape($kyc_rejection_reason)); ?></dd>
       <?php endif; ?>
       <?php endif; ?>
 
@@ -169,7 +206,7 @@ $kyc_can_review = $is_agent && $kyc_complete && in_array($kyc_status, array('pen
     </dl>
   </div>
 </div>
-<?php if ($is_agent && $kyc_can_review) : ?>
+<?php if ($kyc_show_actions) : ?>
 <script>
 (function () {
   function postKyc(url, body, okMsg) {
@@ -208,6 +245,22 @@ $kyc_can_review = $is_agent && $kyc_complete && in_array($kyc_status, array('pen
         '<?php echo site_url('panel/user/kyc-reject'); ?>',
         'user_id=' + encodeURIComponent(this.getAttribute('data-id')) + '&reason=' + encodeURIComponent(reason),
         'KYC rejected.'
+      );
+    });
+  }
+  var editBtn = document.querySelector('.nb-kyc-edit-rejection');
+  if (editBtn) {
+    editBtn.addEventListener('click', function () {
+      var reasonEl = document.getElementById('nb-kyc-edit-rejection-reason');
+      var reason = reasonEl ? reasonEl.value.trim() : '';
+      if (reason.length < 5) {
+        alert('Please enter a rejection comment (at least 5 characters).');
+        return;
+      }
+      postKyc(
+        '<?php echo site_url('panel/user/kyc-rejection-edit'); ?>',
+        'user_id=' + encodeURIComponent(this.getAttribute('data-id')) + '&reason=' + encodeURIComponent(reason),
+        'Rejection comment updated.'
       );
     });
   }

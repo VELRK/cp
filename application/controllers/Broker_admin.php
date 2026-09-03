@@ -1802,6 +1802,18 @@ class Broker_admin extends MY_Controller {
         if (!nb_user_is_agent($user)) {
             return $this->_panel_json(array('success' => false, 'message' => 'Agent account required'), 400);
         }
+        if (nb_agent_kyc_status($user) === 'rejected') {
+            return $this->_panel_json(array(
+                'success' => false,
+                'message' => 'KYC is already rejected. Use Edit rejection comment to update the reason without sending email again.',
+            ), 400);
+        }
+        if (nb_agent_kyc_status($user) !== 'pending') {
+            return $this->_panel_json(array(
+                'success' => false,
+                'message' => 'Agent KYC is not pending review.',
+            ), 400);
+        }
         $update = array('updated_at' => date('Y-m-d H:i:s'));
         if ($this->db->field_exists('kyc_status', 'nb_users')) {
             $update['kyc_status'] = 'rejected';
@@ -1820,6 +1832,53 @@ class Broker_admin extends MY_Controller {
                 ? 'Agent KYC rejected. Email sent to agent.'
                 : 'Agent KYC rejected. No deliverable email on file — agent will see the reason in the app.',
             'email_sent' => $emailed,
+        ));
+    }
+
+    /**
+     * POST panel JSON — update rejection comment on already-rejected agent KYC (no email).
+     */
+    public function update_agent_kyc_rejection()
+    {
+        if ($this->input->method() !== 'post') {
+            show_404();
+        }
+        if (!$this->_panel_nb_admin()) {
+            return $this->_panel_json(array('success' => false, 'message' => 'Forbidden'), 403);
+        }
+        nb_ensure_agent_kyc_columns();
+        $uid = (int) $this->input->post('user_id');
+        $reason = trim((string) $this->input->post('reason', true));
+        if ($uid < 1) {
+            return $this->_panel_json(array('success' => false, 'message' => 'Invalid input'), 400);
+        }
+        if (strlen($reason) < 5) {
+            return $this->_panel_json(array(
+                'success' => false,
+                'message' => 'Rejection reason is required (at least 5 characters).',
+            ), 400);
+        }
+        $user = $this->Nb_user_model->get_by_id($uid);
+        if (!$user) {
+            return $this->_panel_json(array('success' => false, 'message' => 'User not found'), 404);
+        }
+        if (!nb_user_is_agent($user)) {
+            return $this->_panel_json(array('success' => false, 'message' => 'Agent account required'), 400);
+        }
+        if (nb_agent_kyc_status($user) !== 'rejected') {
+            return $this->_panel_json(array(
+                'success' => false,
+                'message' => 'Edit rejection comment is only available for rejected KYC.',
+            ), 400);
+        }
+        $update = array('updated_at' => date('Y-m-d H:i:s'));
+        if ($this->db->field_exists('kyc_rejection_reason', 'nb_users')) {
+            $update['kyc_rejection_reason'] = $reason;
+        }
+        $this->Nb_user_model->update($uid, $update);
+        return $this->_panel_json(array(
+            'success' => true,
+            'message' => 'Rejection comment updated. No email was sent.',
         ));
     }
 

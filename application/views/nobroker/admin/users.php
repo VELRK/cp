@@ -98,7 +98,8 @@ $kyc_status_val = isset($filters['kyc_status']) ? $filters['kyc_status'] : '';
             $ut = isset($u->user_type) ? $u->user_type : (isset($u->role) ? $u->role : '');
             $is_agent = strtolower((string) $ut) === 'agent';
             $kyc_status = $is_agent ? nb_agent_kyc_status($u) : '';
-            $show_kyc_review = $is_agent && nb_agent_kyc_complete($u) && in_array($kyc_status, array('pending', 'rejected'), true);
+            $show_kyc_review = $is_agent && nb_agent_kyc_complete($u) && $kyc_status === 'pending';
+            $show_kyc_rejected = $is_agent && $kyc_status === 'rejected';
           ?>
           <tr>
             <td class="text-muted font-monospace small"><?php echo (int) $u->id; ?></td>
@@ -123,6 +124,8 @@ $kyc_status_val = isset($filters['kyc_status']) ? $filters['kyc_status'] : '';
             <td class="text-end text-nowrap">
               <?php if ($show_kyc_review) : ?>
                 <a href="<?php echo site_url('panel/user/view/' . (int) $u->id); ?>" class="btn btn-sm btn-success rounded-pill me-1">Review KYC</a>
+              <?php elseif ($show_kyc_rejected) : ?>
+                <a href="<?php echo site_url('panel/user/view/' . (int) $u->id); ?>" class="btn btn-sm btn-outline-warning rounded-pill me-1">Edit comment</a>
               <?php elseif (!$is_agent && (!isset($u->is_verified) || (int) $u->is_verified !== 1)) : ?>
                 <button type="button" class="btn btn-sm btn-success rounded-pill nb-verify me-1" data-id="<?php echo (int) $u->id; ?>">Set verified</button>
               <?php endif; ?>

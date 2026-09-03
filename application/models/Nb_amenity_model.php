@@ -5,9 +5,17 @@ class Nb_amenity_model extends CI_Model {
 
     protected $table = 'nb_amenities';
 
+    public function table_exists()
+    {
+        return $this->db->table_exists($this->table);
+    }
+
     /** @return array<int, object> */
     public function all_active()
     {
+        if (!$this->table_exists()) {
+            return array();
+        }
         return $this->db->where('is_active', 1)
             ->order_by('sort_order', 'ASC')
             ->order_by('name', 'ASC')
@@ -72,6 +80,25 @@ class Nb_amenity_model extends CI_Model {
     {
         $this->db->where('id', (int) $id);
         return $this->db->delete($this->table);
+    }
+
+    /**
+     * Flip is_active for admin toggle API.
+     *
+     * @return array{is_active:int}|null
+     */
+    public function toggle_active($id)
+    {
+        if (!$this->table_exists()) {
+            return null;
+        }
+        $row = $this->get_by_id($id);
+        if (!$row) {
+            return null;
+        }
+        $next = empty($row->is_active) ? 1 : 0;
+        $this->update($id, array('is_active' => $next));
+        return array('is_active' => (int) $next);
     }
 
     /**

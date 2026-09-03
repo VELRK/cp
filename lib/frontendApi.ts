@@ -30,6 +30,7 @@ export const API_PATHS = {
   propertyTypeCounts: '/api/nb/property-type-counts',
   propertyTypes: '/api/property-types',
   propertyTypesFlat: '/api/property-types/flat',
+  amenities: '/api/amenities',
   // Wishlist & enquiry (PHP)
   wishlist: '/api/nb/wishlist',
   wishlistCheck: '/api/nb/wishlist/check',

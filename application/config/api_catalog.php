@@ -50,6 +50,14 @@ $sample_city = array(
     'is_active' => 1,
 );
 
+$sample_amenity = array(
+    'id' => 1,
+    'name' => 'Lift',
+    'slug' => 'lift',
+    'sort_order' => 1,
+    'is_active' => 1,
+);
+
 $sample_youtube_media = array(
     'id' => 1,
     'title' => 'Sample Property Tour',
@@ -399,6 +407,41 @@ $config['api_catalog'] = array(
                         ),
                     ),
                 ),
+                array(
+                    'id' => 'amenities',
+                    'name' => 'List amenities',
+                    'method' => 'GET',
+                    'path' => 'api/amenities',
+                    'auth' => false,
+                    'body_type' => 'none',
+                    'query' => array(),
+                    'description' => 'Active amenity master list for property create/edit forms. Use name values in amenities[] when saving a listing.',
+                    'sample_response' => array(
+                        'success' => true,
+                        'total' => 3,
+                        'items' => array(
+                            $sample_amenity,
+                            array('id' => 2, 'name' => 'Parking', 'slug' => 'parking', 'sort_order' => 2, 'is_active' => 1),
+                            array('id' => 3, 'name' => 'Security', 'slug' => 'security', 'sort_order' => 3, 'is_active' => 1),
+                        ),
+                        'amenities' => array('Lift', 'Parking', 'Security'),
+                    ),
+                ),
+                array(
+                    'id' => 'nb_amenities',
+                    'name' => 'List amenities (NB alias)',
+                    'method' => 'GET',
+                    'path' => 'api/nb/amenities',
+                    'auth' => false,
+                    'body_type' => 'none',
+                    'query' => array(),
+                    'sample_response' => array(
+                        'success' => true,
+                        'total' => 1,
+                        'items' => array($sample_amenity),
+                        'amenities' => array('Lift'),
+                    ),
+                ),
             ),
         ),
         array(
@@ -741,6 +784,21 @@ $config['api_catalog'] = array(
                     'body_type' => 'none',
                     'query' => array(),
                     'sample_response' => array('success' => true, 'data' => array($sample_city)),
+                ),
+                array(
+                    'id' => 'mobile_amenities',
+                    'name' => 'Mobile amenities',
+                    'method' => 'GET',
+                    'path' => 'api/mobile/amenities',
+                    'auth' => false,
+                    'body_type' => 'none',
+                    'query' => array(),
+                    'sample_response' => array(
+                        'success' => true,
+                        'total' => 1,
+                        'items' => array($sample_amenity),
+                        'amenities' => array('Lift'),
+                    ),
                 ),
                 array(
                     'id' => 'mobile_send_otp',

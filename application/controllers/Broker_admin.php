@@ -202,6 +202,7 @@ class Broker_admin extends MY_Controller {
         if ($id < 1) { show_404(); }
         $row = $this->Nb_user_model->get_by_id($id);
         if (!$row) { show_404(); }
+        nb_ensure_agent_kyc_columns();
         $this->load->library('form_validation');
         if ($this->input->method() === 'post' && $this->_user_update($id, $row)) {
             $this->session->set_flashdata('nb_ok', 'User updated.');
@@ -2093,7 +2094,10 @@ class Broker_admin extends MY_Controller {
             $update['password'] = password_hash($pw, PASSWORD_BCRYPT);
         }
         if ($this->db->field_exists('is_verified', 'nb_users')) {
-            $update['is_verified'] = $this->input->post('is_verified') ? 1 : 0;
+            $is_agent = nb_user_is_agent($existing);
+            if (!$is_agent) {
+                $update['is_verified'] = $this->input->post('is_verified') ? 1 : 0;
+            }
         }
         $this->Nb_user_model->update($id, $update);
         return true;

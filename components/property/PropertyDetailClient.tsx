@@ -261,15 +261,28 @@ export default function PropertyDetailClient({ slug: slugProp }: PropertyDetailC
 
   const videoEmbed = property.video_url ? getYoutubeEmbed(property.video_url) : null;
 
+  const savedMapUrl =
+    (typeof property.map_url === 'string' && property.map_url.trim() !== '')
+      ? property.map_url.trim()
+      : (typeof property.location === 'string' && property.location.startsWith('http')
+        ? property.location.trim()
+        : null);
+
   const hasCoords = property.latitude && property.longitude;
   const mapQuery = hasCoords
     ? `${property.latitude},${property.longitude}`
     : `${property.address || property.locality || ''}, ${property.city_name || ''}`;
-  const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+  const mapUrl = savedMapUrl
+    ? (savedMapUrl.includes('output=embed')
+      ? savedMapUrl
+      : `https://maps.google.com/maps?q=${encodeURIComponent(savedMapUrl)}&t=&z=15&ie=UTF8&iwloc=&output=embed`)
+    : `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
 
-  const locationImageUrl = property.location_image
-    ? toFrontendAssetUrl(String(property.location_image))
-    : null;
+  const locationImageUrl = property.location_image_url
+    ? toFrontendAssetUrl(String(property.location_image_url))
+    : property.location_image
+      ? toFrontendAssetUrl(String(property.location_image))
+      : null;
 
   const nearbyList = (() => {
     if (!property.nearby) return [];
@@ -760,8 +773,8 @@ export default function PropertyDetailClient({ slug: slugProp }: PropertyDetailC
                     <ExternalLink size={14} />
                     <span>Open in Google Maps</span>
                   </a>
-                  {property.location && typeof property.location === 'string' && property.location.startsWith('http') && (
-                    <a href={property.location}
+                  {savedMapUrl && (
+                    <a href={savedMapUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="pd-map-link pd-map-link--secondary d-inline-flex align-items-center gap-2">

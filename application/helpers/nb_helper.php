@@ -756,6 +756,126 @@ function nb_ensure_property_map_columns()
     }
 }
 
+/** True when a string looks like an http(s) map or external URL. */
+function nb_is_http_url($value)
+{
+    $value = trim((string) $value);
+    return $value !== '' && (bool) preg_match('#^https?://#i', $value);
+}
+
+/**
+ * Parse Google Maps / map link from save payload (map_url, mapUrl, or location when URL).
+ *
+ * @param array $input
+ * @return string|null
+ */
+function nb_parse_map_url_from_input($input)
+{
+    if (!is_array($input)) {
+        return null;
+    }
+    $candidates = array(
+        $input['map_url'] ?? null,
+        $input['mapUrl'] ?? null,
+    );
+    $location = trim((string) ($input['location'] ?? ''));
+    if ($location !== '' && nb_is_http_url($location)) {
+        $candidates[] = $location;
+    }
+    foreach ($candidates as $candidate) {
+        $url = trim((string) $candidate);
+        if ($url === '') {
+            continue;
+        }
+        if (filter_var($url, FILTER_VALIDATE_URL) || nb_is_http_url($url)) {
+            return substr($url, 0, 500);
+        }
+    }
+    return null;
+}
+
+/**
+ * Location notes field: preserve map URLs; sanitize plain text otherwise.
+ *
+ * @param mixed $value
+ * @return string
+ */
+function nb_sanitize_location_field($value)
+{
+    $value = trim((string) $value);
+    if ($value === '') {
+        return '';
+    }
+    if (nb_is_http_url($value)) {
+        return substr($value, 0, 500);
+    }
+    $CI =& get_instance();
+    if (isset($CI->security)) {
+        return $CI->security->xss_clean($value);
+    }
+    return $value;
+}
+
+/** Normalize a 10-digit Indian mobile number from user input. */
+function nb_normalize_register_phone($phone)
+{
+    $digits = preg_replace('/\D+/', '', (string) $phone);
+    if (strlen($digits) > 10) {
+        $digits = substr($digits, -10);
+    }
+    return $digits;
+}
+
+/** Placeholder email for phone-only registration (nb_users.email is NOT NULL). */
+function nb_register_placeholder_email($phone)
+{
+    $digits = nb_normalize_register_phone($phone);
+    if ($digits === '') {
+        $digits = 'user' . bin2hex(random_bytes(4));
+    }
+    return $digits . '@phone.cp';
+}
+
+/** Random password hash for OTP-only accounts. */
+function nb_register_random_password_hash()
+{
+    return password_hash(bin2hex(random_bytes(16)), PASSWORD_BCRYPT);
+}
+
+/**
+ * Resolve email/password for register when client omits them.
+ *
+ * @param array $input
+ * @param string $phone normalized 10-digit phone
+ * @return array{email:string,password_hash:string}
+ */
+function nb_register_resolve_credentials($input, $phone)
+{
+    $email = isset($input['email']) ? trim(strtolower((string) $input['email'])) : '';
+    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $email = nb_register_placeholder_email($phone);
+    }
+
+    $password = isset($input['password']) ? (string) $input['password'] : '';
+    $password2 = isset($input['password_confirm']) ? (string) $input['password_confirm'] : $password;
+    if ($password === '') {
+        $password_hash = nb_register_random_password_hash();
+    } else {
+        if (strlen($password) < 6) {
+            return array('error' => 'Password must be at least 6 characters when provided.');
+        }
+        if ($password !== $password2) {
+            return array('error' => 'Passwords do not match.');
+        }
+        $password_hash = password_hash($password, PASSWORD_BCRYPT);
+    }
+
+    return array(
+        'email' => $email,
+        'password_hash' => $password_hash,
+    );
+}
+
 /**
  * Admin/panel URL map for reels or videos CRUD views.
  *

@@ -246,10 +246,7 @@ class Api_nb_app extends CI_Controller
         }
         $input = $this->_input_json_or_post();
         $name = isset($input['name']) ? trim((string) $input['name']) : '';
-        $email = isset($input['email']) ? trim(strtolower((string) $input['email'])) : '';
-        $phone = isset($input['phone']) ? trim((string) $input['phone']) : '';
-        $password = isset($input['password']) ? (string) $input['password'] : '';
-        $password2 = isset($input['password_confirm']) ? (string) $input['password_confirm'] : $password;
+        $phone = nb_normalize_register_phone(isset($input['phone']) ? $input['phone'] : '');
         $accept = $this->_parse_accept_terms($input);
         // Accept user_type or role: agent | tenant | owner (customer = tenant).
         $roleInput = '';
@@ -296,14 +293,23 @@ class Api_nb_app extends CI_Controller
         if (!$accept) {
             return $this->_json(array('success' => false, 'message' => 'accept_terms must be true'), 400);
         }
-        if (strlen($name) < 2 || strlen($email) < 3 || strlen($phone) < 10 || strlen($password) < 6) {
-            return $this->_json(array('success' => false, 'message' => 'Invalid name, email, phone, or password (min 6 chars).'), 400);
+        if (strlen($name) < 2) {
+            return $this->_json(array('success' => false, 'message' => 'Enter your full name (min 2 characters).'), 400);
         }
-        if ($password !== $password2) {
-            return $this->_json(array('success' => false, 'message' => 'Passwords do not match.'), 400);
+        if (strlen($phone) !== 10) {
+            return $this->_json(array('success' => false, 'message' => 'Enter a valid 10-digit mobile number.'), 400);
         }
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return $this->_json(array('success' => false, 'message' => 'Invalid email.'), 400);
+        if ($this->Nb_user_model->get_by_phone($phone)) {
+            return $this->_json(array('success' => false, 'message' => 'Phone number already registered. Please sign in with OTP.'), 409);
+        }
+
+        $credentials = nb_register_resolve_credentials($input, $phone);
+        if (isset($credentials['error'])) {
+            return $this->_json(array('success' => false, 'message' => $credentials['error']), 400);
+        }
+        $email = $credentials['email'];
+        if ($this->Nb_user_model->get_by_email($email)) {
+            return $this->_json(array('success' => false, 'message' => 'Phone number already registered. Please sign in with OTP.'), 409);
         }
         // Handle direct file upload during register (multipart/form-data).
         $uploadedAadharPath = null;
@@ -399,24 +405,12 @@ class Api_nb_app extends CI_Controller
             }
             $profile_pic = $savedProfile['path'];
         }
-        // Agent KYC: Aadhaar required for agents.
-        if ($roleInput === 'agent') {
-            if ($aadhar_no === '' || !preg_match('/^\d{12}$/', $aadhar_no)) {
-                return $this->_json(array('success' => false, 'message' => 'aadhar_no (12 digits) is required for agent registration.'), 400);
-            }
-            if ($aadhar_file === null || trim((string) $aadhar_file) === '') {
-                return $this->_json(array('success' => false, 'message' => 'aadhar_file is required for agent registration.'), 400);
-            }
-        }
-        // Optional validation when provided for other roles.
+        // Agent KYC: optional Aadhaar file upload only (aadhar_no not required at registration).
         if ($aadhar_no !== '' && !preg_match('/^\d{12}$/', $aadhar_no)) {
             return $this->_json(array('success' => false, 'message' => 'aadhar_no must be a valid 12-digit number when provided.'), 400);
         }
         if ($experience_years !== null && ($experience_years < 0 || $experience_years > 60)) {
             return $this->_json(array('success' => false, 'message' => 'experience_years must be between 0 and 60 when provided.'), 400);
-        }
-        if ($this->Nb_user_model->get_by_email($email)) {
-            return $this->_json(array('success' => false, 'message' => 'Email already registered.'), 409);
         }
         $city_id = isset($input['city_id']) ? (int) $input['city_id'] : null;
         if ($city_id < 1) {
@@ -426,7 +420,7 @@ class Api_nb_app extends CI_Controller
             'name' => trim(strip_tags($name)),
             'email' => $email,
             'phone' => trim(preg_replace('/[^\d\+\-\s]/', '', $phone)),
-            'password' => password_hash($password, PASSWORD_BCRYPT),
+            'password' => $credentials['password_hash'],
             'role' => $role,
             'status' => 'approved',
             'city_id' => $city_id,

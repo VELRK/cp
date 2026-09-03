@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getCities } from '@/lib/frontendApi';
-import { ShieldAlert, CheckCircle, CheckCircle2, User, Mail, Phone, Lock, FileText, Image as ImageIcon } from 'lucide-react';
+import { ShieldAlert, CheckCircle, CheckCircle2, User, Phone } from 'lucide-react';
 
 interface City {
   id: number;
@@ -17,28 +17,17 @@ export default function RegisterPage() {
   const { user, registerUser } = useAuth();
   const router = useRouter();
 
-  // Data states
   const [cities, setCities] = useState<City[]>([]);
-
-  // Form inputs
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordConfirm, setPasswordConfirm] = useState('');
   const [role, setRole] = useState<'tenant' | 'owner' | 'agent'>('tenant');
   const [cityId, setCityId] = useState('');
-  const [aadharNo, setAadharNo] = useState('');
-  const [aadharFile, setAadharFile] = useState<File | null>(null);
   const [profilePic, setProfilePic] = useState<File | null>(null);
   const [acceptTerms, setAcceptTerms] = useState(false);
-
-  // Status indicators
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Redirect if logged in
   useEffect(() => {
     if (user) {
       if (user.role === 'owner') {
@@ -53,7 +42,6 @@ export default function RegisterPage() {
     }
   }, [user, router]);
 
-  // Load cities list
   useEffect(() => {
     getCities()
       .then((res) => {
@@ -69,8 +57,9 @@ export default function RegisterPage() {
     setErrorMsg(null);
     setSuccessMsg(null);
 
-    if (password !== passwordConfirm) {
-      setErrorMsg('Passwords do not match.');
+    const normalizedPhone = phone.replace(/\D/g, '').slice(-10);
+    if (normalizedPhone.length !== 10) {
+      setErrorMsg('Enter a valid 10-digit mobile number.');
       return;
     }
     if (!acceptTerms) {
@@ -82,22 +71,17 @@ export default function RegisterPage() {
     try {
       const formData = new FormData();
       formData.append('name', name);
-      formData.append('email', email);
-      formData.append('phone', phone);
-      formData.append('password', password);
-      formData.append('password_confirm', passwordConfirm);
+      formData.append('phone', normalizedPhone);
       formData.append('role', role);
       formData.append('accept_terms', acceptTerms ? '1' : '0');
       if (cityId) formData.append('city_id', cityId);
-      if (aadharNo) formData.append('aadhar_no', aadharNo);
-      if (aadharFile) formData.append('aadhar_file', aadharFile);
       if (profilePic) formData.append('profile_image', profilePic);
 
       const result = await registerUser(formData);
       if (result.success) {
-        setSuccessMsg('Registration successful! Your account is pending admin approval.');
+        setSuccessMsg('Registration successful! You can now sign in with OTP on your phone.');
         setTimeout(() => {
-          router.push('/');
+          router.push('/login');
         }, 3000);
       } else {
         setErrorMsg(result.message || 'Registration failed.');
@@ -112,7 +96,6 @@ export default function RegisterPage() {
   return (
     <div className="container py-5 mt-5">
       <div className="row justify-content-center align-items-stretch g-4">
-        {/* Left side informational panel */}
         <div className="col-lg-5 d-none d-lg-block">
           <div className="nb-post-landing-left h-100 rounded-3 d-flex flex-column justify-content-center w-100">
             <h1 className="nb-post-landing-title">
@@ -134,37 +117,19 @@ export default function RegisterPage() {
               </li>
               <li className="nb-post-landing-item">
                 <CheckCircle2 size={20} />
-                <span>Assistance in co-ordinating site visits</span>
+                <span>Sign in anytime with phone OTP</span>
               </li>
             </ul>
-
-            {/* Laptop Vector Visual */}
-            <div className="nb-post-landing-ill mt-4">
-              <svg viewBox="0 0 500 300" className="w-100 h-auto" style={{ maxHeight: '240px' }} fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="500" height="300" rx="12" fill="#eff6ff" />
-                <path d="M120 180h260v12H120z" fill="#94a3b8" />
-                <path d="M130 80h240v100H130z" fill="#cbd5e1" />
-                <rect x="140" y="90" width="220" height="80" rx="4" fill="#fff" />
-                <path d="M160 110h80v8h-80zm0 15h120v6H160zm0 15h100v6H160z" fill="#cbd5e1" />
-                <rect x="290" y="105" width="60" height="50" rx="4" fill="#3b82f6" />
-                <path d="M305 130l8 8 16-16" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
-                <circle cx="250" cy="220" r="14" fill="#10b981" />
-                <path d="M246 220l3 3 6-6" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
-                <circle cx="150" cy="220" r="14" fill="#f59e0b" />
-                <circle cx="350" cy="220" r="14" fill="#3b82f6" />
-              </svg>
-            </div>
           </div>
         </div>
 
-        {/* Right side form */}
         <div className="col-lg-6">
           <div className="card border-0 shadow-lg rounded-3 p-4 bg-white">
             <div className="text-center mb-4">
               <h1 className="h3 fw-extrabold text-primary mb-1" style={{ color: '#0b2c56' }}>
                 Register Free Account
               </h1>
-              <p className="text-muted small">Connect directly with owners or tenants in Coimbatore</p>
+              <p className="text-muted small">Name + phone only — sign in later with WhatsApp OTP</p>
             </div>
 
             {errorMsg && (
@@ -197,63 +162,18 @@ export default function RegisterPage() {
               </div>
 
               <div className="mb-3">
-                <label className="form-label small fw-semibold">Email Address</label>
-                <div className="input-group">
-                  <span className="input-group-text bg-light"><Mail size={16} /></span>
-                  <input
-                    type="email"
-                    className="form-control"
-                    placeholder="Enter email address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="mb-3">
                 <label className="form-label small fw-semibold">Phone Number</label>
                 <div className="input-group">
                   <span className="input-group-text bg-light"><Phone size={16} /></span>
                   <input
                     type="tel"
                     className="form-control"
-                    placeholder="Enter phone number"
+                    placeholder="10-digit mobile number"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    maxLength={10}
                     required
                   />
-                </div>
-              </div>
-
-              <div className="row g-3 mb-3">
-                <div className="col-md-6">
-                  <label className="form-label small fw-semibold">Password</label>
-                  <div className="input-group">
-                    <span className="input-group-text bg-light"><Lock size={16} /></span>
-                    <input
-                      type="password"
-                      className="form-control"
-                      placeholder="Password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label small fw-semibold">Confirm Password</label>
-                  <div className="input-group">
-                    <span className="input-group-text bg-light"><Lock size={16} /></span>
-                    <input
-                      type="password"
-                      className="form-control"
-                      placeholder="Confirm"
-                      value={passwordConfirm}
-                      onChange={(e) => setPasswordConfirm(e.target.value)}
-                      required
-                    />
-                  </div>
                 </div>
               </div>
 
@@ -286,40 +206,14 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <div className="mb-3">
-                <label className="form-label small fw-semibold">Aadhaar Card Number (12 digits)</label>
-                <div className="input-group">
-                  <span className="input-group-text bg-light"><FileText size={16} /></span>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Enter Aadhaar number"
-                    maxLength={12}
-                    value={aadharNo}
-                    onChange={(e) => setAadharNo(e.target.value.replace(/\D/g, ''))}
-                  />
-                </div>
-              </div>
-
-              <div className="row g-3 mb-4">
-                <div className="col-md-6">
-                  <label className="form-label small fw-semibold">Aadhaar Image File</label>
-                  <input
-                    type="file"
-                    className="form-control form-control-sm"
-                    accept="image/*"
-                    onChange={(e) => setAadharFile(e.target.files ? e.target.files[0] : null)}
-                  />
-                </div>
-                <div className="col-md-6">
-                  <label className="form-label small fw-semibold">Profile Picture</label>
-                  <input
-                    type="file"
-                    className="form-control form-control-sm"
-                    accept="image/*"
-                    onChange={(e) => setProfilePic(e.target.files ? e.target.files[0] : null)}
-                  />
-                </div>
+              <div className="mb-4">
+                <label className="form-label small fw-semibold">Profile Picture (optional)</label>
+                <input
+                  type="file"
+                  className="form-control form-control-sm"
+                  accept="image/*"
+                  onChange={(e) => setProfilePic(e.target.files ? e.target.files[0] : null)}
+                />
               </div>
 
               <div className="form-check mb-4">
@@ -332,7 +226,7 @@ export default function RegisterPage() {
                   required
                 />
                 <label className="form-check-label small text-muted" htmlFor="regAcceptCheck">
-                  I accept the Terms of Use and Privacy Policy of Coimbatore Properties NoBroker. I confirm that the Aadhaar and profile details provided are accurate.
+                  I accept the Terms of Use and Privacy Policy of Coimbatore Properties NoBroker.
                 </label>
               </div>
 
@@ -347,7 +241,7 @@ export default function RegisterPage() {
               <p className="small text-muted text-center mt-3 mb-0">
                 Already have an account?{' '}
                 <Link href="/login" className="fw-semibold text-decoration-none text-primary">
-                  Sign In
+                  Sign In with OTP
                 </Link>
               </p>
             </form>

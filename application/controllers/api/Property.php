@@ -206,7 +206,7 @@ class Property extends CI_Controller
             'address' => $input['address'] ?? '',
             'locality' => $this->security->xss_clean($input['locality'] ?? ''),
             'city_id' => (int) ($input['city_id'] ?? 0),
-            'location' => $this->security->xss_clean($input['location'] ?? ''),
+            'location' => nb_sanitize_location_field($input['location'] ?? ''),
             'is_price_negotiable' => !empty($input['is_price_negotiable']) ? 1 : 0,
             'rate_per_sqft' => $this->_parse_optional_decimal($input['rate_per_sqft'] ?? null),
             'available_from' => $this->_parse_date_field($input['available_from'] ?? null),
@@ -233,8 +233,7 @@ class Property extends CI_Controller
             $row['google_place_id'] = $this->_parse_google_place_id($input['google_place_id'] ?? $input['place_id'] ?? null);
         }
         if ($this->db->field_exists('map_url', 'nb_properties')) {
-            $map_url = trim((string) ($input['map_url'] ?? $input['mapUrl'] ?? ''));
-            $row['map_url'] = $map_url !== '' ? substr($map_url, 0, 500) : null;
+            $row['map_url'] = nb_parse_map_url_from_input($input);
         }
 
         $upload_errors = array();

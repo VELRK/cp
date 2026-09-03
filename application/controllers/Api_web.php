@@ -311,6 +311,13 @@ class Api_web extends CI_Controller
         $property['thumbnail_url'] = !empty($image_urls) ? $image_urls[0] : null;
         $property['amenities'] = $amenities_list;
 
+        if (!empty($prop->location_image)) {
+            $li = (string) $prop->location_image;
+            $property['location_image_url'] = preg_match('#^https?://#i', $li)
+                ? $li
+                : base_url($li);
+        }
+
         return $this->_json(array('success' => true, 'property' => $property));
     }
 }

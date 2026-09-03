@@ -108,12 +108,8 @@ $modal_cities = isset($modal_cities) && is_array($modal_cities) ? $modal_cities 
               <input type="text" name="name" id="nb-modal-reg-name" class="form-control" value="<?php echo set_value('name'); ?>" required>
             </div>
             <div class="col-md-6">
-              <label class="form-label" for="nb-modal-reg-email">Email</label>
-              <input type="email" name="email" id="nb-modal-reg-email" class="form-control" value="<?php echo set_value('email'); ?>" required autocomplete="email">
-            </div>
-            <div class="col-md-6">
               <label class="form-label" for="nb-modal-reg-phone">Phone</label>
-              <input type="text" name="phone" id="nb-modal-reg-phone" class="form-control" value="<?php echo set_value('phone'); ?>" required>
+              <input type="tel" name="phone" id="nb-modal-reg-phone" class="form-control" value="<?php echo set_value('phone'); ?>" inputmode="numeric" maxlength="10" placeholder="10-digit mobile" required>
             </div>
             <div class="col-md-6">
               <label class="form-label" for="nb-modal-reg-city">City</label>
@@ -124,13 +120,9 @@ $modal_cities = isset($modal_cities) && is_array($modal_cities) ? $modal_cities 
                 <?php endforeach; ?>
               </select>
             </div>
-            <div class="col-md-6">
-              <label class="form-label" for="nb-modal-reg-password">Password</label>
-              <input type="password" name="password" id="nb-modal-reg-password" class="form-control" required autocomplete="new-password">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label" for="nb-modal-reg-password2">Confirm password</label>
-              <input type="password" name="password2" id="nb-modal-reg-password2" class="form-control" required autocomplete="new-password">
+            <div class="col-md-6 nb-agent-only">
+              <label class="form-label" for="nb-modal-reg-experience">Experience (years)</label>
+              <input type="number" min="0" max="60" step="1" name="experience_years" id="nb-modal-reg-experience" class="form-control" value="<?php echo set_value('experience_years'); ?>" placeholder="e.g. 5">
             </div>
             <div class="col-12">
               <div class="form-check">
@@ -138,16 +130,8 @@ $modal_cities = isset($modal_cities) && is_array($modal_cities) ? $modal_cities 
                 <label class="form-check-label" for="nb-modal-terms">I agree to the terms</label>
               </div>
             </div>
-            <div class="col-md-6 nb-agent-only">
-              <label class="form-label" for="nb-modal-reg-aadhar">Aadhar number</label>
-              <input type="text" name="aadhar_no" id="nb-modal-reg-aadhar" class="form-control" value="<?php echo set_value('aadhar_no'); ?>" placeholder="12 digit Aadhar number">
-            </div>
-            <div class="col-md-6 nb-agent-only">
-              <label class="form-label" for="nb-modal-reg-experience">Experience (years)</label>
-              <input type="number" min="0" max="60" step="1" name="experience_years" id="nb-modal-reg-experience" class="form-control" value="<?php echo set_value('experience_years'); ?>" placeholder="e.g. 5">
-            </div>
             <div class="col-12 nb-agent-only">
-              <label class="form-label" for="nb-modal-reg-aadhar-file">Aadhar upload</label>
+              <label class="form-label" for="nb-modal-reg-aadhar-file">KYC document upload (optional)</label>
               <input type="file" name="aadhar_file" id="nb-modal-reg-aadhar-file" class="form-control" accept=".jpg,.jpeg,.png,.pdf,.webp">
               <small class="text-muted">Accepted: JPG, PNG, WEBP, PDF (max 5MB).</small>
             </div>
@@ -170,7 +154,6 @@ $modal_cities = isset($modal_cities) && is_array($modal_cities) ? $modal_cities 
   var typeAgent = document.getElementById('nb-type-agent');
   if (!userTypeHidden || !typeCustomer || !typeAgent) return;
   var rows = document.querySelectorAll('.nb-agent-only');
-  var aadhar = document.getElementById('nb-modal-reg-aadhar');
   var exp = document.getElementById('nb-modal-reg-experience');
   var aadharFile = document.getElementById('nb-modal-reg-aadhar-file');
   var regForm = document.getElementById('nb-register-form');
@@ -184,9 +167,8 @@ $modal_cities = isset($modal_cities) && is_array($modal_cities) ? $modal_cities 
   function syncAgentFields() {
     var isAgent = userTypeHidden.value === 'agent';
     rows.forEach(function (el) { el.style.display = isAgent ? '' : 'none'; });
-    if (aadhar) aadhar.required = isAgent;
-    if (exp) exp.required = isAgent;
-    if (aadharFile) aadharFile.required = isAgent;
+    if (exp) exp.required = false;
+    if (aadharFile) aadharFile.required = false;
   }
   typeCustomer.addEventListener('change', function () { setType('customer'); syncAgentFields(); });
   typeAgent.addEventListener('change', function () { setType('agent'); syncAgentFields(); });

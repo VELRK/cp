@@ -6,7 +6,7 @@ class Nb_auth extends MY_Controller {
     public function __construct()
     {
         parent::__construct();
-        $this->load->helper(array('url', 'form'));
+        $this->load->helper(array('url', 'form', 'nb'));
         $this->load->library('form_validation');
         $this->load->database();
         $this->load->model('Nb_user_model');
@@ -112,10 +112,7 @@ class Nb_auth extends MY_Controller {
             return;
         }
         $this->form_validation->set_rules('name', 'Full name', 'required|trim|max_length[150]');
-        $this->form_validation->set_rules('email', 'Email', 'required|valid_email|trim');
         $this->form_validation->set_rules('phone', 'Phone', 'required|trim|max_length[15]');
-        $this->form_validation->set_rules('password', 'Password', 'required|min_length[6]');
-        $this->form_validation->set_rules('password2', 'Confirm', 'required|matches[password]');
         $this->form_validation->set_rules('city_id', 'City', 'integer');
         $this->form_validation->set_rules('user_type', 'User type', 'required|in_list[agent,customer]');
         if (!$this->form_validation->run()) {
@@ -134,43 +131,42 @@ class Nb_auth extends MY_Controller {
             redirect(base_url() . '?modal=register');
             return;
         }
-        if ($this->Nb_user_model->get_by_email($this->input->post('email'))) {
+        $phone = nb_normalize_register_phone($this->input->post('phone', true));
+        if (strlen($phone) !== 10) {
             if ($is_ajax) {
-                return $this->_json_response(array('success' => false, 'message' => 'Email already registered.'), 409);
+                return $this->_json_response(array('success' => false, 'message' => 'Enter a valid 10-digit mobile number.'), 422);
             }
-            $this->session->set_flashdata('nb_err', 'Email already registered.');
+            $this->session->set_flashdata('nb_err', 'Enter a valid 10-digit mobile number.');
+            redirect(base_url() . '?modal=register');
+            return;
+        }
+        if ($this->Nb_user_model->get_by_phone($phone)) {
+            if ($is_ajax) {
+                return $this->_json_response(array('success' => false, 'message' => 'Phone number already registered. Please sign in with OTP.'), 409);
+            }
+            $this->session->set_flashdata('nb_err', 'Phone number already registered.');
+            redirect(base_url() . '?modal=register');
+            return;
+        }
+        $credentials = nb_register_resolve_credentials($this->input->post(), $phone);
+        if (isset($credentials['error'])) {
+            if ($is_ajax) {
+                return $this->_json_response(array('success' => false, 'message' => $credentials['error']), 422);
+            }
+            $this->session->set_flashdata('nb_err', $credentials['error']);
             redirect(base_url() . '?modal=register');
             return;
         }
         $user_type = strtolower(trim((string) $this->input->post('user_type', true)));
         $is_agent = ($user_type === 'agent');
-        $aadhar_no = trim((string) $this->input->post('aadhar_no', true));
         $experience_years = $this->input->post('experience_years', true);
-        if ($is_agent) {
-            if (!preg_match('/^\d{12}$/', preg_replace('/\D+/', '', $aadhar_no))) {
-                if ($is_ajax) {
-                    return $this->_json_response(array('success' => false, 'message' => 'Enter valid 12-digit Aadhar number for agent registration.'), 422);
-                }
-                $this->session->set_flashdata('nb_err', 'Enter valid 12-digit Aadhar number for agent registration.');
-                redirect(base_url() . '?modal=register');
-                return;
+        if ($is_agent && $experience_years !== '' && (!is_numeric($experience_years) || (int) $experience_years < 0 || (int) $experience_years > 60)) {
+            if ($is_ajax) {
+                return $this->_json_response(array('success' => false, 'message' => 'Enter valid experience in years (0-60).'), 422);
             }
-            if ($experience_years === '' || !is_numeric($experience_years) || (int) $experience_years < 0 || (int) $experience_years > 60) {
-                if ($is_ajax) {
-                    return $this->_json_response(array('success' => false, 'message' => 'Enter valid experience in years (0-60).'), 422);
-                }
-                $this->session->set_flashdata('nb_err', 'Enter valid experience in years (0-60).');
-                redirect(base_url() . '?modal=register');
-                return;
-            }
-            if (empty($_FILES['aadhar_file']['name'])) {
-                if ($is_ajax) {
-                    return $this->_json_response(array('success' => false, 'message' => 'Aadhar file is required for agent registration.'), 422);
-                }
-                $this->session->set_flashdata('nb_err', 'Aadhar file is required for agent registration.');
-                redirect(base_url() . '?modal=register');
-                return;
-            }
+            $this->session->set_flashdata('nb_err', 'Enter valid experience in years (0-60).');
+            redirect(base_url() . '?modal=register');
+            return;
         }
         $aadhar_path = null;
         if ($is_agent && !empty($_FILES['aadhar_file']['name'])) {
@@ -199,16 +195,16 @@ class Nb_auth extends MY_Controller {
         $cid = $this->input->post('city_id');
         $insert = array(
             'name'     => $this->security->xss_clean($this->input->post('name', true)),
-            'email'    => $this->input->post('email', true),
-            'phone'    => $this->security->xss_clean($this->input->post('phone', true)),
-            'password' => password_hash($this->input->post('password'), PASSWORD_BCRYPT),
+            'email'    => $credentials['email'],
+            'phone'    => $phone,
+            'password' => $credentials['password_hash'],
             'role'     => $is_agent ? 'owner' : 'tenant',
             'status'   => 'approved',
             'city_id'  => $cid ? (int) $cid : null,
             'user_type' => $is_agent ? 'agent' : 'customer',
-            'aadhar_no' => $is_agent ? preg_replace('/\D+/', '', $aadhar_no) : null,
+            'aadhar_no' => null,
             'aadhar_file' => $is_agent ? $aadhar_path : null,
-            'experience_years' => $is_agent ? (int) $experience_years : null,
+            'experience_years' => ($is_agent && $experience_years !== '') ? (int) $experience_years : null,
         );
         if ($this->db->field_exists('is_verified', 'nb_users')) {
             $insert['is_verified'] = 1;

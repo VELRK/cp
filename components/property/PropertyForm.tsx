@@ -84,9 +84,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
   const [loginModalStep, setLoginModalStep] = useState<'phone' | 'otp' | 'register'>('phone');
   const [loginOtp, setLoginOtp] = useState('');
   const [otpResendTimer, setOtpResendTimer] = useState(0);
-  const [localPassword, setLocalPassword] = useState('');
   const [localRegName, setLocalRegName] = useState('');
-  const [localRegEmail, setLocalRegEmail] = useState('');
   const [localRegCity, setLocalRegCity] = useState('');
   const [showDraftModal, setShowDraftModal] = useState(false);
 
@@ -116,7 +114,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
   const [locality, setLocality] = useState(initialData?.locality || '');
   const [cityId, setCityId] = useState(initialData?.city_id || '');
   const [description, setDescription] = useState(initialData?.description || '');
-  const [location, setLocation] = useState(initialData?.location || '');
+  const [location, setLocation] = useState(
+    initialData?.map_url || initialData?.location || ''
+  );
   const [videoUrl, setVideoUrl] = useState(initialData?.video_url || '');
   const [brochureFile, setBrochureFile] = useState<File | null>(null);
   const [audioNotesFile, setAudioNotesFile] = useState<File | null>(null);
@@ -279,7 +279,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
         setLocality(parsed.locality || '');
         if (parsed.cityId) setCityId(parsed.cityId);
         setDescription(parsed.description || '');
-        setLocation(parsed.location || '');
+        setLocation(parsed.map_url || parsed.location || '');
         setVideoUrl(parsed.videoUrl || '');
         setAvailableFrom(parsed.availableFrom || '');
         setPlotLength(parsed.plotLength || '');
@@ -532,11 +532,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
         // Build FormData for local signup
         const fd = new FormData();
         fd.append('name', localRegName);
-        fd.append('email', localRegEmail);
         fd.append('phone', landingPhone);
-        fd.append('password', localPassword);
-        fd.append('password_confirm', localPassword);
-        fd.append('role', 'owner'); // Default role owner
+        fd.append('role', 'owner');
         fd.append('city_id', localRegCity || (cities[0]?.id.toString() || '1'));
         fd.append('accept_terms', '1');
 
@@ -603,6 +600,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
       formData.append('city_id', cityId.toString());
       formData.append('description', description);
       formData.append('location', location);
+      if (location.trim()) {
+        formData.append('map_url', location.trim());
+      }
       formData.append('video_url', videoUrl);
       if (brochureFile) {
         formData.append('brochure', brochureFile);
@@ -2234,21 +2234,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                 </div>
 
                 <div className="mb-2">
-                  <label className="form-label small fw-bold text-secondary">Email Address</label>
-                  <div className="input-group input-group-sm">
-                    <span className="input-group-text"><Mail size={14} /></span>
-                    <input
-                      type="email"
-                      className="form-control"
-                      placeholder="email@example.com"
-                      value={localRegEmail}
-                      onChange={(e) => setLocalRegEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="mb-2">
                   <label className="form-label small fw-bold text-secondary">Phone Number</label>
                   <input
                     type="text"
@@ -2256,21 +2241,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                     value={landingPhone}
                     disabled
                   />
-                </div>
-
-                <div className="mb-3">
-                  <label className="form-label small fw-bold text-secondary">Password</label>
-                  <div className="input-group input-group-sm">
-                    <span className="input-group-text"><Lock size={14} /></span>
-                    <input
-                      type="password"
-                      className="form-control"
-                      placeholder="Create Password"
-                      value={localPassword}
-                      onChange={(e) => setLocalPassword(e.target.value)}
-                      required
-                    />
-                  </div>
                 </div>
 
                 <div className="mb-4">

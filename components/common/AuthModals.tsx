@@ -40,14 +40,9 @@ const AuthModals: React.FC = () => {
 
   // Register form states
   const [regName, setRegName] = useState('');
-  const [regEmail, setRegEmail] = useState('');
   const [regPhone, setRegPhone] = useState('');
-  const [regPassword, setRegPassword] = useState('');
-  const [regPasswordConfirm, setRegPasswordConfirm] = useState('');
   const [regRole, setRegRole] = useState<'owner' | 'customer' | 'agent'>('customer');
   const [regCityId, setRegCityId] = useState('');
-  const [regAadharNo, setRegAadharNo] = useState('');
-  const [regAadharFile, setRegAadharFile] = useState<File | null>(null);
   const [regProfilePic, setRegProfilePic] = useState<File | null>(null);
   const [regAcceptTerms, setRegAcceptTerms] = useState(false);
 
@@ -219,8 +214,9 @@ const AuthModals: React.FC = () => {
     e.preventDefault();
     setErrorMsg(null);
 
-    if (regPassword !== regPasswordConfirm) {
-      setErrorMsg('Passwords do not match');
+    const normalizedPhone = regPhone.replace(/\D/g, '').slice(-10);
+    if (normalizedPhone.length !== 10) {
+      setErrorMsg('Enter a valid 10-digit mobile number.');
       return;
     }
     if (!regAcceptTerms) {
@@ -232,15 +228,10 @@ const AuthModals: React.FC = () => {
     try {
       const formData = new FormData();
       formData.append('name', regName);
-      formData.append('email', regEmail);
-      formData.append('phone', regPhone);
-      formData.append('password', regPassword);
-      formData.append('password_confirm', regPasswordConfirm);
+      formData.append('phone', normalizedPhone);
       formData.append('role', regRole);
       formData.append('accept_terms', regAcceptTerms ? '1' : '0');
       if (regCityId) formData.append('city_id', regCityId);
-      if (regAadharNo) formData.append('aadhar_no', regAadharNo);
-      if (regAadharFile) formData.append('aadhar_file', regAadharFile);
       if (regProfilePic) formData.append('profile_image', regProfilePic);
 
       const result = await registerUser(formData);
@@ -250,20 +241,16 @@ const AuthModals: React.FC = () => {
           spread: 70,
           origin: { y: 0.6 }
         });
-        setSuccessMsg('Registration successful! Waiting for admin approval.');
+        setSuccessMsg('Registration successful! Sign in with OTP on your phone.');
         setRegName('');
-        setRegEmail('');
         setRegPhone('');
-        setRegPassword('');
-        setRegPasswordConfirm('');
         setRegCityId('');
-        setRegAadharNo('');
-        setRegAadharFile(null);
         setRegProfilePic(null);
         setRegAcceptTerms(false);
         setTimeout(() => {
-          setAuthModalOpen(null);
-        }, 3000);
+          setAuthModalOpen('login');
+          setSuccessMsg(null);
+        }, 2500);
       } else {
         setErrorMsg(result.message || 'Registration failed');
       }
@@ -555,55 +542,16 @@ const AuthModals: React.FC = () => {
                 </div>
 
                 <div className="mb-2">
-                  <label className="form-label small fw-semibold mb-1">Email</label>
-                  <div className="input-group input-group-sm">
-                    <span className="input-group-text bg-light"><Mail size={14} /></span>
-                    <input
-                      type="email"
-                      className="form-control"
-                      placeholder="Email Address"
-                      value={regEmail}
-                      onChange={(e) => setRegEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="mb-2">
                   <label className="form-label small fw-semibold mb-1">Phone Number</label>
                   <div className="input-group input-group-sm">
                     <span className="input-group-text bg-light"><Phone size={14} /></span>
                     <input
                       type="tel"
                       className="form-control"
-                      placeholder="Phone"
+                      placeholder="10-digit mobile"
                       value={regPhone}
-                      onChange={(e) => setRegPhone(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="mb-2 row g-2">
-                  <div className="col-6">
-                    <label className="form-label small fw-semibold mb-1">Password</label>
-                    <input
-                      type="password"
-                      className="form-control form-control-sm"
-                      placeholder="Password"
-                      value={regPassword}
-                      onChange={(e) => setRegPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="col-6">
-                    <label className="form-label small fw-semibold mb-1">Confirm</label>
-                    <input
-                      type="password"
-                      className="form-control form-control-sm"
-                      placeholder="Confirm"
-                      value={regPasswordConfirm}
-                      onChange={(e) => setRegPasswordConfirm(e.target.value)}
+                      onChange={(e) => setRegPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                      maxLength={10}
                       required
                     />
                   </div>
@@ -638,41 +586,14 @@ const AuthModals: React.FC = () => {
                   </div>
                 </div>
 
-                {regRole !== 'customer' && (
-                  <div className="mb-2">
-                    <label className="form-label small fw-semibold mb-1">Aadhaar Card Number (12 digits)</label>
-                    <input
-                      type="text"
-                      className="form-control form-control-sm"
-                      placeholder="12 digit Aadhaar"
-                      maxLength={12}
-                      value={regAadharNo}
-                      onChange={(e) => setRegAadharNo(e.target.value.replace(/\D/g, ''))}
-                    />
-                  </div>
-                )}
-
-                <div className="mb-2 row g-2">
-                  {regRole !== 'customer' && (
-                    <div className="col-6">
-                      <label className="form-label small fw-semibold mb-1">Aadhaar File</label>
-                      <input
-                        type="file"
-                        className="form-control form-control-sm"
-                        accept="image/*"
-                        onChange={(e) => setRegAadharFile(e.target.files ? e.target.files[0] : null)}
-                      />
-                    </div>
-                  )}
-                  <div className={regRole !== 'customer' ? 'col-6' : 'col-12'}>
-                    <label className="form-label small fw-semibold mb-1">Profile Photo</label>
-                    <input
-                      type="file"
-                      className="form-control form-control-sm"
-                      accept="image/*"
-                      onChange={(e) => setRegProfilePic(e.target.files ? e.target.files[0] : null)}
-                    />
-                  </div>
+                <div className="mb-2">
+                  <label className="form-label small fw-semibold mb-1">Profile Photo (optional)</label>
+                  <input
+                    type="file"
+                    className="form-control form-control-sm"
+                    accept="image/*"
+                    onChange={(e) => setRegProfilePic(e.target.files ? e.target.files[0] : null)}
+                  />
                 </div>
 
                 <div className="mb-3 form-check mt-3">

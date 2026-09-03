@@ -19,6 +19,7 @@ class Api_nb_app extends CI_Controller
         $this->load->library('form_validation');
         $this->load->model(array('Nb_user_model', 'Nb_property_model', 'Nb_city_model', 'Nb_delete_request_model', 'User_model', 'Banner_model', 'Nb_property_type_model', 'Site_visit_model'));
         $this->output->set_content_type('application/json');
+        nb_ensure_agent_kyc_columns();
         $this->_cors();
     }
 
@@ -105,7 +106,24 @@ class Api_nb_app extends CI_Controller
         if (isset($row['aadhar_file'])) {
             $row['aadhar_file'] = $this->_asset_url_or_null($row['aadhar_file']);
         }
+        if (nb_user_is_agent($user)) {
+            $row['kyc_complete'] = nb_agent_kyc_complete($user);
+            $row['kyc_missing'] = nb_agent_kyc_missing($user);
+        } else {
+            $row['kyc_complete'] = true;
+            $row['kyc_missing'] = array();
+        }
         return $row;
+    }
+
+    /** Merge pending profile update onto user row for KYC validation. */
+    private function _user_row_with_updates($user, array $update)
+    {
+        $merged = clone $user;
+        foreach ($update as $k => $v) {
+            $merged->$k = $v;
+        }
+        return $merged;
     }
 
 
@@ -439,7 +457,8 @@ class Api_nb_app extends CI_Controller
             $insert['profile_pic'] = $profile_pic !== '' ? $profile_pic : null;
         }
         if ($this->db->field_exists('is_verified', 'nb_users')) {
-            $insert['is_verified'] = 1;
+            // Agents need admin KYC approval; owners/tenants stay auto-verified for listing flow.
+            $insert['is_verified'] = ($user_type === 'agent') ? 0 : 1;
         }
         $new_id = $this->Nb_user_model->create($insert);
         $user = $this->Nb_user_model->get_by_id($new_id);
@@ -447,12 +466,17 @@ class Api_nb_app extends CI_Controller
             return $this->_json(array('success' => false, 'message' => 'Registration failed.'), 500);
         }
         $token = $this->_issue_auth_token($user);
-        $this->_json(array(
+        $payload = array(
             'success' => true,
             'token' => $token,
             'user' => $this->_user_public($user),
             'message' => 'Registration successful.',
-        ));
+        );
+        if ($user_type === 'agent') {
+            $payload['kyc_complete'] = nb_agent_kyc_complete($user);
+            $payload['kyc_missing'] = nb_agent_kyc_missing($user);
+        }
+        $this->_json($payload);
     }
 
     /** POST — email + password login (owner, tenant, agent, admin). Phone sign-in uses OTP endpoints. */
@@ -487,11 +511,16 @@ class Api_nb_app extends CI_Controller
             return $this->_json(array('success' => false, 'message' => 'Account is not active. Contact support.'), 403);
         }
         $token = $this->_issue_auth_token($user);
-        $this->_json(array(
+        $payload = array(
             'success' => true,
             'token' => $token,
             'user' => $this->_user_public($user),
-        ));
+        );
+        if (nb_user_is_agent($user)) {
+            $payload['kyc_complete'] = nb_agent_kyc_complete($user);
+            $payload['kyc_missing'] = nb_agent_kyc_missing($user);
+        }
+        $this->_json($payload);
     }
 
     /** POST — send 4-digit OTP to registered phone (WhatsApp via AskEva). */
@@ -622,12 +651,17 @@ class Api_nb_app extends CI_Controller
         }
 
         $token = $this->_issue_auth_token($user);
-        $this->_json(array(
+        $payload = array(
             'success' => true,
             'message' => 'Signed in successfully.',
             'token' => $token,
             'user' => $this->_user_public($user),
-        ));
+        );
+        if (nb_user_is_agent($user)) {
+            $payload['kyc_complete'] = nb_agent_kyc_complete($user);
+            $payload['kyc_missing'] = nb_agent_kyc_missing($user);
+        }
+        $this->_json($payload);
     }
 
     /** POST — resend OTP (same as send_otp). */
@@ -1087,7 +1121,78 @@ class Api_nb_app extends CI_Controller
         return $this->_json(array('success' => true, 'message' => 'Your account deletion request has been submitted. Our team will process it shortly.'));
     }
 
-    /** POST â€” update profile for customer or agent (same endpoint for both). */
+    /** Resolve user from Bearer token or userId in request. */
+    private function _auth_user_from_request(array $input)
+    {
+        $this->load->library('nb_api_token');
+        $token = $this->nb_api_token->read_token_from_request();
+        if ($token !== '') {
+            $u = $this->Nb_user_model->get_by_api_token($token);
+            if ($u) {
+                return $u;
+            }
+        }
+        $uid = isset($input['userId']) ? $input['userId'] : (isset($input['user_id']) ? $input['user_id'] : null);
+        if ($uid !== null && trim((string) $uid) !== '') {
+            $id = (int) $uid;
+            if ($id > 0) {
+                return $this->Nb_user_model->get_by_id($id);
+            }
+        }
+        return null;
+    }
+
+    /** KYC status block for agent API responses. */
+    private function _agent_kyc_status_payload($user)
+    {
+        return array(
+            'kyc_complete' => nb_agent_kyc_complete($user),
+            'kyc_missing' => nb_agent_kyc_missing($user),
+            'is_verified' => isset($user->is_verified) ? (int) $user->is_verified : 0,
+            'requirements' => array(
+                'business_name' => array('required' => true, 'label' => 'Business name'),
+                'aadhar_no' => array('required' => true, 'label' => 'Aadhaar number (12 digits)'),
+                'aadhar_file' => array('required' => true, 'label' => 'Aadhaar document upload'),
+                'website' => array('required' => false, 'label' => 'Website URL'),
+            ),
+        );
+    }
+
+    /**
+     * GET — agent KYC status. POST — submit agent KYC (JSON or multipart).
+     * Auth: Bearer token (recommended) or userId query/body.
+     */
+    public function agent_kyc()
+    {
+        $method = strtolower((string) $this->input->method());
+        $input = ($method === 'get')
+            ? array_merge($this->input->get() ?: array(), array())
+            : $this->_input_json_or_post();
+
+        $user = $this->_auth_user_from_request($input);
+        if (!$user) {
+            return $this->_json(array('success' => false, 'message' => 'Login required'), 401);
+        }
+        if (!nb_user_is_agent($user)) {
+            return $this->_json(array('success' => false, 'message' => 'Agent account required'), 403);
+        }
+
+        if ($method === 'get') {
+            return $this->_json(array_merge(
+                array('success' => true, 'user' => $this->_user_public($user)),
+                $this->_agent_kyc_status_payload($user)
+            ));
+        }
+
+        if ($method !== 'post') {
+            return $this->_json(array('success' => false, 'message' => 'GET or POST only'), 405);
+        }
+
+        $input['kyc_submit'] = true;
+        return $this->_update_profile_for_user($user, $input, true);
+    }
+
+    /** POST — update profile for customer or agent (same endpoint for both). */
     public function update_profile()
     {
         if ($this->input->method() !== 'post') {
@@ -1095,22 +1200,25 @@ class Api_nb_app extends CI_Controller
         }
         $input = $this->_input_json_or_post();
 
-        $uid = isset($input['userId']) ? $input['userId'] : (isset($input['user_id']) ? $input['user_id'] : null);
-        if (!$uid) {
-            return $this->_json(array('success' => false, 'message' => 'userId is required'), 400);
-        }
-        $id = (int) $uid;
-        if ($id < 1) {
-            return $this->_json(array('success' => false, 'message' => 'Valid userId is required'), 400);
-        }
-
-        $user = $this->Nb_user_model->get_by_id($id);
+        $user = $this->_auth_user_from_request($input);
         if (!$user) {
+            $uid = isset($input['userId']) ? $input['userId'] : (isset($input['user_id']) ? $input['user_id'] : null);
+            if (!$uid) {
+                return $this->_json(array('success' => false, 'message' => 'userId or auth token is required'), 400);
+            }
             return $this->_json(array('success' => false, 'message' => 'User not found'), 404);
         }
 
+        return $this->_update_profile_for_user($user, $input, false);
+    }
+
+    /** @return void JSON response */
+    private function _update_profile_for_user($user, array $input, $kyc_only)
+    {
+        $id = (int) $user->id;
         $update = array();
 
+        if (!$kyc_only) {
         // --- name ---
         if (isset($input['name'])) {
             $name = trim(strip_tags((string) $input['name']));
@@ -1232,6 +1340,29 @@ class Api_nb_app extends CI_Controller
                 }
             }
         }
+        }
+
+        // --- agent KYC: business_name (required on submit), website (optional) ---
+        if (isset($input['business_name']) && $this->db->field_exists('business_name', 'nb_users')) {
+            $business_name = trim(strip_tags((string) $input['business_name']));
+            if ($business_name !== '' && strlen($business_name) < 2) {
+                return $this->_json(array('success' => false, 'message' => 'business_name must be at least 2 characters'), 400);
+            }
+            $update['business_name'] = $business_name !== '' ? $business_name : null;
+        }
+
+        if (array_key_exists('website', $input) && $this->db->field_exists('website', 'nb_users')) {
+            $website_raw = $input['website'];
+            if ($website_raw === null || trim((string) $website_raw) === '') {
+                $update['website'] = null;
+            } else {
+                $website = nb_normalize_website($website_raw);
+                if ($website === false) {
+                    return $this->_json(array('success' => false, 'message' => 'website must be a valid URL'), 400);
+                }
+                $update['website'] = $website;
+            }
+        }
 
         // --- agent-only fields (accepted for any user_type; validated when present) ---
         if (isset($input['aadhar_no'])) {
@@ -1301,11 +1432,34 @@ class Api_nb_app extends CI_Controller
             return $this->_json(array('success' => false, 'message' => 'No fields provided to update'), 400);
         }
 
+        $kyc_submit = $this->_parse_accept_terms(array(
+            'accept_terms' => $input['kyc_submit'] ?? $input['submit_kyc'] ?? false,
+        ));
+        if ($kyc_submit && nb_user_is_agent($user)) {
+            $merged = $this->_user_row_with_updates($user, $update);
+            $missing = nb_agent_kyc_missing($merged);
+            if (!empty($missing)) {
+                return $this->_json(array(
+                    'success' => false,
+                    'message' => 'Complete agent KYC: business name, 12-digit Aadhaar number, and Aadhaar document upload are required.',
+                    'kyc_missing' => $missing,
+                ), 400);
+            }
+        }
+
         $update['updated_at'] = date('Y-m-d H:i:s');
         $this->Nb_user_model->update($id, $update);
 
         $updated = $this->Nb_user_model->get_by_id($id);
-        $this->_json(array('success' => true, 'message' => 'Profile updated successfully', 'user' => $this->_user_public($updated)));
+        $payload = array(
+            'success' => true,
+            'message' => $kyc_only ? 'Agent KYC submitted successfully' : 'Profile updated successfully',
+            'user' => $this->_user_public($updated),
+        );
+        if (nb_user_is_agent($updated)) {
+            $payload = array_merge($payload, $this->_agent_kyc_status_payload($updated));
+        }
+        $this->_json($payload);
     }
 
 

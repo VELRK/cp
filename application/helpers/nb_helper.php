@@ -730,6 +730,97 @@ function nb_ensure_property_type_image_column()
     }
 }
 
+/** Agent KYC columns on nb_users (business_name, website). */
+function nb_ensure_agent_kyc_columns()
+{
+    $CI =& get_instance();
+    if (!isset($CI->db) || !$CI->db) {
+        return;
+    }
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+    if (!$CI->db->table_exists('nb_users')) {
+        return;
+    }
+    if (!$CI->db->field_exists('business_name', 'nb_users')) {
+        $CI->db->query('ALTER TABLE `nb_users` ADD COLUMN `business_name` VARCHAR(200) NULL DEFAULT NULL AFTER `experience_years`');
+    }
+    if (!$CI->db->field_exists('website', 'nb_users')) {
+        $CI->db->query('ALTER TABLE `nb_users` ADD COLUMN `website` VARCHAR(500) NULL DEFAULT NULL AFTER `business_name`');
+    }
+}
+
+/** True when nb_users row is an agent (user_type = agent). */
+function nb_user_is_agent($user)
+{
+    if (!$user) {
+        return false;
+    }
+    $ut = isset($user->user_type) ? strtolower(trim((string) $user->user_type)) : '';
+    return $ut === 'agent';
+}
+
+/**
+ * Agent KYC fields still missing. website is optional and not listed here.
+ *
+ * @param object|array $user
+ * @return string[]
+ */
+function nb_agent_kyc_missing($user)
+{
+    if (!nb_user_is_agent($user)) {
+        return array();
+    }
+    $row = is_array($user) ? $user : (array) $user;
+    $missing = array();
+
+    $bn = isset($row['business_name']) ? trim((string) $row['business_name']) : '';
+    if (strlen($bn) < 2) {
+        $missing[] = 'business_name';
+    }
+
+    $aad = isset($row['aadhar_no']) ? preg_replace('/\D+/', '', (string) $row['aadhar_no']) : '';
+    if (!preg_match('/^\d{12}$/', $aad)) {
+        $missing[] = 'aadhar_no';
+    }
+
+    $file = isset($row['aadhar_file']) ? trim((string) $row['aadhar_file']) : '';
+    if ($file === '') {
+        $missing[] = 'aadhar_file';
+    }
+
+    return $missing;
+}
+
+function nb_agent_kyc_complete($user)
+{
+    return nb_user_is_agent($user) && empty(nb_agent_kyc_missing($user));
+}
+
+/**
+ * Normalize optional website URL; returns null when empty.
+ *
+ * @param mixed $value
+ * @return string|null|false null empty, string ok, false invalid
+ */
+function nb_normalize_website($value)
+{
+    $v = trim((string) $value);
+    if ($v === '') {
+        return null;
+    }
+    if (!preg_match('#^https?://#i', $v)) {
+        $v = 'https://' . $v;
+    }
+    if (!filter_var($v, FILTER_VALIDATE_URL)) {
+        return false;
+    }
+    return $v;
+}
+
 /** Map / location columns on nb_properties (mobile TC_007). */
 function nb_ensure_property_map_columns()
 {

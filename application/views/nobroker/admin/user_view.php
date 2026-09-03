@@ -73,6 +73,16 @@ $user_type = isset($u->user_type) ? $u->user_type : (isset($u->role) ? $u->role 
       <dd class="font-monospace"><?php echo html_escape($u->aadhar_no); ?></dd>
       <?php endif; ?>
 
+      <?php if (!empty($u->business_name)) : ?>
+      <dt>Business name</dt>
+      <dd><?php echo html_escape($u->business_name); ?></dd>
+      <?php endif; ?>
+
+      <?php if (!empty($u->website)) : ?>
+      <dt>Website</dt>
+      <dd><a href="<?php echo html_escape($u->website); ?>" target="_blank" rel="noopener"><?php echo html_escape($u->website); ?></a></dd>
+      <?php endif; ?>
+
       <?php if (!empty($u->aadhar_file)) : ?>
       <dt>Aadhar document</dt>
       <dd><a class="btn btn-sm btn-outline-secondary rounded-pill" href="<?php echo base_url($u->aadhar_file); ?>" target="_blank" rel="noopener">Open file</a></dd>

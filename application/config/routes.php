@@ -327,14 +327,14 @@ $route['api/mobile/enquiries_by_customer/(:num)'] = 'Api_mobile/enquiries_by_cus
 // Mobile API Authentication Routes
 $route['api/mobile/send_otp'] = 'Api_mobile/send_otp';
 $route['api/mobile/send-otp'] = 'Api_mobile/send_otp';
-$route['api/mobile/verify_otp'] = 'Api_mobile/verify_otp';
-$route['api/mobile/verify-otp'] = 'Api_mobile/verify_otp';
+$route['api/mobile/verify_otp'] = 'api_nb_app/verify_otp';
+$route['api/mobile/verify-otp'] = 'api_nb_app/verify_otp';
 $route['api/mobile/resend_otp'] = 'Api_mobile/resend_otp';
 $route['api/mobile/resend-otp'] = 'Api_mobile/resend_otp';
 $route['api/mobile/save_profile'] = 'Api_mobile/save_profile';
 $route['api/mobile/save-profile'] = 'Api_mobile/save_profile';
-$route['api/mobile/update_profile'] = 'Api_mobile/update_profile';
-$route['api/mobile/update-profile'] = 'Api_mobile/update_profile';
+$route['api/mobile/update_profile'] = 'api_nb_app/update_profile';
+$route['api/mobile/update-profile'] = 'api_nb_app/update_profile';
 $route['api/mobile/profile'] = 'api_nb_app/profile';
 $route['api/mobile/check'] = 'Api_mobile/check';
 $route['api/mobile/check_auth'] = 'Api_mobile/check';
@@ -369,6 +369,8 @@ $route['api/mobile/referral/stats'] = 'Api_mobile/referral_stats';
 
 // Mobile auth & account (delegates to Api_nb_app)
 $route['api/mobile/register'] = 'api_nb_app/register';
+$route['api/mobile/agent-kyc'] = 'api_nb_app/agent_kyc';
+$route['api/mobile/agent_kyc'] = 'api_nb_app/agent_kyc';
 $route['api/mobile/login'] = 'api_nb_app/login';
 $route['api/mobile/forgot-password'] = 'api_nb_app/forgot_password';
 $route['api/mobile/forgot_password'] = 'api_nb_app/forgot_password';
@@ -492,6 +494,8 @@ $route['api/property/save'] = 'nb_property_form/save';
 
 // NoBroker JSON API (Bearer token; base path api/nb/) — used by Next.js frontend
 $route['api/nb/update-profile'] = 'api_nb_app/update_profile';
+$route['api/nb/agent-kyc'] = 'api_nb_app/agent_kyc';
+$route['api/nb/agent_kyc'] = 'api_nb_app/agent_kyc';
 $route['api/nb/register'] = 'api_nb_app/register';
 $route['api/nb/login'] = 'api_nb_app/login';
 $route['api/nb/send-otp'] = 'api_nb_app/send_otp';

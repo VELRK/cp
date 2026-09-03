@@ -97,7 +97,7 @@ $type_label = nb_property_type_label($p->property_type);
 
           <?php if (!empty($p->available_from)) : ?>
           <dt>Available from</dt>
-          <dd><?php echo html_escape($p->available_from); ?></dd>
+          <dd><?php echo html_escape(nb_format_datetime($p->available_from, true)); ?></dd>
           <?php endif; ?>
 
           <dt>Views</dt>
@@ -110,12 +110,12 @@ $type_label = nb_property_type_label($p->property_type);
 
           <?php if (!empty($p->created_at)) : ?>
           <dt>Created</dt>
-          <dd><?php echo html_escape($p->created_at); ?></dd>
+          <dd><?php echo html_escape(nb_format_datetime($p->created_at)); ?> <span class="text-muted small">(IST)</span></dd>
           <?php endif; ?>
 
           <?php if (!empty($p->updated_at)) : ?>
           <dt>Last updated</dt>
-          <dd><?php echo html_escape($p->updated_at); ?></dd>
+          <dd><?php echo html_escape(nb_format_datetime($p->updated_at)); ?> <span class="text-muted small">(IST)</span></dd>
           <?php endif; ?>
         </dl>
 

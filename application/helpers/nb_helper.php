@@ -911,6 +911,50 @@ function nb_normalize_website($value)
     return $v;
 }
 
+/** IST timezone used for admin/UI datetime display. */
+function nb_display_timezone()
+{
+    return new DateTimeZone('Asia/Kolkata');
+}
+
+/**
+ * Format date or datetime for admin/UI (IST, 12-hour clock).
+ * MySQL values without timezone are treated as already in IST (server local).
+ *
+ * @param mixed $value
+ * @param bool $date_only Y-m-d only → e.g. 03 Sep 2026
+ * @return string
+ */
+function nb_format_datetime($value, $date_only = false)
+{
+    $value = trim((string) $value);
+    if ($value === '') {
+        return '—';
+    }
+    $fmt = $date_only ? 'd M Y' : 'd M Y, h:i A';
+    $tz = nb_display_timezone();
+
+    if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+        $dt = DateTime::createFromFormat('Y-m-d', $value, $tz);
+        return ($dt instanceof DateTime) ? $dt->format('d M Y') : $value;
+    }
+
+    if (preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value)) {
+        $dt = DateTime::createFromFormat('Y-m-d H:i:s', $value, $tz);
+        if ($dt instanceof DateTime) {
+            return $dt->format($fmt);
+        }
+    }
+
+    try {
+        $dt = new DateTime($value, $tz);
+        return $dt->format($date_only ? 'd M Y' : $fmt);
+    } catch (Exception $e) {
+        $ts = strtotime($value);
+        return $ts ? date($fmt, $ts) : $value;
+    }
+}
+
 /** Map / location columns on nb_properties (mobile TC_007). */
 function nb_ensure_property_map_columns()
 {

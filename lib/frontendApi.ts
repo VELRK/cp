@@ -77,6 +77,11 @@ export type SearchParams = {
   under_construction?: number | string;
   is_premium?: number | string;
   is_home_banner?: number | string;
+  tags_best_rate_localities?: number | string;
+  tags_high_growth_localities?: number | string;
+  best_rate?: number | string;
+  best_rated?: number | string;
+  high_growth?: number | string;
   [key: string]: string | number | undefined;
 };
 

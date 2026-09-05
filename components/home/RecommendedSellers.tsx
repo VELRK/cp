@@ -54,7 +54,7 @@ const RecommendedSellers: React.FC<RecommendedSellersProps> = ({ properties }) =
     properties.forEach(p => {
       // Determine name
       const name = p.owner_name?.trim() || 'Anonymous Seller';
-      
+
       // Determine type
       let type: 'Agent' | 'Owner' | 'Developer' = 'Owner';
       const postedBy = p.posted_by?.toLowerCase() || '';
@@ -70,7 +70,7 @@ const RecommendedSellers: React.FC<RecommendedSellersProps> = ({ properties }) =
       if (!sellerMap.has(id)) {
         const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'S';
         const colors = getColorsForName(name);
-        
+
         sellerMap.set(id, {
           id,
           name,
@@ -115,15 +115,15 @@ const RecommendedSellers: React.FC<RecommendedSellersProps> = ({ properties }) =
         <div className="nb-horizontal-scroll d-flex gap-3 pb-2" style={{ overflowX: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {sellers.map((seller) => (
             <div key={seller.id} className="card shadow-sm border-0" style={{ minWidth: '280px', borderRadius: '12px' }}>
-              
+
               {/* Top Banner section */}
               <Link href={`/seller/${seller.id}`} className="text-decoration-none">
-                <div 
+                <div
                   className="d-flex align-items-center justify-content-between p-3 rounded-top"
                   style={{ backgroundColor: seller.bgColor, color: seller.textColor, borderTopLeftRadius: '12px', borderTopRightRadius: '12px', height: '70px' }}
                 >
                   <div className="d-flex align-items-center gap-2">
-                    <div 
+                    <div
                       className="d-flex align-items-center justify-content-center fw-bold"
                       style={{ width: '40px', height: '40px', borderRadius: '8px', backgroundColor: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(4px)', fontSize: '14px' }}
                     >
@@ -137,9 +137,9 @@ const RecommendedSellers: React.FC<RecommendedSellersProps> = ({ properties }) =
                   <ChevronRight size={18} />
                 </div>
               </Link>
-              
+
               <div className="card-body p-3 bg-white" style={{ borderBottomLeftRadius: '12px', borderBottomRightRadius: '12px' }}>
-                <div className="d-flex align-items-center gap-3 mb-3 small">
+                {/* <div className="d-flex align-items-center gap-3 mb-3 small">
                   <div>
                     <span className="fw-bold">{seller.experienceYears} Yrs</span> <span className="text-muted">Experience</span>
                   </div>
@@ -147,8 +147,8 @@ const RecommendedSellers: React.FC<RecommendedSellersProps> = ({ properties }) =
                   <div>
                     <span className="fw-bold">{seller.totalListings}</span> <span className="text-muted">Total listings</span>
                   </div>
-                </div>
-                
+                </div> */}
+
                 <div className="d-flex flex-wrap gap-2 mb-3">
                   {seller.localities.map((loc, idx) => (
                     <span key={idx} className="badge rounded-pill fw-normal" style={{ backgroundColor: '#f1f5f9', color: '#64748b', fontSize: '0.7rem', padding: '4px 10px' }}>
@@ -156,7 +156,7 @@ const RecommendedSellers: React.FC<RecommendedSellersProps> = ({ properties }) =
                     </span>
                   ))}
                 </div>
-                
+
                 <button className="btn w-100 fw-bold d-flex align-items-center justify-content-center gap-2" style={{ color: '#6d28d9', borderColor: '#c4b5fd', backgroundColor: '#fff', borderRadius: '8px', padding: '8px 0' }}>
                   <Phone size={16} />
                   Show Contact

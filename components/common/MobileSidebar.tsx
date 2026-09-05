@@ -182,12 +182,10 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
                 {ownersOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
               </button>
               <div className={`menu-group-items ${ownersOpen ? 'expanded' : ''}`}>
-                {(!user || user.role !== 'tenant') && (
-                  <Link href="/owner/property/add" className="menu-item" onClick={handleLinkClick}>
-                    <PlusCircle size={16} />
-                    <span>Post Property</span>
-                  </Link>
-                )}
+                <Link href="/owner/property/add" className="menu-item" onClick={handleLinkClick}>
+                  <PlusCircle size={16} />
+                  <span>Post Property</span>
+                </Link>
                 {user && (
                   <>
                     {(user.role === 'owner' || user.role === 'agent') && user.status === 'approved' && (
@@ -236,47 +234,6 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
               </div>
             </div>
 
-            {/* Become an Agent Featured Card for Mobile */}
-            <div className="px-2 my-2">
-              <Link
-                href="/user/become-agent"
-                className="d-flex align-items-center justify-content-between p-2.5 rounded-3 text-decoration-none shadow-sm"
-                style={{
-                  background: 'linear-gradient(135deg, #071f3f 0%, #0b2c56 100%)',
-                  border: '1px solid rgba(212, 175, 55, 0.35)',
-                  color: '#ffffff',
-                }}
-                onClick={handleLinkClick}
-              >
-                <div className="d-flex align-items-center gap-2">
-                  <div
-                    className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                    style={{ width: '32px', height: '32px', background: 'rgba(242, 178, 3, 0.2)' }}
-                  >
-                    <Briefcase size={16} className="text-warning" />
-                  </div>
-                  <div>
-                    <div className="fw-bold" style={{ fontSize: '0.85rem', color: '#ffffff' }}>
-                      Become an Agent
-                    </div>
-                    <div className="small text-white-50" style={{ fontSize: '0.7rem' }}>
-                      Post unlimited • 0% fee
-                    </div>
-                  </div>
-                </div>
-                <span
-                  className="badge rounded-pill fw-bold"
-                  style={{
-                    background: 'linear-gradient(135deg, #d4af37 0%, #b8860b 100%)',
-                    color: '#071f3f',
-                    fontSize: '0.65rem',
-                  }}
-                >
-                  UPGRADE
-                </span>
-              </Link>
-            </div>
-
             {/* User Account Actions */}
             {user && (
               <div className="menu-group">
@@ -288,10 +245,12 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
                   {accountOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                 </button>
                 <div className={`menu-group-items ${accountOpen ? 'expanded' : ''}`}>
-                  <Link href="/user/become-agent" className="menu-item" onClick={handleLinkClick}>
-                    <Briefcase size={16} className="text-warning" />
-                    <span>{user.role === 'agent' || user.user_type === 'agent' ? 'Agent Profile & KYC' : 'Become an Agent'}</span>
-                  </Link>
+                  {(user.role === 'agent' || user.user_type === 'agent') && (
+                    <Link href="/user/become-agent" className="menu-item" onClick={handleLinkClick}>
+                      <Briefcase size={16} className="text-warning" />
+                      <span>Agent Profile & KYC</span>
+                    </Link>
+                  )}
                   <Link href="/owner/listings" className="menu-item" onClick={handleLinkClick}>
                     <Bookmark size={16} />
                     <span>My Properties</span>

@@ -157,54 +157,6 @@ const SidebarConsole: React.FC<SidebarConsoleProps> = ({
           </button>
         </div>
       </div>
-
-      {/* Become an Agent Classic Card (if not already an agent) */}
-      {(!user || (user.role !== 'agent' && user.user_type !== 'agent')) && (
-        <div
-          className="nb-sidebar-agent-card fade-in-up p-3 rounded-4 shadow-sm border position-relative overflow-hidden"
-          style={{
-            background: 'linear-gradient(135deg, #071f3f 0%, #0b2c56 100%)',
-            borderColor: 'rgba(212, 175, 55, 0.3)',
-            color: '#ffffff',
-            cursor: 'pointer',
-            transition: 'all 0.25s ease',
-          }}
-          onClick={() => router.push('/user/become-agent')}
-        >
-          <div className="d-flex align-items-center gap-2 mb-2">
-            <div
-              className="p-1.5 rounded-circle d-flex align-items-center justify-content-center"
-              style={{ background: 'rgba(242, 178, 3, 0.2)' }}
-            >
-              <Briefcase size={16} className="text-warning" />
-            </div>
-            <div>
-              <span className="badge bg-warning text-dark fw-bold" style={{ fontSize: '0.62rem' }}>
-                FOR BROKERS
-              </span>
-            </div>
-          </div>
-          <h4 className="h6 fw-bold text-white mb-1" style={{ fontSize: '0.9rem' }}>
-            Become an Agent
-          </h4>
-          <p className="text-white-50 small mb-2" style={{ fontSize: '0.75rem', lineHeight: '1.4' }}>
-            Upgrade your profile to list unlimited properties & get verified buyer leads on WhatsApp.
-          </p>
-          <Link
-            href="/user/become-agent"
-            className="btn btn-sm w-100 fw-bold d-flex align-items-center justify-content-center gap-1.5 rounded-pill"
-            style={{
-              background: 'linear-gradient(135deg, #d4af37 0%, #b8860b 100%)',
-              color: '#071f3f',
-              border: 'none',
-              fontSize: '0.78rem',
-            }}
-          >
-            <span>Upgrade to Agent</span>
-            <ArrowRight size={14} />
-          </Link>
-        </div>
-      )}
     </div>
   );
 };

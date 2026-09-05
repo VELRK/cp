@@ -1518,7 +1518,8 @@ class Api_nb_app extends CI_Controller
             'is_premium' => !empty($get['is_premium']) ? 1 : null,
             'is_home_banner' => !empty($get['is_home_banner']) || !empty($get['home_banner'])
                 || (isset($get['sort']) && $get['sort'] === 'home_banner') ? 1 : null,
-            'tags_best_rate_localities' => !empty($get['tags_best_rate_localities']) || !empty($get['best_rate']) ? 1 : null,
+            'tags_best_rate_localities' => !empty($get['tags_best_rate_localities']) || !empty($get['best_rate']) || !empty($get['best_rated']) ? 1 : null,
+            'tags_high_growth_localities' => !empty($get['tags_high_growth_localities']) || !empty($get['high_growth']) ? 1 : null,
         );
     }
 
@@ -1861,6 +1862,7 @@ class Api_nb_app extends CI_Controller
             'home_banner_image_url' => (isset($p->home_banner_image) && $p->home_banner_image !== '')
                 ? $this->_asset_url_or_null($p->home_banner_image) : null,
             'tags_best_rate_localities' => isset($p->tags_best_rate_localities) ? (int) (bool) $p->tags_best_rate_localities : 0,
+            'tags_high_growth_localities' => isset($p->tags_high_growth_localities) ? (int) (bool) $p->tags_high_growth_localities : 0,
             'brochure_url' => isset($p->brochure_url) && $p->brochure_url !== '' ? $this->_asset_url_or_null($p->brochure_url) : null,
             'audio_notes_url' => isset($p->audio_notes_url) && $p->audio_notes_url !== '' ? $this->_asset_url_or_null($p->audio_notes_url) : null,
             'views' => isset($p->views) ? (int) $p->views : 0,

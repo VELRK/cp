@@ -83,6 +83,12 @@ export function buildSearchApiParams(
   if (sp.get('has_video') || sp.get('video')) params.has_video = 1;
   if (sp.get('ready_to_move')) params.ready_to_move = 1;
   if (sp.get('under_construction')) params.under_construction = 1;
+  if (sp.get('tags_best_rate_localities') || sp.get('best_rate') || sp.get('best_rated')) {
+    params.tags_best_rate_localities = 1;
+  }
+  if (sp.get('tags_high_growth_localities') || sp.get('high_growth')) {
+    params.tags_high_growth_localities = 1;
+  }
 
   return params;
 }

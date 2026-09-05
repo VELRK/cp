@@ -27,6 +27,7 @@ import {
   PlusCircle,
   ExternalLink,
   Lock,
+  Clock,
 } from 'lucide-react';
 
 interface City {
@@ -121,6 +122,11 @@ export default function BecomeAgentPage() {
   const isAlreadyAgent =
     user && (user.role === 'agent' || user.user_type === 'agent');
 
+  const isPendingKyc =
+    isSuccessUpgraded ||
+    user?.kyc_status === 'pending' ||
+    (user && user.is_verified === 0 && !user.kyc_approved);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -172,7 +178,11 @@ export default function BecomeAgentPage() {
       formData.append('kyc_submit', '1');
 
       if (website.trim()) {
-        formData.append('website', website.trim());
+        let cleanWebsite = website.trim();
+        if (!cleanWebsite.startsWith('http://') && !cleanWebsite.startsWith('https://')) {
+          cleanWebsite = 'https://' + cleanWebsite;
+        }
+        formData.append('website', cleanWebsite);
       }
       if (profilePic) {
         formData.append('profile_image', profilePic);
@@ -398,8 +408,19 @@ export default function BecomeAgentPage() {
             )}
 
             {/* If user is ALREADY an agent: Display classic Agent Profile & Status Card */}
-            {!authLoading && user && isAlreadyAgent && !isSuccessUpgraded && (
+            {!authLoading && user && (isAlreadyAgent || isSuccessUpgraded) && (
               <div className="card classic-form-card border-0 shadow rounded-4 p-4 p-md-5 bg-white mb-5">
+                {isPendingKyc && (
+                  <div className="alert alert-warning border-warning-subtle rounded-3 p-3 mb-4 d-flex align-items-start gap-2.5">
+                    <Clock size={20} className="text-warning flex-shrink-0 mt-0.5" />
+                    <div>
+                      <div className="fw-bold text-dark">KYC Verification In Progress</div>
+                      <div className="small text-secondary">
+                        Your agent application and KYC documents have been submitted to Coimbatore Properties compliance desk for verification. Property posting privileges will unlock automatically upon admin approval.
+                      </div>
+                    </div>
+                  </div>
+                )}
                 <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 pb-4 border-bottom mb-4">
                   <div className="d-flex align-items-center gap-3">
                     <div
@@ -434,9 +455,16 @@ export default function BecomeAgentPage() {
                   </div>
 
                   <div className="text-md-end">
-                    <span className="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-semibold">
-                      KYC Status: {user.kyc_status?.toUpperCase() || 'APPROVED'}
-                    </span>
+                    {isPendingKyc ? (
+                      <span className="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill fw-semibold d-inline-flex align-items-center gap-1.5">
+                        <Clock size={14} className="text-warning" />
+                        <span>KYC Status: PENDING REVIEW</span>
+                      </span>
+                    ) : (
+                      <span className="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-semibold">
+                        KYC Status: {user.kyc_status?.toUpperCase() || 'APPROVED'}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -468,13 +496,24 @@ export default function BecomeAgentPage() {
                 </div>
 
                 <div className="d-flex flex-wrap gap-3 pt-3 border-top">
-                  <Link
-                    href="/owner/property/add"
-                    className="btn classic-gold-btn rounded-pill px-4 py-2 fw-bold d-inline-flex align-items-center gap-2 shadow-sm"
-                  >
-                    <PlusCircle size={16} />
-                    <span>Post New Property</span>
-                  </Link>
+                  {isPendingKyc ? (
+                    <button
+                      type="button"
+                      className="btn btn-secondary rounded-pill px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2 opacity-75"
+                      disabled
+                    >
+                      <Clock size={16} />
+                      <span>Posting Unlocks Upon KYC Approval</span>
+                    </button>
+                  ) : (
+                    <Link
+                      href="/owner/property/add"
+                      className="btn classic-gold-btn rounded-pill px-4 py-2 fw-bold d-inline-flex align-items-center gap-2 shadow-sm"
+                    >
+                      <PlusCircle size={16} />
+                      <span>Post New Property</span>
+                    </Link>
+                  )}
                   <Link
                     href="/owner/listings"
                     className="btn btn-outline-primary rounded-pill px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2"
@@ -492,7 +531,7 @@ export default function BecomeAgentPage() {
             )}
 
             {/* If user is customer/tenant: Display Classic Conversion Form */}
-            {!authLoading && user && (!isAlreadyAgent || isSuccessUpgraded) && (
+            {!authLoading && user && !isAlreadyAgent && !isSuccessUpgraded && (
               <div className="card classic-form-card border-0 shadow-lg rounded-4 p-4 p-md-5 bg-white mb-5">
                 <div className="classic-form-header mb-4 pb-3 border-bottom d-flex flex-wrap align-items-center justify-content-between gap-3">
                   <div>

@@ -199,48 +199,6 @@ export default function UserProfilePage() {
               </div>
             </div>
 
-            {/* Become an Agent Promo Box (if not already an agent) */}
-            {!isAgent && (
-              <div
-                className="p-3 mb-4 rounded-3 border d-flex flex-wrap align-items-center justify-content-between gap-3"
-                style={{
-                  background: 'linear-gradient(135deg, #071f3f 0%, #0b2c56 100%)',
-                  borderColor: 'rgba(212, 175, 55, 0.35)',
-                  color: '#ffffff',
-                }}
-              >
-                <div className="d-flex align-items-center gap-2.5">
-                  <div
-                    className="rounded-circle d-flex align-items-center justify-content-center p-2 flex-shrink-0"
-                    style={{ background: 'rgba(242, 178, 3, 0.2)' }}
-                  >
-                    <Briefcase size={20} className="text-warning" />
-                  </div>
-                  <div>
-                    <div className="fw-bold text-white small">
-                      Are you a Real Estate Broker or Consultant?
-                    </div>
-                    <div className="text-white-50" style={{ fontSize: '0.75rem' }}>
-                      Convert your profile to an Accredited Agent to unlock unlimited listings & verified buyer leads.
-                    </div>
-                  </div>
-                </div>
-                <Link
-                  href="/user/become-agent"
-                  className="btn btn-sm rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-sm"
-                  style={{
-                    background: 'linear-gradient(135deg, #d4af37 0%, #b8860b 100%)',
-                    color: '#071f3f',
-                    fontSize: '0.78rem',
-                    border: 'none',
-                  }}
-                >
-                  <span>Become an Agent</span>
-                  <ArrowRight size={14} />
-                </Link>
-              </div>
-            )}
-
             {isAgent && (
               <div className="p-3 mb-4 rounded-3 bg-light border d-flex align-items-center justify-content-between gap-2">
                 <div className="d-flex align-items-center gap-2">

@@ -36,7 +36,7 @@ import BlogsSection from '../components/home/BlogsSection';
 import SidebarConsole from '../components/home/SidebarConsole';
 import RecommendedSellers from '../components/home/RecommendedSellers';
 import PropertyVideos from '../components/home/PropertyVideos';
-import BecomeAgentBanner from '../components/home/BecomeAgentBanner';
+
 
 interface City {
   id: number;
@@ -620,7 +620,7 @@ export default function Home() {
 
             {/* Explore Cities */}
             <ExploreCities />
-            <RecommendedSellers properties={[...recommended, ...newlyLaunched, ...verified, ...featured]} />
+            {/* <RecommendedSellers properties={[...recommended, ...newlyLaunched, ...verified, ...featured]} /> */}
 
             {/* Featured Properties Grid View */}
             <FeaturedProperties
@@ -637,9 +637,6 @@ export default function Home() {
 
             {/* Property Videos Section */}
             <PropertyVideos />
-
-            {/* Classic Become an Agent Showcase Banner */}
-            <BecomeAgentBanner />
 
             {/* Promo Section (Sell/Rent Faster Banner) */}
             <PromoSection

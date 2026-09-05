@@ -82,15 +82,7 @@ const Navbar: React.FC = () => {
                 </li>
               </ul>
             </li>
-            <li className="nav-item">
-              <Link href="/user/become-agent" className="nav-link nav-link-premium text-nowrap d-flex align-items-center gap-1.5">
-                <Briefcase size={15} className="text-warning" />
-                <span>Become an Agent</span>
-                <span className="badge bg-warning-subtle text-dark border border-warning-subtle px-1.5 py-0.5 rounded-pill" style={{ fontSize: '0.62rem' }}>
-                  NEW
-                </span>
-              </Link>
-            </li>
+
             {user && (
               <li className="nav-item">
                 <Link href="/owner/listings" className="nav-link nav-link-premium text-nowrap">
@@ -111,16 +103,14 @@ const Navbar: React.FC = () => {
         {/* Right: Unified Action Buttons (Always cleanly aligned on mobile & desktop) */}
         <div className="d-flex align-items-center gap-2 flex-shrink-0 ms-auto ms-lg-0">
           
-          {/* Post Property button */}
-          {(!user || user.role !== 'tenant') && (
-            <Link 
-              href={user ? "/owner/property/add" : "/register"} 
-              className="btn btn-sm post-property-btn-navbar rounded-pill px-3 py-1.5 fw-semibold d-none d-md-flex align-items-center gap-1.5 shadow-sm text-decoration-none"
-            >
-              <span>Post Property</span>
-              <span className="badge bg-success rounded-1" style={{ fontSize: '0.65rem' }}>FREE</span>
-            </Link>
-          )}
+          {/* Post Property button (Always shown for all roles including tenant) */}
+          <Link 
+            href={user ? "/owner/property/add" : "/register"} 
+            className="btn btn-sm post-property-btn-navbar rounded-pill px-3 py-1.5 fw-semibold d-none d-md-flex align-items-center gap-1.5 shadow-sm text-decoration-none"
+          >
+            <span>Post Property</span>
+            <span className="badge bg-success rounded-1" style={{ fontSize: '0.65rem' }}>FREE</span>
+          </Link>
 
           {/* Support Dropdown */}
           <div className="dropdown">
@@ -153,7 +143,7 @@ const Navbar: React.FC = () => {
           {user ? (
             <div className="dropdown">
               <button
-                className="btn btn-sm user-dropdown-btn-premium d-flex align-items-center gap-2 dropdown-toggle rounded-pill px-3 py-2 shadow-sm"
+                className="btn btn-sm user-dropdown-btn-premium d-flex align-items-center gap-2 rounded-pill px-3 py-2 shadow-sm"
                 type="button"
                 id="userDropdown"
                 data-bs-toggle="dropdown"
@@ -171,41 +161,25 @@ const Navbar: React.FC = () => {
                   <span className="badge nb-role-pill text-uppercase">{user.role}</span>
                 </li>
 
-                {(!user || user.role !== 'tenant') && (
-                  <li>
-                    <Link href="/owner/property/add" className="dropdown-item d-flex justify-content-between align-items-center py-2 fw-semibold post-property-free-btn-dropdown">
-                      <div className="d-flex align-items-center gap-2">
-                        <PlusCircle size={16} />
-                        <span>Post Property</span>
-                      </div>
-                      <span className="badge bg-success rounded-1">FREE</span>
-                    </Link>
-                  </li>
-                )}
+                <li>
+                  <Link href="/owner/property/add" className="dropdown-item d-flex justify-content-between align-items-center py-2 fw-semibold post-property-free-btn-dropdown">
+                    <div className="d-flex align-items-center gap-2">
+                      <PlusCircle size={16} />
+                      <span>Post Property</span>
+                    </div>
+                    <span className="badge bg-success rounded-1">FREE</span>
+                  </Link>
+                </li>
 
-                {/* Become an Agent / Agent Profile Link */}
-                {user.role !== 'agent' && user.user_type !== 'agent' ? (
-                  <li>
-                    <Link
-                      href="/user/become-agent"
-                      className="dropdown-item d-flex justify-content-between align-items-center py-2 fw-semibold"
-                      style={{ background: 'rgba(242, 178, 3, 0.08)' }}
-                    >
-                      <div className="d-flex align-items-center gap-2">
-                        <Briefcase size={16} className="text-warning" />
-                        <span className="text-dark">Become an Agent</span>
-                      </div>
-                      <span className="badge bg-warning text-dark" style={{ fontSize: '0.62rem' }}>UPGRADE</span>
-                    </Link>
-                  </li>
-                ) : (
+                {/* Agent Profile Link (Only if already agent) */}
+                {user.role === 'agent' || user.user_type === 'agent' ? (
                   <li>
                     <Link href="/user/become-agent" className="dropdown-item d-flex align-items-center gap-2 py-2">
                       <Briefcase size={16} className="text-primary" />
                       <span>Agent Profile & KYC</span>
                     </Link>
                   </li>
-                )}
+                ) : null}
 
                 {/* Owner / Agent / Property Actions */}
                 {user && (
@@ -315,7 +289,7 @@ const Navbar: React.FC = () => {
           ) : (
             <div className="dropdown">
               <button
-                className="btn btn-sm user-dropdown-btn-premium d-flex align-items-center gap-2 dropdown-toggle rounded-pill px-3 py-2 shadow-sm"
+                className="btn btn-sm user-dropdown-btn-premium d-flex align-items-center gap-2 rounded-pill px-3 py-2 shadow-sm"
                 type="button"
                 id="guestDropdown"
                 data-bs-toggle="dropdown"
@@ -358,15 +332,7 @@ const Navbar: React.FC = () => {
                   </Link>
                 </li>
                 <li><hr className="dropdown-divider" /></li>
-                <li>
-                  <Link href="/user/become-agent" className="dropdown-item d-flex justify-content-between align-items-center py-2 fw-semibold">
-                    <div className="d-flex align-items-center gap-2">
-                      <Briefcase size={16} className="text-warning" />
-                      <span>Become an Agent</span>
-                    </div>
-                    <span className="badge bg-warning text-dark" style={{ fontSize: '0.62rem' }}>JOIN</span>
-                  </Link>
-                </li>
+
                 <li>
                   <Link href="/owner/property/add" className="dropdown-item d-flex justify-content-between align-items-center py-2 fw-semibold post-property-free-btn-dropdown">
                     <div className="d-flex align-items-center gap-2">

@@ -36,6 +36,8 @@ import BlogsSection from '../components/home/BlogsSection';
 import SidebarConsole from '../components/home/SidebarConsole';
 import RecommendedSellers from '../components/home/RecommendedSellers';
 import PropertyVideos from '../components/home/PropertyVideos';
+import BestRatedProperties from '../components/home/BestRatedProperties';
+import HighGrowthProperties from '../components/home/HighGrowthProperties';
 
 
 interface City {
@@ -59,6 +61,8 @@ export interface Property {
   city_id?: number;
   is_featured?: number;
   is_home_banner?: number;
+  tags_best_rate_localities?: number;
+  tags_high_growth_localities?: number;
   home_banner_image_url?: string;
   images?: string | string[];
   image_urls?: string[];
@@ -109,6 +113,10 @@ export default function Home() {
   const [loadingVerified, setLoadingVerified] = useState(true);
   const [featured, setFeatured] = useState<Property[]>([]);
   const [loadingFeatured, setLoadingFeatured] = useState(true);
+  const [bestRated, setBestRated] = useState<Property[]>([]);
+  const [loadingBestRated, setLoadingBestRated] = useState(true);
+  const [highGrowth, setHighGrowth] = useState<Property[]>([]);
+  const [loadingHighGrowth, setLoadingHighGrowth] = useState(true);
   // Data states
   const [cities, setCities] = useState<City[]>([]);
   const activeCity = cities.find((c) => c.id.toString() === cityId);
@@ -207,6 +215,8 @@ export default function Home() {
     setLoadingNewlyLaunched(true);
     setLoadingVerified(true);
     setLoadingFeatured(true);
+    setLoadingBestRated(true);
+    setLoadingHighGrowth(true);
 
     searchProperties({ ...baseParams, is_recommended: 1 })
       .then((res) => {
@@ -275,6 +285,40 @@ export default function Home() {
       })
       .catch((e) => console.warn('Could not fetch featured listings', e))
       .finally(() => setLoadingFeatured(false));
+
+    searchProperties({ ...baseParams, tags_best_rate_localities: 1 })
+      .then((res) => {
+        if (res.data?.success && Array.isArray(res.data.items) && res.data.items.length > 0) {
+          setBestRated(res.data.items);
+        } else {
+          searchProperties({ limit: 12, tags_best_rate_localities: 1 }).then((fRes) => {
+            if (fRes.data?.success && Array.isArray(fRes.data.items) && fRes.data.items.length > 0) {
+              setBestRated(fRes.data.items);
+            } else {
+              setBestRated([]);
+            }
+          }).catch(() => setBestRated([]));
+        }
+      })
+      .catch((e) => console.warn('Could not fetch best rated listings', e))
+      .finally(() => setLoadingBestRated(false));
+
+    searchProperties({ ...baseParams, tags_high_growth_localities: 1 })
+      .then((res) => {
+        if (res.data?.success && Array.isArray(res.data.items) && res.data.items.length > 0) {
+          setHighGrowth(res.data.items);
+        } else {
+          searchProperties({ limit: 12, tags_high_growth_localities: 1 }).then((fRes) => {
+            if (fRes.data?.success && Array.isArray(fRes.data.items) && fRes.data.items.length > 0) {
+              setHighGrowth(fRes.data.items);
+            } else {
+              setHighGrowth([]);
+            }
+          }).catch(() => setHighGrowth([]));
+        }
+      })
+      .catch((e) => console.warn('Could not fetch high growth listings', e))
+      .finally(() => setLoadingHighGrowth(false));
   }, [cityId]);
 
   // Fetch wishlist IDs if logged in
@@ -585,6 +629,28 @@ export default function Home() {
             <NewlyLaunchedProjects
               items={newlyLaunched}
               loading={loadingNewlyLaunched}
+              formatPrice={formatPrice}
+              getPropertyTypeLabel={getPropertyTypeLabel}
+            />
+
+            {/* Best Rated Properties Section */}
+            <BestRatedProperties
+              items={bestRated}
+              loading={loadingBestRated}
+              wishlistedIds={wishlistedIds}
+              cityName={cityName}
+              handleWishlistToggle={handleWishlistToggle}
+              formatPrice={formatPrice}
+              getPropertyTypeLabel={getPropertyTypeLabel}
+            />
+
+            {/* High Growth Properties Section */}
+            <HighGrowthProperties
+              items={highGrowth}
+              loading={loadingHighGrowth}
+              wishlistedIds={wishlistedIds}
+              cityName={cityName}
+              handleWishlistToggle={handleWishlistToggle}
               formatPrice={formatPrice}
               getPropertyTypeLabel={getPropertyTypeLabel}
             />

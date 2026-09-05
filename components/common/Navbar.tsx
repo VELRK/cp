@@ -21,7 +21,8 @@ import {
   LayoutGrid,
   Headphones,
   Mail,
-  Phone
+  Phone,
+  Briefcase
 } from 'lucide-react';
 
 const Navbar: React.FC = () => {
@@ -72,6 +73,15 @@ const Navbar: React.FC = () => {
                   </Link>
                 </li>
               </ul>
+            </li>
+            <li className="nav-item">
+              <Link href="/user/become-agent" className="nav-link nav-link-premium text-nowrap d-flex align-items-center gap-1.5">
+                <Briefcase size={15} className="text-warning" />
+                <span>Become an Agent</span>
+                <span className="badge bg-warning-subtle text-dark border border-warning-subtle px-1.5 py-0.5 rounded-pill" style={{ fontSize: '0.62rem' }}>
+                  NEW
+                </span>
+              </Link>
             </li>
             {user && user.role === 'admin' && (
               <li className="nav-item">
@@ -159,9 +169,33 @@ const Navbar: React.FC = () => {
                   </li>
                 )}
 
-                {user.role === 'owner' && user.status === 'approved' && (
+                {/* Become an Agent / Agent Profile Link */}
+                {user.role !== 'agent' && user.user_type !== 'agent' ? (
+                  <li>
+                    <Link
+                      href="/user/become-agent"
+                      className="dropdown-item d-flex justify-content-between align-items-center py-2 fw-semibold"
+                      style={{ background: 'rgba(242, 178, 3, 0.08)' }}
+                    >
+                      <div className="d-flex align-items-center gap-2">
+                        <Briefcase size={16} className="text-warning" />
+                        <span className="text-dark">Become an Agent</span>
+                      </div>
+                      <span className="badge bg-warning text-dark" style={{ fontSize: '0.62rem' }}>UPGRADE</span>
+                    </Link>
+                  </li>
+                ) : (
+                  <li>
+                    <Link href="/user/become-agent" className="dropdown-item d-flex align-items-center gap-2 py-2">
+                      <Briefcase size={16} className="text-primary" />
+                      <span>Agent Profile & KYC</span>
+                    </Link>
+                  </li>
+                )}
+
+                {(user.role === 'owner' || user.role === 'agent') && user.status === 'approved' && (
                   <>
-                    <li><h6 className="dropdown-header">Owner Actions</h6></li>
+                    <li><h6 className="dropdown-header">{user.role === 'agent' ? 'Agent Actions' : 'Owner Actions'}</h6></li>
                     <li>
                       <Link href="/owner/dashboard" className="dropdown-item py-2">
                         <LayoutGrid size={16} className="text-muted" />
@@ -299,6 +333,15 @@ const Navbar: React.FC = () => {
                   </Link>
                 </li>
                 <li><hr className="dropdown-divider" /></li>
+                <li>
+                  <Link href="/user/become-agent" className="dropdown-item d-flex justify-content-between align-items-center py-2 fw-semibold">
+                    <div className="d-flex align-items-center gap-2">
+                      <Briefcase size={16} className="text-warning" />
+                      <span>Become an Agent</span>
+                    </div>
+                    <span className="badge bg-warning text-dark" style={{ fontSize: '0.62rem' }}>JOIN</span>
+                  </Link>
+                </li>
                 <li>
                   <Link href="/owner/property/add" className="dropdown-item d-flex justify-content-between align-items-center py-2 fw-semibold post-property-free-btn-dropdown">
                     <div className="d-flex align-items-center gap-2">

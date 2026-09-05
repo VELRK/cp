@@ -16,6 +16,8 @@ import {
   ShieldAlert,
   CheckCircle2,
   Save,
+  Briefcase,
+  ArrowRight,
 } from 'lucide-react';
 
 interface City {
@@ -141,8 +143,14 @@ export default function UserProfilePage() {
     );
   }
 
-  const roleLabel =
-    user.role === 'owner' ? 'Property Owner' : user.role === 'tenant' ? 'Tenant' : user.role;
+  const isAgent = user.role === 'agent' || user.user_type === 'agent';
+  const roleLabel = isAgent
+    ? 'Accredited Agent'
+    : user.role === 'owner'
+    ? 'Property Owner'
+    : user.role === 'tenant'
+    ? 'Tenant'
+    : user.role;
 
   return (
     <div className="container py-5 mt-5">
@@ -180,7 +188,7 @@ export default function UserProfilePage() {
               <div>
                 <div className="fw-bold text-dark">{user.name}</div>
                 <div className="small text-muted">{user.email}</div>
-                <span className="badge bg-primary-subtle text-primary border border-primary-subtle mt-1">
+                <span className={`badge ${isAgent ? 'bg-warning text-dark border border-warning' : 'bg-primary-subtle text-primary border border-primary-subtle'} mt-1`}>
                   {roleLabel}
                 </span>
                 {user.status !== 'approved' && (
@@ -190,6 +198,66 @@ export default function UserProfilePage() {
                 )}
               </div>
             </div>
+
+            {/* Become an Agent Promo Box (if not already an agent) */}
+            {!isAgent && (
+              <div
+                className="p-3 mb-4 rounded-3 border d-flex flex-wrap align-items-center justify-content-between gap-3"
+                style={{
+                  background: 'linear-gradient(135deg, #071f3f 0%, #0b2c56 100%)',
+                  borderColor: 'rgba(212, 175, 55, 0.35)',
+                  color: '#ffffff',
+                }}
+              >
+                <div className="d-flex align-items-center gap-2.5">
+                  <div
+                    className="rounded-circle d-flex align-items-center justify-content-center p-2 flex-shrink-0"
+                    style={{ background: 'rgba(242, 178, 3, 0.2)' }}
+                  >
+                    <Briefcase size={20} className="text-warning" />
+                  </div>
+                  <div>
+                    <div className="fw-bold text-white small">
+                      Are you a Real Estate Broker or Consultant?
+                    </div>
+                    <div className="text-white-50" style={{ fontSize: '0.75rem' }}>
+                      Convert your profile to an Accredited Agent to unlock unlimited listings & verified buyer leads.
+                    </div>
+                  </div>
+                </div>
+                <Link
+                  href="/user/become-agent"
+                  className="btn btn-sm rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5 shadow-sm"
+                  style={{
+                    background: 'linear-gradient(135deg, #d4af37 0%, #b8860b 100%)',
+                    color: '#071f3f',
+                    fontSize: '0.78rem',
+                    border: 'none',
+                  }}
+                >
+                  <span>Become an Agent</span>
+                  <ArrowRight size={14} />
+                </Link>
+              </div>
+            )}
+
+            {isAgent && (
+              <div className="p-3 mb-4 rounded-3 bg-light border d-flex align-items-center justify-content-between gap-2">
+                <div className="d-flex align-items-center gap-2">
+                  <Briefcase size={18} className="text-primary" />
+                  <span className="small fw-semibold text-dark">
+                    Agent Business: {user.business_name || 'Active Agent Account'}
+                  </span>
+                </div>
+                <Link
+                  href="/user/become-agent"
+                  className="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 text-decoration-none"
+                  style={{ fontSize: '0.75rem' }}
+                >
+                  Manage Agent KYC
+                </Link>
+              </div>
+            )}
 
             {errorMsg && (
               <div className="alert alert-danger d-flex align-items-center gap-2 small py-2 mb-3 rounded-3">
@@ -283,7 +351,7 @@ export default function UserProfilePage() {
                   <div className="form-text">JPG, PNG or WebP. Max 15 MB.</div>
                 </div>
 
-                {user.role === 'owner' && (
+                {(user.role === 'owner' || isAgent) && (
                   <>
                     <div className="col-md-6">
                       <label className="form-label small fw-semibold">Aadhaar Number (optional)</label>

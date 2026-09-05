@@ -1281,6 +1281,9 @@ class Api_nb_app extends CI_Controller
                 return $this->_json(array('success' => false, 'message' => 'user_type must be agent or customer'), 400);
             }
             $update['user_type'] = $user_type;
+            if ($user_type === 'agent' && empty($update['role'])) {
+                $update['role'] = 'owner';
+            }
         }
 
         // --- city_id ---
@@ -1445,8 +1448,10 @@ class Api_nb_app extends CI_Controller
         $kyc_submit = $this->_parse_accept_terms(array(
             'accept_terms' => $input['kyc_submit'] ?? $input['submit_kyc'] ?? false,
         ));
-        if ($kyc_submit && nb_user_is_agent($user)) {
+        $will_be_agent = nb_user_is_agent($user) || (isset($update['user_type']) && $update['user_type'] === 'agent');
+        if ($kyc_submit && $will_be_agent) {
             $merged = $this->_user_row_with_updates($user, $update);
+            $merged->user_type = 'agent';
             $missing = nb_agent_kyc_missing($merged);
             if (!empty($missing)) {
                 return $this->_json(array(
@@ -1474,8 +1479,8 @@ class Api_nb_app extends CI_Controller
             'success' => true,
             'message' => $kyc_only
                 ? 'Agent KYC submitted successfully. Awaiting admin approval.'
-                : ($kyc_submit && nb_user_is_agent($user)
-                    ? 'Profile updated. KYC submitted for admin approval.'
+                : ($kyc_submit && $will_be_agent
+                    ? 'Profile updated. Agent KYC submitted for admin approval.'
                     : 'Profile updated successfully'),
             'user' => $this->_user_public($updated),
         );

@@ -6,11 +6,20 @@ export interface AuthUser {
   email: string;
   phone: string;
   role: 'tenant' | 'customer' | 'owner' | 'admin' | 'agent';
+  user_type?: 'agent' | 'customer';
   status: 'pending' | 'approved' | 'rejected';
   city_id: number;
   profile_pic?: string;
+  business_name?: string;
+  website?: string;
+  experience_years?: number;
   aadhar_no?: string;
   aadhar_file?: string;
+  kyc_status?: 'none' | 'pending' | 'approved' | 'rejected';
+  kyc_complete?: boolean;
+  kyc_approved?: boolean;
+  kyc_rejection_reason?: string;
+  is_verified?: number;
 }
 
 export interface AuthContextType {

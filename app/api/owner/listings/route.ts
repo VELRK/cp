@@ -5,7 +5,7 @@ import { pool } from '../../../../lib/db';
 export async function GET(request: Request) {
   const user = await getAuthUser(request);
 
-  if (!user || user.role !== 'owner') {
+  if (!user) {
     return NextResponse.json(
       { success: false, message: 'Unauthorized' },
       { status: 401 }

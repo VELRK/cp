@@ -31,27 +31,35 @@ const Navbar: React.FC = () => {
 
   return (
     <nav className="navbar navbar-expand-lg fixed-top navbar-light navbar-classic-fresh" id="nbNavbar">
-      <div className="container">
+      <div className="container-fluid px-xl-5 px-lg-4 px-3 d-flex align-items-center justify-content-between">
         
-        {/* Left: Brand logo */}
-        <Link href="/" className="navbar-brand fw-bold nb-brand d-flex align-items-center" style={{ color: 'var(--nb-primary)' }}>
-          <div className="d-flex align-items-center justify-content-center rounded-3 p-1.5 me-2 border" style={{ background: 'var(--nb-primary-soft)', border: '1px solid rgba(11, 44, 86, 0.1)' }}>
-            <Home className="text-primary" size={20} fill="var(--nb-accent)" />
+        {/* Left: Brand logo with official cplogo.png */}
+        <Link href="/" className="navbar-brand d-flex align-items-center text-decoration-none py-1 me-0 me-xl-3 flex-shrink-0" style={{ color: 'var(--nb-primary)' }}>
+          <img 
+            src="/assets/images/logo/cplogo.png" 
+            alt="Coimbatore Properties" 
+            className="nb-logo-img me-2"
+            style={{ height: '48px', width: 'auto', objectFit: 'contain' }}
+          />
+          <div className="d-none d-sm-flex flex-column leading-tight">
+            <span className="nb-brand-text fw-extrabold text-primary" style={{ letterSpacing: '-0.02em', fontSize: '1.25rem', lineHeight: '1.15' }}>
+              Coimbatore<span style={{ color: 'var(--nb-accent-dark)' }}>Properties</span>
+            </span>
+            <span className="text-muted fw-semibold text-uppercase" style={{ fontSize: '0.62rem', letterSpacing: '0.1em' }}>
+              Buy • Rent • Sell
+            </span>
           </div>
-          <span className="nb-brand-text fw-extrabold text-primary" style={{ letterSpacing: '-0.02em', fontSize: '1.25rem' }}>
-            Coimbatore<span style={{ color: 'var(--nb-accent-dark)' }}>Properties</span>
-          </span>
         </Link>
 
-        {/* Center: Desktop horizontal menu links */}
-        <div className="collapse navbar-collapse justify-content-center" id="nbNav">
-          <ul className="navbar-nav mb-2 mb-lg-0 ms-lg-3">
+        {/* Center: Desktop horizontal menu links (Perfect alignment) */}
+        <div className="collapse navbar-collapse justify-content-center flex-grow-1 mx-xl-3" id="nbNav">
+          <ul className="navbar-nav align-items-center gap-1 gap-xl-2 mb-0">
             <li className="nav-item">
               <Link href="/search" className="nav-link nav-link-premium text-nowrap">Search</Link>
             </li>
             <li className="nav-item dropdown">
-              <a className="nav-link nav-link-premium text-nowrap dropdown-toggle" href="#" id="knowledgeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Knowledge Centre
+              <a className="nav-link nav-link-premium text-nowrap dropdown-toggle d-flex align-items-center gap-1" href="#" id="knowledgeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <span>Knowledge Centre</span>
               </a>
               <ul className="dropdown-menu dropdown-menu-premium border-0 shadow mt-2" aria-labelledby="knowledgeDropdown">
                 <li>
@@ -83,6 +91,13 @@ const Navbar: React.FC = () => {
                 </span>
               </Link>
             </li>
+            {user && (
+              <li className="nav-item">
+                <Link href="/owner/listings" className="nav-link nav-link-premium text-nowrap">
+                  My Properties
+                </Link>
+              </li>
+            )}
             {user && user.role === 'admin' && (
               <li className="nav-item">
                 <a href={getAdminPanelUrl()} className="nav-link nav-link-premium text-nowrap text-danger fw-bold">
@@ -93,15 +108,14 @@ const Navbar: React.FC = () => {
           </ul>
         </div>
 
-        {/* Right: Unified Action Buttons (Always visible on mobile & desktop) */}
-        <div className="d-flex align-items-center gap-2 ms-auto ms-lg-0 order-lg-last">
+        {/* Right: Unified Action Buttons (Always cleanly aligned on mobile & desktop) */}
+        <div className="d-flex align-items-center gap-2 flex-shrink-0 ms-auto ms-lg-0">
           
-          {/* Post Property button (desktop only) */}
+          {/* Post Property button */}
           {(!user || user.role !== 'tenant') && (
             <Link 
               href={user ? "/owner/property/add" : "/register"} 
-              className="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 fw-semibold d-none d-lg-flex align-items-center gap-1.5 post-property-btn-navbar"
-              style={{ border: '2px solid var(--nb-primary)', color: 'var(--nb-primary)', transition: 'all 0.2s ease' }}
+              className="btn btn-sm post-property-btn-navbar rounded-pill px-3 py-1.5 fw-semibold d-none d-md-flex align-items-center gap-1.5 shadow-sm text-decoration-none"
             >
               <span>Post Property</span>
               <span className="badge bg-success rounded-1" style={{ fontSize: '0.65rem' }}>FREE</span>
@@ -148,7 +162,7 @@ const Navbar: React.FC = () => {
                 <div className="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style={{ width: '26px', height: '26px', background: 'linear-gradient(135deg, var(--nb-primary) 0%, var(--nb-primary-dark) 100%) !important' }}>
                   <User size={13} />
                 </div>
-                <span className="fw-semibold text-primary">{user.name}</span>
+                <span className="fw-semibold text-primary d-none d-sm-inline">{user.name}</span>
                 <ChevronDown size={14} className="text-muted" />
               </button>
               <ul className="dropdown-menu dropdown-menu-end dropdown-menu-premium shadow border-0 animate-fade-in mt-2" aria-labelledby="userDropdown">
@@ -193,27 +207,32 @@ const Navbar: React.FC = () => {
                   </li>
                 )}
 
-                {(user.role === 'owner' || user.role === 'agent') && user.status === 'approved' && (
+                {/* Owner / Agent / Property Actions */}
+                {user && (
                   <>
-                    <li><h6 className="dropdown-header">{user.role === 'agent' ? 'Agent Actions' : 'Owner Actions'}</h6></li>
-                    <li>
-                      <Link href="/owner/dashboard" className="dropdown-item py-2">
-                        <LayoutGrid size={16} className="text-muted" />
-                        <span>Owner Dashboard</span>
-                      </Link>
-                    </li>
+                    <li><h6 className="dropdown-header">{user.role === 'agent' ? 'Agent Actions' : 'Property Management'}</h6></li>
+                    {(user.role === 'owner' || user.role === 'agent') && user.status === 'approved' && (
+                      <li>
+                        <Link href="/owner/dashboard" className="dropdown-item py-2">
+                          <LayoutGrid size={16} className="text-muted" />
+                          <span>Owner Dashboard</span>
+                        </Link>
+                      </li>
+                    )}
                     <li>
                       <Link href="/owner/listings" className="dropdown-item py-2">
                         <Bookmark size={16} className="text-muted" />
                         <span>My Properties</span>
                       </Link>
                     </li>
-                    <li>
-                      <Link href="/owner/enquiries" className="dropdown-item py-2">
-                        <MessageSquare size={16} className="text-muted" />
-                        <span>Received Enquiries</span>
-                      </Link>
-                    </li>
+                    {(user.role === 'owner' || user.role === 'agent') && user.status === 'approved' && (
+                      <li>
+                        <Link href="/owner/enquiries" className="dropdown-item py-2">
+                          <MessageSquare size={16} className="text-muted" />
+                          <span>Received Enquiries</span>
+                        </Link>
+                      </li>
+                    )}
                   </>
                 )}
 
@@ -286,9 +305,9 @@ const Navbar: React.FC = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/user/viewed" className="dropdown-item py-2">
-                    <Compass size={16} className="text-muted" />
-                    <span>Viewed properties</span>
+                  <Link href="/owner/listings" className="dropdown-item py-2">
+                    <Home size={16} className="text-muted" />
+                    <span>My Properties</span>
                   </Link>
                 </li>
               </ul>
@@ -330,6 +349,12 @@ const Navbar: React.FC = () => {
                   <Link href="/user/wishlist" className="dropdown-item py-2">
                     <Bookmark size={16} className="text-muted" />
                     <span>My Wishlist</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/owner/listings" className="dropdown-item py-2">
+                    <Home size={16} className="text-muted" />
+                    <span>My Properties</span>
                   </Link>
                 </li>
                 <li><hr className="dropdown-divider" /></li>

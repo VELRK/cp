@@ -485,11 +485,11 @@ export default function PropertyDetailClient({ slug: slugProp }: PropertyDetailC
 
                   <div className="pd-summary-price-box text-md-end">
                     <div className="pd-summary-price">{formatPrice(property.price)}</div>
-                    {property.rate_per_sqft && (
+                    {property.rate_per_sqft ? (
                       <div className="pd-summary-rate-sqft">
                         ₹{Number(property.rate_per_sqft).toLocaleString('en-IN')} / sq.ft.
                       </div>
-                    )}
+                    ) : null}
                   </div>
                 </div>
 
@@ -561,7 +561,7 @@ export default function PropertyDetailClient({ slug: slugProp }: PropertyDetailC
                   <span>Overview & Highlights</span>
                 </h2>
                 <div className="pd-overview-grid">
-                  {property.bedrooms && (
+                  {property.bedrooms ? (
                     <div className="pd-overview-item">
                       <div className="pd-overview-icon-container">
                         <Bed size={20} />
@@ -571,8 +571,8 @@ export default function PropertyDetailClient({ slug: slugProp }: PropertyDetailC
                         <span className="pd-overview-value">{property.bedrooms} BHK</span>
                       </div>
                     </div>
-                  )}
-                  {property.bathrooms && (
+                  ) : null}
+                  {property.bathrooms ? (
                     <div className="pd-overview-item">
                       <div className="pd-overview-icon-container">
                         <Bath size={20} />
@@ -582,8 +582,8 @@ export default function PropertyDetailClient({ slug: slugProp }: PropertyDetailC
                         <span className="pd-overview-value">{property.bathrooms} Baths</span>
                       </div>
                     </div>
-                  )}
-                  {property.area_sqft && (
+                  ) : null}
+                  {property.area_sqft ? (
                     <div className="pd-overview-item">
                       <div className="pd-overview-icon-container">
                         <Compass size={20} />
@@ -593,7 +593,7 @@ export default function PropertyDetailClient({ slug: slugProp }: PropertyDetailC
                         <span className="pd-overview-value">{property.area_sqft} Sq.Ft.</span>
                       </div>
                     </div>
-                  )}
+                  ) : null}
                   <div className="pd-overview-item">
                     <div className="pd-overview-icon-container">
                       <Tag size={20} />

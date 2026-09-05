@@ -186,10 +186,24 @@ class Property extends CI_Controller
         $amenities = array_map(array($this->security, 'xss_clean'), $amenities);
         if ($this->db->table_exists('nb_amenities')) {
             $allowed = $this->Nb_amenity_model->allowed_names_map();
-            $amenities = array_values(array_filter($amenities, function ($n) use ($allowed) {
+            $final_amenities = array();
+            foreach ($amenities as $n) {
                 $n = trim((string) $n);
-                return $n !== '' && isset($allowed[$n]);
-            }));
+                if ($n === '')
+                    continue;
+                if (!isset($allowed[$n])) {
+                    // Auto-add new amenity from form
+                    $slug = $this->Nb_amenity_model->unique_slug($n);
+                    $this->Nb_amenity_model->create(array(
+                        'name' => $n,
+                        'slug' => $slug,
+                        'is_active' => 1
+                    ));
+                    $allowed[$n] = true;
+                }
+                $final_amenities[] = $n;
+            }
+            $amenities = $final_amenities;
         } else {
             $amenities = array_values(array_filter(array_map('trim', $amenities)));
         }
@@ -215,6 +229,16 @@ class Property extends CI_Controller
             'has_boundary_wall' => $this->_parse_boundary_wall($input['has_boundary_wall'] ?? null),
             'amenities' => json_encode($amenities),
         );
+        if ($this->db->field_exists('property_position', 'nb_properties')) {
+            $pos = strtolower(trim($input['property_position'] ?? ''));
+            $row['property_position'] = in_array($pos, array('new', 'resale'), true) ? $pos : 'new';
+        }
+        if ($this->db->field_exists('plot_area_sqft', 'nb_properties')) {
+            $row['plot_area_sqft'] = isset($input['plot_area_sqft']) && $input['plot_area_sqft'] !== '' ? (int) $input['plot_area_sqft'] : null;
+        }
+        if ($this->db->field_exists('is_newly_launched', 'nb_properties') && isset($input['property_position'])) {
+            $row['is_newly_launched'] = ($input['property_position'] === 'new') ? 1 : 0;
+        }
         if ($this->db->field_exists('nearby', 'nb_properties')) {
             $row['nearby'] = $this->_nearby_json_from_input($input);
         }
@@ -910,11 +934,11 @@ class Property extends CI_Controller
 
         $this->session->set_userdata('nb_user_id', (int) $admin_row->id);
         $this->session->set_userdata('nb_user', array(
-            'id'     => (int) $admin_row->id,
-            'name'   => $admin_row->name,
-            'email'  => $admin_row->email,
-            'phone'  => isset($admin_row->phone) ? (string) $admin_row->phone : '',
-            'role'   => $admin_row->role,
+            'id' => (int) $admin_row->id,
+            'name' => $admin_row->name,
+            'email' => $admin_row->email,
+            'phone' => isset($admin_row->phone) ? (string) $admin_row->phone : '',
+            'role' => $admin_row->role,
             'status' => $admin_row->status,
         ));
 

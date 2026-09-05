@@ -61,7 +61,29 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
       {/* Sidebar Drawer container */}
       <div className={`sidebar-drawer ${isOpen ? 'open' : ''}`}>
         
-        {/* Header section */}
+        {/* Brand Banner with cplogo.png */}
+        <div className="p-3 border-bottom d-flex align-items-center justify-content-between bg-white">
+          <Link href="/" className="d-flex align-items-center text-decoration-none" onClick={handleLinkClick}>
+            <img 
+              src="/assets/images/logo/cplogo.png" 
+              alt="Coimbatore Properties" 
+              style={{ height: '38px', width: 'auto', objectFit: 'contain' }} 
+            />
+            <div className="ms-2 leading-tight">
+              <div className="fw-extrabold text-primary" style={{ fontSize: '0.98rem', lineHeight: 1.15 }}>
+                Coimbatore<span style={{ color: 'var(--nb-accent-dark)' }}>Properties</span>
+              </div>
+              <div className="text-muted fw-semibold" style={{ fontSize: '0.62rem', letterSpacing: '0.08em' }}>
+                REAL ESTATE PORTAL
+              </div>
+            </div>
+          </Link>
+          <button className="sidebar-close-btn" onClick={onClose} aria-label="Close menu">
+            <X size={22} />
+          </button>
+        </div>
+
+        {/* User Account / Login Bar */}
         <div className="sidebar-header">
           {user ? (
             <div className="user-profile-info">
@@ -81,9 +103,6 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
               <span className="login-label">LOGIN / REGISTER</span>
             </button>
           )}
-          <button className="sidebar-close-btn" onClick={onClose} aria-label="Close menu">
-            <X size={24} />
-          </button>
         </div>
 
         {/* Sidebar Content */}
@@ -115,9 +134,9 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
                       <MessageSquare size={16} />
                       <span>Sent Enquiries</span>
                     </Link>
-                    <Link href="/user/viewed" className="menu-item" onClick={handleLinkClick}>
-                      <Compass size={16} />
-                      <span>Viewed Properties</span>
+                    <Link href="/owner/listings" className="menu-item" onClick={handleLinkClick}>
+                      <Bookmark size={16} />
+                      <span>My Properties</span>
                     </Link>
                   </>
                 )}
@@ -169,20 +188,24 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
                     <span>Post Property</span>
                   </Link>
                 )}
-                {user && user.role === 'owner' && user.status === 'approved' && (
+                {user && (
                   <>
-                    <Link href="/owner/dashboard" className="menu-item" onClick={handleLinkClick}>
-                      <LayoutGrid size={16} />
-                      <span>Owner Dashboard</span>
-                    </Link>
+                    {(user.role === 'owner' || user.role === 'agent') && user.status === 'approved' && (
+                      <Link href="/owner/dashboard" className="menu-item" onClick={handleLinkClick}>
+                        <LayoutGrid size={16} />
+                        <span>Owner Dashboard</span>
+                      </Link>
+                    )}
                     <Link href="/owner/listings" className="menu-item" onClick={handleLinkClick}>
                       <Bookmark size={16} />
                       <span>My Properties</span>
                     </Link>
-                    <Link href="/owner/enquiries" className="menu-item" onClick={handleLinkClick}>
-                      <MessageSquare size={16} />
-                      <span>Received Enquiries</span>
-                    </Link>
+                    {(user.role === 'owner' || user.role === 'agent') && user.status === 'approved' && (
+                      <Link href="/owner/enquiries" className="menu-item" onClick={handleLinkClick}>
+                        <MessageSquare size={16} />
+                        <span>Received Enquiries</span>
+                      </Link>
+                    )}
                   </>
                 )}
               </div>
@@ -268,6 +291,10 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
                   <Link href="/user/become-agent" className="menu-item" onClick={handleLinkClick}>
                     <Briefcase size={16} className="text-warning" />
                     <span>{user.role === 'agent' || user.user_type === 'agent' ? 'Agent Profile & KYC' : 'Become an Agent'}</span>
+                  </Link>
+                  <Link href="/owner/listings" className="menu-item" onClick={handleLinkClick}>
+                    <Bookmark size={16} />
+                    <span>My Properties</span>
                   </Link>
                   <Link href="/user/profile" className="menu-item" onClick={handleLinkClick}>
                     <User size={16} />

@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import { getCities, saveProperty } from '@/lib/frontendApi';
 import { formatApiErrorMessage } from '@/lib/api';
 import { usePropertyTypeFilters } from '@/hooks/usePropertyTypeFilters';
-import { PropertyTypeFilterFields } from '@/components/common/PropertyTypeSelects';
 import { useAuth } from '@/hooks/useAuth';
 import {
   ArrowLeft,
@@ -17,13 +16,9 @@ import {
   Check,
   CheckCircle2,
   Lock,
-  Mail,
   User,
-  Phone,
-  LayoutGrid,
-  Laptop,
   CheckCircle,
-  HelpCircle
+  HelpCircle,
 } from 'lucide-react';
 
 interface City {
@@ -62,6 +57,28 @@ const COMMERCIAL_TYPE_SLUGS = new Set([
   'godown',
 ]);
 
+const RESIDENTIAL_TYPE_OPTIONS = [
+  { val: 'apartment', label: 'Flat / Apartment' },
+  { val: 'house', label: 'Independent House / Villa' },
+  { val: 'plot', label: 'Plot / Land' },
+  { val: 'farmhouse', label: 'Farm Land / Farmhouse' },
+  { val: 'builder_floor', label: 'Independent / Builder Floor' },
+  { val: 'studio', label: '1 RK / Studio Apartment' },
+  { val: 'serviced_apartment', label: 'Serviced Apartment' },
+  { val: 'others', label: 'Other' },
+];
+
+/** Check if property type is land / plot / farm */
+const isLandOrPlotType = (type: string): boolean => {
+  const t = (type || '').toLowerCase();
+  return (
+    t.includes('plot') ||
+    t.includes('land') ||
+    t.includes('farm') ||
+    t === 'others'
+  );
+};
+
 const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false, ownerMode = false }) => {
   const router = useRouter();
   const { user, sendOtp, verifyOtp, resendOtp, registerUser, setAuthModalOpen } = useAuth();
@@ -72,12 +89,19 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
   // Modern Step 0 Landing options page state
   const [isLandingMode, setIsLandingMode] = useState(!isEdit);
 
-  // Modern landing custom options
-  const [landingListingType, setLandingListingType] = useState<'sale' | 'rent' | 'pg'>('sale');
-  const [landingCategory, setLandingCategory] = useState<'residential' | 'commercial'>('residential');
-  const [landingSubcategory, setLandingSubcategory] = useState('apartment');
-  const [landingPlotType, setLandingPlotType] = useState('Commercial Land/Inst. Land');
+  // Modern landing custom options - locked to Sell and Residential
+  const [landingListingType] = useState<'sale'>('sale');
+  const [landingCategory] = useState<'residential'>('residential');
+  const [landingSubcategory, setLandingSubcategory] = useState(initialData?.property_type || 'apartment');
+  const [landingPlotType, setLandingPlotType] = useState('Residential Land / Plot');
   const [landingPhone, setLandingPhone] = useState('');
+
+  // Property position: 'new' | 'resale'
+  const [propertyPosition, setPropertyPosition] = useState<'new' | 'resale'>(() => {
+    if (initialData?.property_position) return initialData.property_position;
+    if (initialData?.is_newly_launched === 1) return 'new';
+    return 'new';
+  });
 
   // Local popup states for Step 0
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -88,9 +112,9 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
   const [localRegCity, setLocalRegCity] = useState('');
   const [showDraftModal, setShowDraftModal] = useState(false);
 
-  // Core Wizard step state
-  // In classic mode: step is 1 to 4. In modern mode: step is 1 to 5.
+  // Core Wizard step state: 3 Steps Overall
   const [step, setStep] = useState(1);
+  const maxWizardSteps = 3;
 
   // Form states
   const [title, setTitle] = useState(initialData?.title || '');
@@ -103,12 +127,15 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
     setMainTypeSlug,
     setSubTypeSlug,
   } = usePropertyTypeFilters(initialData?.property_type || '');
-  const [listingType, setListingType] = useState<'rent' | 'sale'>(initialData?.listing_type || 'sale');
+
+  // Listing type locked to 'sale'
+  const [listingType] = useState<'sale'>('sale');
   const [price, setPrice] = useState(initialData?.price || '');
   const [isPriceNegotiable, setIsPriceNegotiable] = useState(initialData?.is_price_negotiable === 1);
   const [bedrooms, setBedrooms] = useState(initialData?.bedrooms || '');
   const [bathrooms, setBathrooms] = useState(initialData?.bathrooms || '');
   const [areaSqft, setAreaSqft] = useState(initialData?.area_sqft || '');
+  const [plotAreaSqft, setPlotAreaSqft] = useState(initialData?.plot_area_sqft || '');
   const [ratePerSqft, setRatePerSqft] = useState(initialData?.rate_per_sqft || '');
   const [address, setAddress] = useState(initialData?.address || '');
   const [locality, setLocality] = useState(initialData?.locality || '');
@@ -119,15 +146,16 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
   );
   const [videoUrl, setVideoUrl] = useState(initialData?.video_url || '');
   const [brochureFile, setBrochureFile] = useState<File | null>(null);
-  const [audioNotesFile, setAudioNotesFile] = useState<File | null>(null);
   const [removeBrochure, setRemoveBrochure] = useState(false);
-  const [removeAudioNotes, setRemoveAudioNotes] = useState(false);
   const [existingBrochureUrl, setExistingBrochureUrl] = useState(initialData?.brochure_url || initialData?.brochure_url_url || '');
-  const [existingAudioUrl, setExistingAudioUrl] = useState(initialData?.audio_notes_url || initialData?.audio_notes_url_url || '');
   const [availableFrom, setAvailableFrom] = useState(initialData?.available_from ? initialData.available_from.substring(0, 10) : '');
   const [plotLength, setPlotLength] = useState(initialData?.plot_length_ft || '');
   const [plotWidth, setPlotWidth] = useState(initialData?.plot_width_ft || '');
-  const [hasBoundaryWall, setHasBoundaryWall] = useState<string>(initialData?.has_boundary_wall !== null && initialData?.has_boundary_wall !== undefined ? initialData.has_boundary_wall.toString() : '');
+  const [hasBoundaryWall, setHasBoundaryWall] = useState<string>(
+    initialData?.has_boundary_wall !== null && initialData?.has_boundary_wall !== undefined
+      ? initialData.has_boundary_wall.toString()
+      : ''
+  );
 
   // Amenities checklist
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>(() => {
@@ -136,6 +164,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
     }
     return [];
   });
+  const [customAmenity, setCustomAmenity] = useState('');
 
   // Photo uploads
   const [newImages, setNewImages] = useState<File[]>([]);
@@ -152,6 +181,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
   const [modalLoading, setModalLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successPendingReview, setSuccessPendingReview] = useState(false);
+
+  // Determine if land / plot type fields should be displayed
+  const effectiveType = propertyType || landingSubcategory;
+  const isLandOrPlot = isLandOrPlotType(effectiveType);
 
   // Fetch Cities on mount
   useEffect(() => {
@@ -176,13 +209,13 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
         m.name.toLowerCase().includes('commercial') ||
         m.name.toLowerCase().includes('office') ||
         m.name.toLowerCase().includes('shop');
-      return landingCategory === 'commercial' ? commercial : !commercial;
+      return !commercial;
     });
     const list = options.length > 0 ? options : mainTypes;
     if (!list.some((m) => m.slug === landingSubcategory)) {
       setLandingSubcategory(list[0].slug);
     }
-  }, [mainTypes, landingCategory, landingSubcategory]);
+  }, [mainTypes, landingSubcategory]);
 
   // Draft recovery check on load
   useEffect(() => {
@@ -191,7 +224,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
       if (savedDraft) {
         try {
           const parsed = JSON.parse(savedDraft);
-          // Only show resume draft modal if some valuable data exists
           if (parsed.title || parsed.price || parsed.locality) {
             setShowDraftModal(true);
           }
@@ -204,16 +236,18 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
 
   // Sync draft to localStorage in modern mode
   useEffect(() => {
-    if (!isEdit && uiMode === 'modern' && !isLandingMode) {
+    if (!isEdit && !isLandingMode) {
       const draftData = {
         title,
         propertyType,
-        listingType,
+        listingType: 'sale',
+        propertyPosition,
         price,
         isPriceNegotiable,
         bedrooms,
         bathrooms,
         areaSqft,
+        plotAreaSqft,
         ratePerSqft,
         address,
         locality,
@@ -228,7 +262,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
         selectedAmenities,
         step,
       };
-      // Only save draft if user has inputted something
       if (title || price || locality || description) {
         localStorage.setItem('nb_draft_property', JSON.stringify(draftData));
       }
@@ -236,12 +269,13 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
   }, [
     title,
     propertyType,
-    listingType,
+    propertyPosition,
     price,
     isPriceNegotiable,
     bedrooms,
     bathrooms,
     areaSqft,
+    plotAreaSqft,
     ratePerSqft,
     address,
     locality,
@@ -255,9 +289,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
     hasBoundaryWall,
     selectedAmenities,
     step,
-    uiMode,
     isLandingMode,
-    isEdit
+    isEdit,
   ]);
 
   const handleConfirmDraft = () => {
@@ -268,12 +301,13 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
         setTitle(parsed.title || '');
         setMainTypeSlug(parsed.propertyType || 'apartment');
         setSubTypeSlug('');
-        setListingType(parsed.listingType || 'sale');
+        setPropertyPosition(parsed.propertyPosition || 'new');
         setPrice(parsed.price || '');
         setIsPriceNegotiable(!!parsed.isPriceNegotiable);
         setBedrooms(parsed.bedrooms || '');
         setBathrooms(parsed.bathrooms || '');
         setAreaSqft(parsed.areaSqft || '');
+        setPlotAreaSqft(parsed.plotAreaSqft || '');
         setRatePerSqft(parsed.ratePerSqft || '');
         setAddress(parsed.address || '');
         setLocality(parsed.locality || '');
@@ -286,7 +320,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
         setPlotWidth(parsed.plotWidth || '');
         setHasBoundaryWall(parsed.hasBoundaryWall || '');
         setSelectedAmenities(parsed.selectedAmenities || []);
-        setStep(parsed.step || 1);
+        setStep(Math.min(parsed.step || 1, maxWizardSteps));
         setIsLandingMode(false);
       } catch (e) {
         console.error('Error restoring draft', e);
@@ -307,6 +341,16 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
       setSelectedAmenities([...selectedAmenities, amenity]);
     }
   };
+
+  const handleAddCustomAmenity = () => {
+    const trimmed = customAmenity.trim();
+    if (trimmed && !selectedAmenities.includes(trimmed)) {
+      setSelectedAmenities([...selectedAmenities, trimmed]);
+    }
+    setCustomAmenity('');
+  };
+
+  const allAmenitiesToRender = Array.from(new Set([...AMENITIES_LIST, ...selectedAmenities]));
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
@@ -347,98 +391,57 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
     setRemovedImages([...removedImages, path]);
   };
 
-  const showPlotFields = propertyType === 'plot' || propertyType === 'others' || propertyType === 'land';
-
-  // Calculate property completeness score (0 to 100)
+  // Calculate property score (0 to 100)
   const calculatePropertyScore = () => {
     let score = 0;
     if (title.trim()) score += 15;
-    if (propertyType && listingType) score += 15;
-    if (price && Number(price) > 0) score += 15;
+    if (propertyType) score += 15;
+    if (price && Number(price) > 0) score += 20;
     if (cityId && locality.trim() && address.trim()) score += 20;
     if (newImages.length > 0 || existingImages.length > 0) score += 15;
-    if (description.trim()) score += 10;
-    if (selectedAmenities.length > 0 || showPlotFields) score += 10;
-    return score;
+    if (description.trim()) score += 15;
+    return Math.min(100, score);
   };
 
-  const validateStep = (currentStep: number, mode: 'classic' | 'modern'): boolean => {
-    if (mode === 'classic') {
-      if (currentStep === 1) {
-        if (!title.trim()) {
-          setErrorMsg('Please enter a descriptive listing title.');
-          return false;
-        }
-        if (!propertyType) {
-          setErrorMsg('Please select a property type.');
-          return false;
-        }
-      } else if (currentStep === 2) {
-        if (!price) {
-          setErrorMsg('Please enter the price or rent.');
-          return false;
-        }
-        if (Number(price) <= 0) {
-          setErrorMsg('Please enter a valid price greater than zero.');
-          return false;
-        }
-      } else if (currentStep === 3) {
-        if (!cityId) {
-          setErrorMsg('Please select a city.');
-          return false;
-        }
-        if (!locality.trim()) {
-          setErrorMsg('Please specify the locality/area.');
-          return false;
-        }
-        if (!address.trim()) {
-          setErrorMsg('Please specify the detailed address.');
-          return false;
-        }
+  // 3-Step Wizard validation
+  const validateStep = (currentStep: number): boolean => {
+    if (currentStep === 1) {
+      if (!title.trim()) {
+        setErrorMsg('Please enter a descriptive listing title.');
+        return false;
       }
-    } else {
-      // Modern mode validation (5 steps)
-      if (currentStep === 1) {
-        if (!title.trim()) {
-          setErrorMsg('Please enter a descriptive listing title.');
-          return false;
-        }
-        if (!propertyType) {
-          setErrorMsg('Please select a property type.');
-          return false;
-        }
-      } else if (currentStep === 2) {
-        if (!cityId) {
-          setErrorMsg('Please select a city.');
-          return false;
-        }
-        if (!locality.trim()) {
-          setErrorMsg('Please specify the locality/area.');
-          return false;
-        }
-        if (!address.trim()) {
-          setErrorMsg('Please specify the detailed address.');
-          return false;
-        }
-      } else if (currentStep === 3) {
-        if (!price) {
-          setErrorMsg('Please enter the price or rent.');
-          return false;
-        }
-        if (Number(price) <= 0) {
-          setErrorMsg('Please enter a valid price greater than zero.');
-          return false;
-        }
+      if (!propertyType) {
+        setErrorMsg('Please select a property type.');
+        return false;
+      }
+      if (!cityId) {
+        setErrorMsg('Please select a city.');
+        return false;
+      }
+      if (!locality.trim()) {
+        setErrorMsg('Please specify the locality/area.');
+        return false;
+      }
+      if (!address.trim()) {
+        setErrorMsg('Please specify the detailed address.');
+        return false;
+      }
+    } else if (currentStep === 2) {
+      if (!price) {
+        setErrorMsg('Please enter the expected price.');
+        return false;
+      }
+      if (Number(price) <= 0) {
+        setErrorMsg('Please enter a valid price greater than zero.');
+        return false;
       }
     }
     setErrorMsg(null);
     return true;
   };
 
-  const maxWizardSteps = uiMode === 'classic' ? 4 : 5;
-
   const nextStep = () => {
-    if (validateStep(step, uiMode)) {
+    if (validateStep(step)) {
       if (step < maxWizardSteps) {
         setStep((prev) => prev + 1);
       }
@@ -461,13 +464,12 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
   // Step 0 Start Now trigger
   const handleLandingStartNow = (e: React.FormEvent) => {
     e.preventDefault();
-    setListingType(landingListingType === 'pg' ? 'rent' : landingListingType);
     setMainTypeSlug(landingSubcategory);
     setSubTypeSlug('');
-    const cityLabel = cities.find((c) => c.id.toString() === cityId)?.name || 'your city';
-    setTitle(`Premium ${landingSubcategory.replace(/_/g, ' ')} for ${landingListingType === 'sale' ? 'Sale' : 'Rent'} in ${cityLabel}`);
-    if (landingPhone) {
-      setLandingPhone(landingPhone);
+    const cityLabel = cities.find((c) => c.id.toString() === cityId)?.name || 'Coimbatore';
+    const subLabel = getSubcategories().find((s) => s.val === landingSubcategory)?.label || landingSubcategory;
+    if (!title.trim()) {
+      setTitle(`${propertyPosition === 'new' ? 'New' : 'Resale'} ${subLabel} for Sale in ${cityLabel}`);
     }
 
     if (!user) {
@@ -478,7 +480,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
       return;
     }
 
-    // Authenticated, proceed directly
+    // Authenticated, proceed directly to wizard step 1
     setIsLandingMode(false);
     setStep(1);
   };
@@ -529,7 +531,6 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
           setModalErrorMsg(result.message || 'Invalid OTP.');
         }
       } else if (loginModalStep === 'register') {
-        // Build FormData for local signup
         const fd = new FormData();
         fd.append('name', localRegName);
         fd.append('phone', landingPhone);
@@ -573,7 +574,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
       return;
     }
     for (let s = 1; s <= maxWizardSteps; s += 1) {
-      if (!validateStep(s, uiMode)) {
+      if (!validateStep(s)) {
         setStep(s);
         return;
       }
@@ -588,12 +589,15 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
       }
       formData.append('title', title);
       formData.append('property_type', propertyType);
-      formData.append('listing_type', listingType);
+      formData.append('listing_type', 'sale');
+      formData.append('property_position', propertyPosition);
+      formData.append('is_newly_launched', propertyPosition === 'new' ? '1' : '0');
       formData.append('price', price.toString());
       formData.append('is_price_negotiable', isPriceNegotiable ? '1' : '0');
-      if (bedrooms) formData.append('bedrooms', bedrooms.toString());
-      if (bathrooms) formData.append('bathrooms', bathrooms.toString());
+      if (bedrooms && !isLandOrPlot) formData.append('bedrooms', bedrooms.toString());
+      if (bathrooms && !isLandOrPlot) formData.append('bathrooms', bathrooms.toString());
       if (areaSqft) formData.append('area_sqft', areaSqft.toString());
+      if (plotAreaSqft) formData.append('plot_area_sqft', plotAreaSqft.toString());
       if (ratePerSqft) formData.append('rate_per_sqft', ratePerSqft.toString());
       formData.append('address', address);
       formData.append('locality', locality);
@@ -607,31 +611,22 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
       if (brochureFile) {
         formData.append('brochure', brochureFile);
       }
-      if (audioNotesFile) {
-        formData.append('audio_notes', audioNotesFile);
-      }
       if (isEdit && removeBrochure) {
         formData.append('remove_brochure', '1');
-      }
-      if (isEdit && removeAudioNotes) {
-        formData.append('remove_audio_notes', '1');
       }
       if (availableFrom) formData.append('available_from', availableFrom);
       if (plotLength) formData.append('plot_length_ft', plotLength.toString());
       if (plotWidth) formData.append('plot_width_ft', plotWidth.toString());
       if (hasBoundaryWall !== '') formData.append('has_boundary_wall', hasBoundaryWall);
 
-      // Append amenities array
       selectedAmenities.forEach((amenity) => {
         formData.append('amenities[]', amenity);
       });
 
-      // Append new image files
       newImages.forEach((file) => {
         formData.append('images[]', file);
       });
 
-      // Append existing and removed image paths for edits
       if (isEdit) {
         existingImages.forEach((path) => {
           formData.append('existing_paths[]', path);
@@ -669,33 +664,20 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
           m.name.toLowerCase().includes('commercial') ||
           m.name.toLowerCase().includes('office') ||
           m.name.toLowerCase().includes('shop');
-        return landingCategory === 'commercial' ? commercial : !commercial;
+        return !commercial;
       });
-      const list = filtered.length > 0 ? filtered : mainTypes;
-      return list.map((m) => ({ val: m.slug, label: m.name }));
+      if (filtered.length > 0) {
+        return filtered.map((m) => ({ val: m.slug, label: m.name }));
+      }
     }
-    if (landingCategory === 'residential') {
-      return [
-        { val: 'apartment', label: 'Flat/Apartment' },
-        { val: 'house', label: 'Independent House / Villa' },
-        { val: 'builder_floor', label: 'Independent / Builder Floor' },
-        { val: 'plot', label: 'Plot / Land' },
-        { val: 'studio', label: '1 RK / Studio Apartment' },
-        { val: 'serviced_apartment', label: 'Serviced Apartment' },
-        { val: 'farmhouse', label: 'Farmhouse' },
-        { val: 'others', label: 'Other' },
-      ];
-    } else {
-      return [
-        { val: 'office', label: 'Office Space' },
-        { val: 'retail', label: 'Retail / Shop' },
-        { val: 'plot', label: 'Plot / Land' },
-        { val: 'warehouse', label: 'Storage / Godown' },
-        { val: 'commercial', label: 'Commercial Space' },
-        { val: 'others', label: 'Other' },
-      ];
-    }
+    return RESIDENTIAL_TYPE_OPTIONS;
   };
+
+  const wizardStepsConfig = [
+    { num: 1, label: 'Property & Location' },
+    { num: 2, label: 'Pricing & Specs' },
+    { num: 3, label: 'Photos & Details' },
+  ];
 
   return (
     <div className="w-100 position-relative">
@@ -734,7 +716,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
         </div>
       )}
 
-      {/* 1. Header Dual-Mode Toggle Bar */}
+      {/* Header Dual-Mode Toggle Bar */}
       {!ownerMode && (
         <div className="nb-post-option-toggle-bar">
           <div className="btn-group border rounded-pill p-1 bg-white shadow-sm" role="group">
@@ -747,7 +729,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
               }}
               style={{ fontSize: '0.8rem' }}
             >
-              Premium CP Form
+              Modern 3-Step Form
             </button>
             <button
               type="button"
@@ -760,19 +742,19 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
               }}
               style={{ fontSize: '0.8rem' }}
             >
-              Classic 4-Step Form
+              Classic Form
             </button>
           </div>
         </div>
       )}
 
-      {/* 2. Step 0 Landing Option page (Modern Mode only) */}
+      {/* Step 0 Landing Option page (Modern Mode only) */}
       {uiMode === 'modern' && isLandingMode ? (
         <div className="nb-post-landing-container">
           {/* Left panel - visual benefits */}
           <div className="nb-post-landing-left">
             <h1 className="nb-post-landing-title">
-              Sell or Rent Property<br />
+              Sell Residential Property<br />
               <span>online faster</span> with CP
             </h1>
             <ul className="nb-post-landing-list">
@@ -782,15 +764,15 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
               </li>
               <li className="nb-post-landing-item">
                 <CheckCircle2 size={20} />
-                <span>Get unlimited enquiries</span>
+                <span>Get unlimited genuine buyer enquiries</span>
               </li>
               <li className="nb-post-landing-item">
                 <CheckCircle2 size={20} />
-                <span>Get shortlisted buyers and tenants</span>
+                <span>Get shortlisted verified buyers</span>
               </li>
               <li className="nb-post-landing-item">
                 <CheckCircle2 size={20} />
-                <span>Assistance in co-ordinating site visits</span>
+                <span>Quick 3-Step Listing Process</span>
               </li>
             </ul>
 
@@ -811,7 +793,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
               </svg>
             </div>
             <p className="text-secondary small mt-3 text-center text-md-start">
-              * Available with Owner Assist Plans
+              * Zero brokerage for direct owner-buyer sales
             </p>
           </div>
 
@@ -821,53 +803,26 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
             <p className="nb-post-landing-card-subtitle">Add Basic Details</p>
 
             <form onSubmit={handleLandingStartNow}>
-              {/* Sell / Rent / PG selection */}
+              {/* Sell only selection */}
               <div className="mb-4">
                 <span className="nb-post-pill-group-title d-block">You&apos;re looking to ...</span>
                 <div className="d-flex gap-2">
-                  {(['sale', 'rent', 'pg'] as const).map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      className={`nb-post-pill text-capitalize ${landingListingType === t ? 'active' : ''}`}
-                      onClick={() => setLandingListingType(t)}
-                    >
-                      {t === 'rent' ? 'Rent / Lease' : t === 'sale' ? 'Sell' : 'PG'}
-                    </button>
-                  ))}
+                  <button
+                    type="button"
+                    className="nb-post-pill active"
+                  >
+                    Sell
+                  </button>
                 </div>
               </div>
 
-              {/* Residential / Commercial selector */}
+              {/* Residential only selector */}
               <div className="mb-4">
                 <span className="nb-post-pill-group-title d-block">And it&apos;s a ...</span>
-                <div className="d-flex gap-4 align-items-center mb-3">
-                  <label className="d-flex align-items-center gap-2 cursor-pointer small fw-semibold text-secondary">
-                    <input
-                      type="radio"
-                      name="landingCat"
-                      className="form-check-input mt-0"
-                      checked={landingCategory === 'residential'}
-                      onChange={() => {
-                        setLandingCategory('residential');
-                        setLandingSubcategory('apartment');
-                      }}
-                    />
+                <div className="d-flex gap-3 align-items-center mb-3">
+                  <span className="badge bg-primary text-white px-3 py-2 rounded-pill fw-semibold" style={{ fontSize: '0.85rem' }}>
                     Residential
-                  </label>
-                  <label className="d-flex align-items-center gap-2 cursor-pointer small fw-semibold text-secondary">
-                    <input
-                      type="radio"
-                      name="landingCat"
-                      className="form-check-input mt-0"
-                      checked={landingCategory === 'commercial'}
-                      onChange={() => {
-                        setLandingCategory('commercial');
-                        setLandingSubcategory('office');
-                      }}
-                    />
-                    Commercial
-                  </label>
+                  </span>
                 </div>
 
                 {/* Subcategory Pills */}
@@ -885,28 +840,28 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                 </div>
               </div>
 
-              {/* Plot Land Type Specific Selector */}
-              {landingSubcategory === 'plot' && (
-                <div className="mb-4 animate-pulse">
-                  <span className="nb-post-pill-group-title d-block">Your plot / land type is ...</span>
-                  <div className="nb-post-pills">
-                    {[
-                      'Commercial Land/Inst. Land',
-                      'Agricultural/Farm Land',
-                      'Industrial Lands/Plots'
-                    ].map((type) => (
-                      <button
-                        key={type}
-                        type="button"
-                        className={`nb-post-pill ${landingPlotType === type ? 'active' : ''}`}
-                        onClick={() => setLandingPlotType(type)}
-                      >
-                        {type}
-                      </button>
-                    ))}
-                  </div>
+              {/* Property Position: New or Resale */}
+              <div className="mb-4">
+                <span className="nb-post-pill-group-title d-block">Property Position</span>
+                <div className="d-flex gap-2">
+                  <button
+                    type="button"
+                    className={`nb-post-pill ${propertyPosition === 'new' ? 'active' : ''}`}
+                    onClick={() => setPropertyPosition('new')}
+                  >
+                    New Property
+                  </button>
+                  <button
+                    type="button"
+                    className={`nb-post-pill ${propertyPosition === 'resale' ? 'active' : ''}`}
+                    onClick={() => setPropertyPosition('resale')}
+                  >
+                    Resale
+                  </button>
                 </div>
-              )}
+              </div>
+
+              {/* Plot Land Type Specific Selector removed */}
 
               {!user && (
                 <div className="mb-4 pt-2 border-top">
@@ -924,7 +879,18 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                     />
                   </div>
                   <div className="form-text small text-muted">
-                    Are you a registered user? <button type="button" onClick={() => { setLoginOtp(''); setLoginModalStep('phone'); setShowLoginModal(true); }} className="btn btn-link p-0 small text-decoration-none fw-semibold">Login</button>
+                    Are you a registered user?{' '}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLoginOtp('');
+                        setLoginModalStep('phone');
+                        setShowLoginModal(true);
+                      }}
+                      className="btn btn-link p-0 small text-decoration-none fw-semibold"
+                    >
+                      Login
+                    </button>
                   </div>
                 </div>
               )}
@@ -940,24 +906,18 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
           </div>
         </div>
       ) : uiMode === 'modern' ? (
-        /* 3. Modern Wizard Screen (Steps 1-5 side-by-side) */
+        /* Modern Wizard Screen (3 Steps) */
         <div className="nb-modern-wizard-grid">
           {/* Left Sidebar Checklist & Property score */}
           <div className="nb-modern-wizard-sidebar">
             <div className="nb-modern-wizard-steps-card">
               <ul className="nb-modern-wizard-steps-list">
-                {[
-                  { num: 1, label: 'Basic Details' },
-                  { num: 2, label: 'Location Details' },
-                  { num: 3, label: 'Property Profile' },
-                  { num: 4, label: 'Photos & Videos' },
-                  { num: 5, label: 'Amenities section' },
-                ].map((s) => (
+                {wizardStepsConfig.map((s) => (
                   <li
                     key={s.num}
                     className={`nb-modern-wizard-step-item ${step === s.num ? 'active' : step > s.num ? 'done' : ''}`}
                     onClick={() => {
-                      if (validateStep(step, 'modern') || s.num < step) {
+                      if (validateStep(step) || s.num < step) {
                         setStep(s.num);
                       }
                     }}
@@ -989,7 +949,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
               </div>
               <div>
                 <h3 className="nb-score-info-title">Property Score</h3>
-                <p className="nb-score-info-desc">Better your property score, greater your visibility</p>
+                <p className="nb-score-info-desc">Better your property score, greater your buyer visibility</p>
               </div>
             </div>
           </div>
@@ -998,10 +958,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
           <div className="nb-modern-wizard-form-panel">
             <div className="nb-wizard-welcome-hdr border-bottom pb-3">
               <h2 className="nb-wizard-welcome-title">
-                Welcome back {user?.name || 'User'},
+                Welcome back {user?.name || 'Owner'},
               </h2>
               <p className="nb-wizard-welcome-subtitle">
-                Fill out property details step-by-step
+                Fill out property details in 3 quick steps
               </p>
             </div>
 
@@ -1013,10 +973,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
             )}
 
             <form onSubmit={(e) => e.preventDefault()} onKeyDown={handleFormKeyDown}>
-              {/* STEP 1: Basic Details */}
+              {/* STEP 1: Property & Location Details */}
               {step === 1 && (
                 <div className="fade-in-up-wizard">
-                  <h3 className="h6 fw-bold text-primary mb-3">Step 1: Basic Details</h3>
+                  <h3 className="h6 fw-bold text-primary mb-3">Step 1: Property & Location Details</h3>
                   <div className="row g-3">
                     <div className="col-12">
                       <label className="form-label small fw-bold text-secondary">Listing Title</label>
@@ -1029,62 +989,83 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                         required
                       />
                       <div className="form-text small text-muted">
-                        Highlight key landmarks, BHK, and structure in title.
+                        Highlight key landmarks, BHK or structure in your listing title.
                       </div>
                     </div>
 
-                    <div className="col-md-6 mt-4">
-                      <label className="form-label small fw-bold text-secondary">Listing Type</label>
-                      <select
-                        className="form-select"
-                        value={listingType}
-                        onChange={(e) => setListingType(e.target.value as 'sale' | 'rent')}
-                      >
-                        <option value="sale">Sell / Outright Sale</option>
-                        <option value="rent">Rent / Lease</option>
-                      </select>
+                    {/* Property Position: New or Resale */}
+                    <div className="col-12 mt-3">
+                      <label className="form-label small fw-bold text-secondary d-block">Property Position</label>
+                      <div className="d-flex gap-2">
+                        <button
+                          type="button"
+                          className={`nb-post-pill ${propertyPosition === 'new' ? 'active' : ''}`}
+                          onClick={() => setPropertyPosition('new')}
+                        >
+                          New Property
+                        </button>
+                        <button
+                          type="button"
+                          className={`nb-post-pill ${propertyPosition === 'resale' ? 'active' : ''}`}
+                          onClick={() => setPropertyPosition('resale')}
+                        >
+                          Resale
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="col-md-6 mt-4">
-                      <label className="form-label small fw-bold text-secondary">Main property type</label>
+                    {/* Property Types */}
+                    <div className="col-md-6 mt-3">
+                      <label className="form-label small fw-bold text-secondary">Property Type</label>
                       <select
                         className="form-select"
                         value={mainTypeSlug}
                         onChange={(e) => setMainTypeSlug(e.target.value)}
                         required
                       >
-                        <option value="">Select main type</option>
-                        {mainTypes.map((m) => (
-                          <option key={m.id} value={m.slug}>{m.name}</option>
-                        ))}
+                        <option value="">Select Property Type</option>
+                        {mainTypes.length > 0
+                          ? mainTypes
+                              .filter(
+                                (m) =>
+                                  !COMMERCIAL_TYPE_SLUGS.has(m.slug) &&
+                                  !m.name.toLowerCase().includes('commercial') &&
+                                  !m.name.toLowerCase().includes('office') &&
+                                  !m.name.toLowerCase().includes('shop')
+                              )
+                              .map((m) => (
+                                <option key={m.id} value={m.slug}>
+                                  {m.name}
+                                </option>
+                              ))
+                          : RESIDENTIAL_TYPE_OPTIONS.map((o) => (
+                              <option key={o.val} value={o.val}>
+                                {o.label}
+                              </option>
+                            ))}
                       </select>
                     </div>
 
                     {mainTypeSlug && subTypes.length > 0 && (
-                      <div className="col-md-6 mt-4">
-                        <label className="form-label small fw-bold text-secondary">Sub property type</label>
+                      <div className="col-md-6 mt-3">
+                        <label className="form-label small fw-bold text-secondary">Sub Property Type (optional)</label>
                         <select
                           className="form-select"
                           value={subTypeSlug}
                           onChange={(e) => setSubTypeSlug(e.target.value)}
                         >
-                          <option value="">Select sub type (optional)</option>
+                          <option value="">Select sub type</option>
                           {subTypes.map((s) => (
-                            <option key={s.id} value={s.slug}>{s.name}</option>
+                            <option key={s.id} value={s.slug}>
+                              {s.name}
+                            </option>
                           ))}
                         </select>
                       </div>
                     )}
-                  </div>
-                </div>
-              )}
 
-              {/* STEP 2: Location Details */}
-              {step === 2 && (
-                <div className="fade-in-up-wizard">
-                  <h3 className="h6 fw-bold text-primary mb-3">Step 2: Location Details</h3>
-                  <div className="row g-3">
-                    <div className="col-md-4">
+                    {/* Location fields */}
+                    <div className="col-md-4 mt-3">
                       <label className="form-label small fw-bold text-secondary">City</label>
                       <select
                         className="form-select"
@@ -1094,36 +1075,38 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                       >
                         <option value="">Select City</option>
                         {cities.map((c) => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
+                          <option key={c.id} value={c.id}>
+                            {c.name}
+                          </option>
                         ))}
                       </select>
                     </div>
 
-                    <div className="col-md-8">
+                    <div className="col-md-8 mt-3">
                       <label className="form-label small fw-bold text-secondary">Locality / Area</label>
                       <input
                         type="text"
                         className="form-control"
-                        placeholder="e.g. Peelamedu, RS Puram"
+                        placeholder="e.g. Peelamedu, RS Puram, Saravanampatti"
                         value={locality}
                         onChange={(e) => setLocality(e.target.value)}
                         required
                       />
                     </div>
 
-                    <div className="col-12">
+                    <div className="col-12 mt-3">
                       <label className="form-label small fw-bold text-secondary">Detailed Address</label>
                       <textarea
                         className="form-control"
                         rows={3}
-                        placeholder="Flat No, Building, Street Details"
+                        placeholder="Door No., Flat No, Building Name, Street / Road Details"
                         value={address}
                         onChange={(e) => setAddress(e.target.value)}
                         required
                       />
                     </div>
 
-                    <div className="col-12">
+                    <div className="col-12 mt-3">
                       <label className="form-label small text-secondary fw-semibold">Google Maps Location Link (optional)</label>
                       <input
                         type="text"
@@ -1137,24 +1120,24 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                 </div>
               )}
 
-              {/* STEP 3: Property Profile / Pricing */}
-              {step === 3 && (
+              {/* STEP 2: Pricing & Specifications */}
+              {step === 2 && (
                 <div className="fade-in-up-wizard">
-                  <h3 className="h6 fw-bold text-primary mb-3">Step 3: Property Profile & Pricing</h3>
+                  <h3 className="h6 fw-bold text-primary mb-3">Step 2: Pricing & Specifications</h3>
                   <div className="row g-3 mb-4">
                     <div className="col-md-6">
-                      <label className="form-label small fw-bold text-secondary">Expected Price / Rent (₹)</label>
+                      <label className="form-label small fw-bold text-secondary">Expected Price (₹)</label>
                       <input
                         type="number"
                         className="form-control"
-                        placeholder={listingType === 'rent' ? 'Rent per month' : 'Sale price'}
+                        placeholder="Total Sale Price in ₹"
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
                         required
                       />
                     </div>
 
-                    <div className="col-md-6 d-flex align-items-center pt-4">
+                    <div className="col-md-6 d-flex align-items-center pt-md-4">
                       <div className="form-check p-2.5 rounded bg-light border w-100 ps-4">
                         <input
                           className="form-check-input ms-0 cursor-pointer"
@@ -1168,13 +1151,39 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                         </label>
                       </div>
                     </div>
+
+                    <div className="col-md-6">
+                      <label className="form-label small text-secondary fw-semibold">Rate per sq.ft (₹ / sqft)</label>
+                      <input
+                        type="number"
+                        className="form-control"
+                        value={ratePerSqft}
+                        onChange={(e) => setRatePerSqft(e.target.value)}
+                        min="0"
+                        placeholder="e.g. 4500"
+                      />
+                    </div>
+
+                    <div className="col-md-6">
+                      <label className="form-label small text-secondary fw-semibold">Possession Date</label>
+                      <input
+                        type="date"
+                        className="form-control"
+                        value={availableFrom}
+                        onChange={(e) => setAvailableFrom(e.target.value)}
+                      />
+                    </div>
                   </div>
 
-                  <div className="row g-3 border-top pt-3">
-                    <span className="text-secondary small fw-bold d-block mb-1">Specifications</span>
-                    {!showPlotFields ? (
-                      <>
-                        <div className="col-md-4">
+                  <div className="border-top pt-3">
+                    <span className="text-secondary small fw-bold d-block mb-3">
+                      {isLandOrPlot ? 'Land & Plot Dimensions' : 'Apartment & Villa Specifications'}
+                    </span>
+
+                    {/* VILLA & APARTMENT FIELDS */}
+                    {!isLandOrPlot ? (
+                      <div className="row g-3">
+                        <div className="col-md-3">
                           <label className="form-label small text-secondary fw-semibold">Bedrooms (BHK)</label>
                           <input
                             type="number"
@@ -1182,11 +1191,11 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                             value={bedrooms}
                             onChange={(e) => setBedrooms(e.target.value)}
                             min="0"
-                            placeholder="e.g. 2"
+                            placeholder="e.g. 3"
                           />
                         </div>
-                        <div className="col-md-4">
-                          <label className="form-label small text-secondary fw-semibold">Bathrooms</label>
+                        <div className="col-md-3">
+                          <label className="form-label small text-secondary fw-semibold">No. of Bathrooms</label>
                           <input
                             type="number"
                             className="form-control"
@@ -1196,20 +1205,46 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                             placeholder="e.g. 2"
                           />
                         </div>
-                        <div className="col-md-4">
-                          <label className="form-label small text-secondary fw-semibold">Super Area (sqft)</label>
+                        <div className="col-md-3">
+                          <label className="form-label small text-secondary fw-semibold">Built-up Area (sq.ft)</label>
                           <input
                             type="number"
                             className="form-control"
                             value={areaSqft}
                             onChange={(e) => setAreaSqft(e.target.value)}
                             min="0"
-                            placeholder="sqft"
+                            placeholder="e.g. 1500"
                           />
                         </div>
-                      </>
+                        <div className="col-md-3">
+                          <label className="form-label small text-secondary fw-semibold">Plot Area (sq.ft)</label>
+                          <input
+                            type="number"
+                            className="form-control"
+                            value={plotAreaSqft}
+                            onChange={(e) => setPlotAreaSqft(e.target.value)}
+                            min="0"
+                            placeholder="e.g. 2400"
+                          />
+                        </div>
+                      </div>
                     ) : (
-                      <>
+                      /* FARM LAND & PLOT / LAND FIELDS (NO BEDROOMS, NO BATHROOMS) */
+                      <div className="row g-3">
+                        <div className="col-md-3">
+                          <label className="form-label small text-secondary fw-semibold">Plot / Land Area (sq.ft)</label>
+                          <input
+                            type="number"
+                            className="form-control"
+                            value={areaSqft}
+                            onChange={(e) => {
+                              setAreaSqft(e.target.value);
+                              setPlotAreaSqft(e.target.value);
+                            }}
+                            min="0"
+                            placeholder="Total sq.ft"
+                          />
+                        </div>
                         <div className="col-md-3">
                           <label className="form-label small text-secondary fw-semibold">Plot Length (ft)</label>
                           <input
@@ -1218,6 +1253,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                             value={plotLength}
                             onChange={(e) => setPlotLength(e.target.value)}
                             min="0"
+                            placeholder="Length in ft"
                           />
                         </div>
                         <div className="col-md-3">
@@ -1228,16 +1264,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                             value={plotWidth}
                             onChange={(e) => setPlotWidth(e.target.value)}
                             min="0"
-                          />
-                        </div>
-                        <div className="col-md-3">
-                          <label className="form-label small text-secondary fw-semibold">Total Land Area (sqft)</label>
-                          <input
-                            type="number"
-                            className="form-control"
-                            value={areaSqft}
-                            onChange={(e) => setAreaSqft(e.target.value)}
-                            min="0"
+                            placeholder="Width in ft"
                           />
                         </div>
                         <div className="col-md-3">
@@ -1252,38 +1279,16 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                             <option value="0">No</option>
                           </select>
                         </div>
-                      </>
+                      </div>
                     )}
-
-                    <div className="col-md-6">
-                      <label className="form-label small text-secondary fw-semibold">Rate per sqft (optional)</label>
-                      <input
-                        type="number"
-                        className="form-control"
-                        value={ratePerSqft}
-                        onChange={(e) => setRatePerSqft(e.target.value)}
-                        min="0"
-                        placeholder="₹ / sqft"
-                      />
-                    </div>
-
-                    <div className="col-md-6">
-                      <label className="form-label small text-secondary fw-semibold">Possession Date</label>
-                      <input
-                        type="date"
-                        className="form-control"
-                        value={availableFrom}
-                        onChange={(e) => setAvailableFrom(e.target.value)}
-                      />
-                    </div>
                   </div>
                 </div>
               )}
 
-              {/* STEP 4: Photos & Videos */}
-              {step === 4 && (
+              {/* STEP 3: Photos, Features & Description */}
+              {step === 3 && (
                 <div className="fade-in-up-wizard">
-                  <h3 className="h6 fw-bold text-primary mb-3">Step 4: Photos & Videos</h3>
+                  <h3 className="h6 fw-bold text-primary mb-3">Step 3: Photos, Features & Description</h3>
                   <div className="border p-3 rounded bg-light mb-4">
                     <label className="form-label small fw-bold text-secondary d-block">Upload Photos (Max 10)</label>
                     <label className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1.5 cursor-pointer rounded-pill bg-white px-3 py-2">
@@ -1354,7 +1359,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                     />
                   </div>
 
-                  <div className="mb-3">
+                  <div className="mb-4">
                     <label className="form-label small text-secondary fw-semibold">Brochure (optional)</label>
                     {existingBrochureUrl && !removeBrochure && (
                       <div className="small mb-2">
@@ -1379,55 +1384,23 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                     />
                   </div>
 
-                  <div className="mb-3">
-                    <label className="form-label small text-secondary fw-semibold">Audio notes (optional)</label>
-                    {existingAudioUrl && !removeAudioNotes && (
-                      <div className="small mb-2">
-                        <audio controls preload="none" className="w-100" style={{ maxWidth: 420 }}>
-                          <source src={existingAudioUrl} />
-                        </audio>
-                        <div className="form-check mt-1">
-                          <input
-                            className="form-check-input"
-                            type="checkbox"
-                            id="removeAudioModern"
-                            checked={removeAudioNotes}
-                            onChange={(e) => setRemoveAudioNotes(e.target.checked)}
-                          />
-                          <label className="form-check-label text-danger" htmlFor="removeAudioModern">Remove audio notes</label>
-                        </div>
-                      </div>
-                    )}
-                    <input
-                      type="file"
-                      className="form-control"
-                      accept="audio/*,.mp3,.wav,.m4a,.ogg,.webm,.aac"
-                      onChange={(e) => setAudioNotesFile(e.target.files?.[0] || null)}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 5: Amenities & Details */}
-              {step === 5 && (
-                <div className="fade-in-up-wizard">
-                  <h3 className="h6 fw-bold text-primary mb-3">Step 5: Amenities & Details</h3>
-                  <div className="mb-4">
+                  <div className="mb-4 border-top pt-3">
                     <label className="form-label small fw-bold text-secondary">Property Description</label>
                     <textarea
                       className="form-control"
                       rows={4}
-                      placeholder="Detailed details, nearby shops, hospital, rules..."
+                      placeholder="Detailed features, nearby landmarks, schools, hospital, road access..."
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                     />
                   </div>
 
-                  {!showPlotFields && (
+                  {/* Amenities (shown for residential houses/apartments) */}
+                  {!isLandOrPlot && (
                     <div className="mb-4 border-top pt-3">
                       <label className="form-label small fw-bold text-secondary mb-2">Select Amenities</label>
-                      <div className="row g-2">
-                        {AMENITIES_LIST.map((amenity) => (
+                      <div className="row g-2 mb-3">
+                        {allAmenitiesToRender.map((amenity) => (
                           <div key={amenity} className="col-6 col-sm-4">
                             <div className="form-check">
                               <input
@@ -1444,12 +1417,34 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                           </div>
                         ))}
                       </div>
+                      <div className="d-flex gap-2 align-items-center">
+                        <input
+                          type="text"
+                          className="form-control form-control-sm w-auto"
+                          placeholder="Other amenity..."
+                          value={customAmenity}
+                          onChange={(e) => setCustomAmenity(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleAddCustomAmenity();
+                            }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-primary"
+                          onClick={handleAddCustomAmenity}
+                        >
+                          Add
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Wizard Control Buttons */}
+              {/* Wizard Navigation Controls */}
               <div className="border-top pt-3 d-flex justify-content-between gap-3 mt-4">
                 {step === 1 ? (
                   <button
@@ -1484,7 +1479,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                     onClick={handleContinue}
                     style={{ background: '#3b82f6', borderColor: '#3b82f6' }}
                   >
-                    <span>Continue</span>
+                    <span>Continue to Step {step + 1}</span>
                     <ChevronRight size={16} />
                   </button>
                 ) : (
@@ -1504,32 +1499,27 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
           </div>
         </div>
       ) : (
-        /* 4. Classic 4-step wizard form layout */
+        /* Classic 3-step wizard form layout */
         <div className="card border-0 shadow bg-white p-4 rounded-4" style={{ border: '1px solid rgba(0,0,0,0.05)' }}>
-          {/* 4-Step Classic Wizard Header */}
+          {/* 3-Step Classic Wizard Header */}
           <div className="mb-4">
             <div className="d-flex justify-content-between align-items-center mb-3">
-              {[
-                { id: 1, label: 'Core Info' },
-                { id: 2, label: 'Pricing & Specs' },
-                { id: 3, label: 'Location' },
-                { id: 4, label: 'Media & Description' },
-              ].map((s) => (
-                <div key={s.id} className="text-center flex-grow-1" style={{ position: 'relative' }}>
+              {wizardStepsConfig.map((s) => (
+                <div key={s.num} className="text-center flex-grow-1" style={{ position: 'relative' }}>
                   <div
                     className="mx-auto d-flex align-items-center justify-content-center rounded-circle border fw-bold"
                     style={{
                       width: '36px',
                       height: '36px',
                       fontSize: '0.95rem',
-                      backgroundColor: step === s.id ? 'var(--nb-primary)' : step > s.id ? '#10b981' : '#fff',
-                      color: step >= s.id ? '#fff' : '#6b7280',
-                      borderColor: step === s.id ? 'var(--nb-primary)' : step > s.id ? '#10b981' : '#d1d5db',
-                      boxShadow: step === s.id ? '0 0 10px rgba(11, 44, 86, 0.2)' : 'none',
+                      backgroundColor: step === s.num ? 'var(--nb-primary)' : step > s.num ? '#10b981' : '#fff',
+                      color: step >= s.num ? '#fff' : '#6b7280',
+                      borderColor: step === s.num ? 'var(--nb-primary)' : step > s.num ? '#10b981' : '#d1d5db',
+                      boxShadow: step === s.num ? '0 0 10px rgba(11, 44, 86, 0.2)' : 'none',
                       transition: 'all 0.3s ease',
                     }}
                   >
-                    {step > s.id ? '✓' : s.id}
+                    {step > s.num ? '✓' : s.num}
                   </div>
                   <span
                     className="d-none d-sm-block mt-2 small text-muted"
@@ -1545,10 +1535,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
               <div
                 className="progress-bar bg-success"
                 role="progressbar"
-                style={{ width: `${((step - 1) / 3) * 100}%`, transition: 'width 0.4s' }}
+                style={{ width: `${((step - 1) / (maxWizardSteps - 1)) * 100}%`, transition: 'width 0.4s' }}
                 aria-valuenow={step}
                 aria-valuemin={1}
-                aria-valuemax={4}
+                aria-valuemax={maxWizardSteps}
               />
             </div>
           </div>
@@ -1561,10 +1551,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
           )}
 
           <form onSubmit={(e) => e.preventDefault()} onKeyDown={handleFormKeyDown}>
-            {/* STEP 1: Basic Info & Property Type */}
+            {/* STEP 1: Property & Location Details */}
             {step === 1 && (
               <div className="fade-in-up">
-                <h3 className="h6 fw-bold text-dark mb-3">Step 1: Core Property Details</h3>
+                <h3 className="h6 fw-bold text-dark mb-3">Step 1: Property & Location Details</h3>
                 <div className="row g-3">
                   <div className="col-12">
                     <label className="form-label small fw-bold text-secondary">Listing Title</label>
@@ -1576,69 +1566,95 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                       onChange={(e) => setTitle(e.target.value)}
                       required
                     />
-                    <div className="form-text text-muted small" style={{ fontSize: '0.75rem' }}>
-                      Write a catchy title highlighting BHK status, property style, and closest landmark.
-                    </div>
                   </div>
 
-                  <div className="col-12 mt-4">
-                    <label className="form-label small fw-bold text-secondary mb-2">Listing Purpose</label>
-                    <div className="d-flex gap-3">
+                  <div className="col-12 mt-3">
+                    <label className="form-label small fw-bold text-secondary d-block">Property Position</label>
+                    <div className="d-flex gap-2">
                       <button
                         type="button"
-                        className={`btn flex-grow-1 py-3 fw-bold rounded-4 border-2 ${listingType === 'sale' ? 'btn-primary border-primary text-white shadow-sm' : 'btn-outline-secondary border-light text-muted bg-light'}`}
-                        onClick={() => setListingType('sale')}
-                        style={{ transition: 'all 0.2s' }}
+                        className={`nb-post-pill ${propertyPosition === 'new' ? 'active' : ''}`}
+                        onClick={() => setPropertyPosition('new')}
                       >
-                        Sell
+                        New Property
                       </button>
                       <button
                         type="button"
-                        className={`btn flex-grow-1 py-3 fw-bold rounded-4 border-2 ${listingType === 'rent' ? 'btn-primary border-primary text-white shadow-sm' : 'btn-outline-secondary border-light text-muted bg-light'}`}
-                        onClick={() => setListingType('rent')}
-                        style={{ transition: 'all 0.2s' }}
+                        className={`nb-post-pill ${propertyPosition === 'resale' ? 'active' : ''}`}
+                        onClick={() => setPropertyPosition('resale')}
                       >
-                        Rent
+                        Resale
                       </button>
                     </div>
                   </div>
 
-                  <div className="col-12 mt-4">
+                  <div className="col-12 mt-3">
                     <label className="form-label small fw-bold text-secondary mb-2">Property Category</label>
                     <div className="row g-2">
-                      {mainTypes.map((m) => (
-                        <div className="col-6 col-sm-4 col-md-3" key={m.slug}>
+                      {getSubcategories().map((m) => (
+                        <div className="col-6 col-sm-4 col-md-3" key={m.val}>
                           <button
                             type="button"
-                            className={`btn w-100 h-100 py-3 small rounded-4 border ${mainTypeSlug === m.slug ? 'btn-primary border-primary text-white shadow-sm fw-bold' : 'btn-light border-light text-muted'}`}
-                            onClick={() => setMainTypeSlug(m.slug)}
-                            style={{ fontSize: '0.85rem', transition: 'all 0.2s' }}
+                            className={`btn w-100 h-100 py-2.5 small rounded-4 border ${mainTypeSlug === m.val ? 'btn-primary border-primary text-white shadow-sm fw-bold' : 'btn-light border-light text-muted'}`}
+                            onClick={() => setMainTypeSlug(m.val)}
+                            style={{ fontSize: '0.85rem' }}
                           >
-                            {m.name}
+                            {m.label}
                           </button>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {mainTypeSlug && subTypes.length > 0 && (
-                    <div className="col-12 mt-3">
-                      <label className="form-label small fw-bold text-secondary mb-2">Sub property type</label>
-                      <div className="row g-2">
-                        {subTypes.map((s) => (
-                          <div className="col-6 col-sm-4 col-md-3" key={s.slug}>
-                            <button
-                              type="button"
-                              className={`btn w-100 py-2 small rounded-4 border ${subTypeSlug === s.slug ? 'btn-primary border-primary text-white fw-bold' : 'btn-light border-light text-muted'}`}
-                              onClick={() => setSubTypeSlug(s.slug)}
-                            >
-                              {s.name}
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <div className="col-md-4 mt-3">
+                    <label className="form-label small fw-bold text-secondary">City</label>
+                    <select
+                      className="form-select"
+                      value={cityId}
+                      onChange={(e) => setCityId(e.target.value)}
+                      required
+                    >
+                      <option value="">Select City</option>
+                      {cities.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="col-md-8 mt-3">
+                    <label className="form-label small fw-bold text-secondary">Locality / Area</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="e.g. Peelamedu, RS Puram, Saravanampatti"
+                      value={locality}
+                      onChange={(e) => setLocality(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="col-12 mt-3">
+                    <label className="form-label small fw-bold text-secondary">Detailed Address</label>
+                    <textarea
+                      className="form-control"
+                      rows={3}
+                      placeholder="Door No., Building Name, Street / Road, Landmarks..."
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      required
+                    />
+                  </div>
+
+                  <div className="col-12 mt-3">
+                    <label className="form-label small text-secondary fw-semibold">Google Map / Coordinates Link (optional)</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="https://maps.google.com/?q=..."
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -1650,18 +1666,18 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
 
                 <div className="row g-3 mb-4">
                   <div className="col-md-6">
-                    <label className="form-label small fw-bold text-secondary">Price (₹)</label>
+                    <label className="form-label small fw-bold text-secondary">Expected Price (₹)</label>
                     <input
                       type="number"
                       className="form-control"
-                      placeholder={listingType === 'rent' ? 'Monthly Rent Amount' : 'Total Valuation / Outright Price'}
+                      placeholder="Total Outright Price in ₹"
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
                       required
                     />
                   </div>
 
-                  <div className="col-md-6 d-flex align-items-center pt-4">
+                  <div className="col-md-6 d-flex align-items-center pt-md-4">
                     <div className="form-check border p-2.5 rounded bg-light/50 w-100 ps-4">
                       <input
                         className="form-check-input ms-0 cursor-pointer"
@@ -1675,13 +1691,38 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                       </label>
                     </div>
                   </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label small text-secondary fw-semibold">Rate per sq.ft (₹ / sqft)</label>
+                    <input
+                      type="number"
+                      className="form-control"
+                      value={ratePerSqft}
+                      onChange={(e) => setRatePerSqft(e.target.value)}
+                      min="0"
+                      placeholder="e.g. 4500"
+                    />
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label small text-secondary fw-semibold">Possession Date</label>
+                    <input
+                      type="date"
+                      className="form-control"
+                      value={availableFrom}
+                      onChange={(e) => setAvailableFrom(e.target.value)}
+                    />
+                  </div>
                 </div>
 
-                <div className="row g-3 border-top pt-3">
-                  <span className="text-secondary small fw-bold d-block mb-1">Dimensions & Specifications</span>
-                  {!showPlotFields ? (
-                    <>
-                      <div className="col-md-4">
+                <div className="border-top pt-3">
+                  <span className="text-secondary small fw-bold d-block mb-3">
+                    {isLandOrPlot ? 'Land & Plot Dimensions' : 'Apartment & Villa Specifications'}
+                  </span>
+
+                  {!isLandOrPlot ? (
+                    <div className="row g-3">
+                      <div className="col-md-3">
                         <label className="form-label small text-secondary fw-semibold">Bedrooms (BHK)</label>
                         <input
                           type="number"
@@ -1689,10 +1730,10 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                           value={bedrooms}
                           onChange={(e) => setBedrooms(e.target.value)}
                           min="0"
-                          placeholder="e.g. 2"
+                          placeholder="e.g. 3"
                         />
                       </div>
-                      <div className="col-md-4">
+                      <div className="col-md-3">
                         <label className="form-label small text-secondary fw-semibold">Bathrooms</label>
                         <input
                           type="number"
@@ -1703,20 +1744,45 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                           placeholder="e.g. 2"
                         />
                       </div>
-                      <div className="col-md-4">
-                        <label className="form-label small text-secondary fw-semibold">Built-up Area (sqft)</label>
+                      <div className="col-md-3">
+                        <label className="form-label small text-secondary fw-semibold">Built-up Area (sq.ft)</label>
                         <input
                           type="number"
                           className="form-control"
                           value={areaSqft}
                           onChange={(e) => setAreaSqft(e.target.value)}
                           min="0"
-                          placeholder="e.g. 1200"
+                          placeholder="e.g. 1500"
                         />
                       </div>
-                    </>
+                      <div className="col-md-3">
+                        <label className="form-label small text-secondary fw-semibold">Plot Area (sq.ft)</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          value={plotAreaSqft}
+                          onChange={(e) => setPlotAreaSqft(e.target.value)}
+                          min="0"
+                          placeholder="e.g. 2400"
+                        />
+                      </div>
+                    </div>
                   ) : (
-                    <>
+                    <div className="row g-3">
+                      <div className="col-md-3">
+                        <label className="form-label small text-secondary fw-semibold">Plot / Land Area (sq.ft)</label>
+                        <input
+                          type="number"
+                          className="form-control"
+                          value={areaSqft}
+                          onChange={(e) => {
+                            setAreaSqft(e.target.value);
+                            setPlotAreaSqft(e.target.value);
+                          }}
+                          min="0"
+                          placeholder="Total sq.ft"
+                        />
+                      </div>
                       <div className="col-md-3">
                         <label className="form-label small text-secondary fw-semibold">Plot Length (ft)</label>
                         <input
@@ -1738,158 +1804,92 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                         />
                       </div>
                       <div className="col-md-3">
-                        <label className="form-label small text-secondary fw-semibold">Total Area (sqft)</label>
-                        <input
-                          type="number"
-                          className="form-control"
-                          value={areaSqft}
-                          onChange={(e) => setAreaSqft(e.target.value)}
-                          min="0"
-                        />
-                      </div>
-                      <div className="col-md-3">
                         <label className="form-label small text-secondary fw-semibold">Boundary Wall</label>
                         <select
                           className="form-select"
                           value={hasBoundaryWall}
                           onChange={(e) => setHasBoundaryWall(e.target.value)}
                         >
-                          <option value="">Select Option</option>
+                          <option value="">Select</option>
                           <option value="1">Yes</option>
                           <option value="0">No</option>
                         </select>
                       </div>
-                    </>
+                    </div>
                   )}
-
-                  <div className="col-md-6">
-                    <label className="form-label small text-secondary fw-semibold">Rate per sqft (optional)</label>
-                    <input
-                      type="number"
-                      className="form-control"
-                      value={ratePerSqft}
-                      onChange={(e) => setRatePerSqft(e.target.value)}
-                      min="0"
-                      placeholder="₹ / sqft"
-                    />
-                  </div>
-
-                  <div className="col-md-6">
-                    <label className="form-label small text-secondary fw-semibold">Available From</label>
-                    <input
-                      type="date"
-                      className="form-control"
-                      value={availableFrom}
-                      onChange={(e) => setAvailableFrom(e.target.value)}
-                    />
-                  </div>
                 </div>
               </div>
             )}
 
-            {/* STEP 3: Location Details */}
+            {/* STEP 3: Photos, Amenities & Description */}
             {step === 3 && (
               <div className="fade-in-up">
-                <h3 className="h6 fw-bold text-dark mb-3">Step 3: Location & Address</h3>
+                <h3 className="h6 fw-bold text-dark mb-3">Step 3: Photos, Features & Description</h3>
 
-                <div className="row g-3 mb-3">
-                  <div className="col-md-4">
-                    <label className="form-label small fw-bold text-secondary">City</label>
-                    <select
-                      className="form-select"
-                      value={cityId}
-                      onChange={(e) => setCityId(e.target.value)}
-                      required
-                    >
-                      <option value="">Select City</option>
-                      {cities.map((c) => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="col-md-8">
-                    <label className="form-label small fw-bold text-secondary">Locality / Area</label>
+                {/* Photo Upload Panel */}
+                <div className="border p-3 rounded bg-light mb-4">
+                  <label className="form-label small fw-bold text-secondary d-block">Upload Photos (Max 10)</label>
+                  <label className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1.5 cursor-pointer rounded-pill bg-white px-3 py-2">
+                    <Upload size={14} />
+                    <span>Choose Photos</span>
                     <input
-                      type="text"
-                      className="form-control"
-                      placeholder="e.g. Peelamedu, RS Puram, Saravanampatti"
-                      value={locality}
-                      onChange={(e) => setLocality(e.target.value)}
-                      required
+                      type="file"
+                      className="d-none"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageFileChange}
                     />
-                  </div>
+                  </label>
 
-                  <div className="col-12">
-                    <label className="form-label small fw-bold text-secondary">Detailed Address</label>
-                    <textarea
-                      className="form-control"
-                      rows={3}
-                      placeholder="Door No., Building Name, Street / Road, Landmarks..."
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="col-12">
-                    <label className="form-label small text-secondary fw-semibold">Google Map / Coordinates Link (optional)</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="https://maps.google.com/?q=..."
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 4: Media, Description & Amenities */}
-            {step === 4 && (
-              <div className="fade-in-up">
-                <h3 className="h6 fw-bold text-dark mb-3">Step 4: Amenities, Details & Photos</h3>
-
-                {/* Description */}
-                <div className="mb-4">
-                  <label className="form-label small fw-bold text-secondary">Property Description</label>
-                  <textarea
-                    className="form-control"
-                    rows={4}
-                    placeholder="Give a detailed overview of your property, near facilities, rules, or features..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                  />
-                </div>
-
-                {/* Amenities Checkboxes */}
-                {!showPlotFields && (
-                  <div className="mb-4 border-top pt-3">
-                    <label className="form-label small fw-bold text-secondary mb-2">Select Amenities</label>
-                    <div className="row g-2">
-                      {AMENITIES_LIST.map((amenity) => (
-                        <div key={amenity} className="col-6 col-sm-4">
-                          <div className="form-check">
-                            <input
-                              className="form-check-input cursor-pointer"
-                              type="checkbox"
-                              id={`amenity-classic-${amenity}`}
-                              checked={selectedAmenities.includes(amenity)}
-                              onChange={() => handleAmenityChange(amenity)}
-                            />
-                            <label className="form-check-label small cursor-pointer" htmlFor={`amenity-classic-${amenity}`}>
-                              {amenity}
-                            </label>
+                  {/* Existing preview */}
+                  {existingImages.length > 0 && (
+                    <div className="mt-3">
+                      <span className="small text-muted d-block mb-1">Existing:</span>
+                      <div className="d-flex flex-wrap gap-2">
+                        {existingImages.map((path, idx) => (
+                          <div key={idx} className="position-relative border rounded overflow-hidden" style={{ width: '80px', height: '80px' }}>
+                            <img src={`/${path}`} className="w-100 h-100 object-fit-cover" alt="Existing" />
+                            <button
+                              type="button"
+                              className="btn btn-danger p-0 position-absolute top-0 end-0 rounded-circle d-flex align-items-center justify-content-center"
+                              style={{ width: '18px', height: '18px', margin: '3px' }}
+                              onClick={() => removeExistingImage(path)}
+                            >
+                              <X size={10} />
+                            </button>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Video Url */}
-                <div className="mb-4 border-top pt-3">
+                  {/* New preview */}
+                  {newImages.length > 0 && (
+                    <div className="mt-3">
+                      <span className="small text-muted d-block mb-1">New:</span>
+                      <div className="d-flex flex-wrap gap-2">
+                        {newImages.map((file, idx) => {
+                          const previewUrl = URL.createObjectURL(file);
+                          return (
+                            <div key={idx} className="position-relative border rounded overflow-hidden" style={{ width: '80px', height: '80px' }}>
+                              <img src={previewUrl} className="w-100 h-100 object-fit-cover" alt="New" />
+                              <button
+                                type="button"
+                                className="btn btn-danger p-0 position-absolute top-0 end-0 rounded-circle d-flex align-items-center justify-content-center"
+                                style={{ width: '18px', height: '18px', margin: '3px' }}
+                                onClick={() => removeNewImage(idx)}
+                              >
+                                <X size={10} />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mb-3">
                   <label className="form-label small text-secondary fw-semibold">YouTube Tour Link (optional)</label>
                   <input
                     type="text"
@@ -1925,109 +1925,68 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
                   />
                 </div>
 
-                <div className="mb-4">
-                  <label className="form-label small text-secondary fw-semibold">Audio notes (optional)</label>
-                  {existingAudioUrl && !removeAudioNotes && (
-                    <div className="small mb-2">
-                      <audio controls preload="none" className="w-100" style={{ maxWidth: 420 }}>
-                        <source src={existingAudioUrl} />
-                      </audio>
-                      <div className="form-check mt-1">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          id="removeAudioClassic"
-                          checked={removeAudioNotes}
-                          onChange={(e) => setRemoveAudioNotes(e.target.checked)}
-                        />
-                        <label className="form-check-label text-danger" htmlFor="removeAudioClassic">Remove audio notes</label>
-                      </div>
-                    </div>
-                  )}
-                  <input
-                    type="file"
+                {/* Description */}
+                <div className="mb-4 border-top pt-3">
+                  <label className="form-label small fw-bold text-secondary">Property Description</label>
+                  <textarea
                     className="form-control"
-                    accept="audio/*,.mp3,.wav,.m4a,.ogg,.webm,.aac"
-                    onChange={(e) => setAudioNotesFile(e.target.files?.[0] || null)}
+                    rows={4}
+                    placeholder="Overview of your property, features, nearby places..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                   />
                 </div>
 
-                {/* Photo Upload Panel */}
-                <div className="border-top pt-3 mb-4">
-                  <label className="form-label small fw-bold text-secondary d-block">Upload Photos (Max 10)</label>
-                  <div className="d-inline-block mb-3">
-                    <label className="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1.5 cursor-pointer rounded-pill">
-                      <Upload size={14} />
-                      <span>Choose Photos</span>
-                      <input
-                        type="file"
-                        className="d-none"
-                        accept="image/*"
-                        multiple
-                        onChange={handleImageFileChange}
-                      />
-                    </label>
-                  </div>
-
-                  {/* Existing photos preview */}
-                  {existingImages.length > 0 && (
-                    <div className="mb-3">
-                      <span className="small text-muted d-block mb-2">Existing Photos:</span>
-                      <div className="d-flex flex-wrap gap-2">
-                        {existingImages.map((path, idx) => (
-                          <div key={idx} className="position-relative border rounded overflow-hidden" style={{ width: '80px', height: '80px' }}>
-                            <img
-                              src={`/${path}`}
-                              className="w-100 h-100 object-fit-cover"
-                              alt="Existing preview"
+                {/* Amenities Checkboxes */}
+                {!isLandOrPlot && (
+                  <div className="mb-4 border-top pt-3">
+                    <label className="form-label small fw-bold text-secondary mb-2">Select Amenities</label>
+                    <div className="row g-2 mb-3">
+                      {allAmenitiesToRender.map((amenity) => (
+                        <div key={amenity} className="col-6 col-sm-4">
+                          <div className="form-check">
+                            <input
+                              className="form-check-input cursor-pointer"
+                              type="checkbox"
+                              id={`amenity-classic-${amenity}`}
+                              checked={selectedAmenities.includes(amenity)}
+                              onChange={() => handleAmenityChange(amenity)}
                             />
-                            <button
-                              type="button"
-                              className="btn btn-danger p-0 position-absolute top-0 end-0 rounded-circle d-flex align-items-center justify-content-center"
-                              style={{ width: '18px', height: '18px', margin: '3px' }}
-                              onClick={() => removeExistingImage(path)}
-                            >
-                              <X size={10} />
-                            </button>
+                            <label className="form-check-label small cursor-pointer" htmlFor={`amenity-classic-${amenity}`}>
+                              {amenity}
+                            </label>
                           </div>
-                        ))}
-                      </div>
+                        </div>
+                      ))}
                     </div>
-                  )}
-
-                  {/* New upload preview */}
-                  {newImages.length > 0 && (
-                    <div>
-                      <span className="small text-muted d-block mb-2">New Uploads:</span>
-                      <div className="d-flex flex-wrap gap-2">
-                        {newImages.map((file, idx) => {
-                          const previewUrl = URL.createObjectURL(file);
-                          return (
-                            <div key={idx} className="position-relative border rounded overflow-hidden" style={{ width: '80px', height: '80px' }}>
-                              <img
-                                src={previewUrl}
-                                className="w-100 h-100 object-fit-cover"
-                                alt="Upload preview"
-                              />
-                              <button
-                                type="button"
-                                className="btn btn-danger p-0 position-absolute top-0 end-0 rounded-circle d-flex align-items-center justify-content-center"
-                                style={{ width: '18px', height: '18px', margin: '3px' }}
-                                onClick={() => removeNewImage(idx)}
-                              >
-                                <X size={10} />
-                              </button>
-                            </div>
-                          );
-                        })}
-                      </div>
+                    <div className="d-flex gap-2 align-items-center">
+                      <input
+                        type="text"
+                        className="form-control form-control-sm w-auto"
+                        placeholder="Other amenity..."
+                        value={customAmenity}
+                        onChange={(e) => setCustomAmenity(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddCustomAmenity();
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-primary"
+                        onClick={handleAddCustomAmenity}
+                      >
+                        Add
+                      </button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Dynamic Wizard Action controls */}
+            {/* Classic Navigation Controls */}
             <div className="border-top pt-3 d-flex justify-content-between gap-3 mt-4">
               {step === 1 ? (
                 <button
@@ -2074,9 +2033,8 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
         </div>
       )}
 
-      {/* 5. Custom Modals */}
-
-      {/* A. Login / Register Overlay Modal */}
+      {/* Modals */}
+      {/* Login / Register Overlay Modal */}
       {showLoginModal && (
         <div className="nb-auth-overlay-backdrop">
           <div className="nb-auth-overlay-card">
@@ -2284,7 +2242,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
         </div>
       )}
 
-      {/* B. Resume Draft Overlay Modal */}
+      {/* Resume Draft Overlay Modal */}
       {showDraftModal && (
         <div className="nb-auth-overlay-backdrop">
           <div className="nb-auth-overlay-card text-center p-4">

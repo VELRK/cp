@@ -33,7 +33,7 @@ export default function OwnerListingsPage() {
 
   // Authenticate user
   useEffect(() => {
-    if (!authLoading && (!user || (user.role !== 'owner' && user.role !== 'agent'))) {
+    if (!authLoading && !user) {
       router.push('/login');
     }
   }, [user, authLoading, router]);
@@ -101,7 +101,11 @@ export default function OwnerListingsPage() {
                 <h1 className="h2 fw-bold text-dark m-0 owner-page-title">My Properties</h1>
                 <p className="text-muted small m-0 mt-1">Manage and track performance of your property listings</p>
               </div>
-              <Link href="/owner/property/add" className="btn btn-danger rounded-pill px-4 py-2 text-dark fw-bold d-inline-flex align-items-center gap-2 shadow-sm add-property-btn">
+              <Link 
+                href="/owner/property/add" 
+                className="btn rounded-pill px-4 py-2 text-white fw-bold d-inline-flex align-items-center gap-2 shadow-sm add-property-btn"
+                style={{ background: 'linear-gradient(135deg, var(--nb-primary) 0%, var(--nb-primary-dark) 100%)', border: 'none' }}
+              >
                 <Plus size={16} />
                 <span>Post New Property</span>
               </Link>

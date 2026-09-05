@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { ChevronRight, ChevronLeft, Heart, Bed, Bath, Grid, MapPin } from 'lucide-react';
 import { Property } from '@/components/property/PropertyCard';
+import { toFrontendAssetUrl } from '@/lib/cityImages';
 
 interface RecommendedPropertiesProps {
   items: Property[];
@@ -33,7 +34,7 @@ const RecommendedProperties: React.FC<RecommendedPropertiesProps> = ({
       <div className="d-flex justify-content-between align-items-end mb-3">
         <div>
           <h2 className="h4 fw-bold text-dark m-0">Recommended Properties</h2>
-          <p className="text-muted small m-0">Curated premium properties in {cityName}</p>
+          <p className="text-muted small m-0">Curated premium properties in {cityName || 'All Cities'}</p>
         </div>
         <Link href="/search?is_recommended=1" className="btn btn-link text-decoration-none nb-text-brand small p-0 d-flex align-items-center gap-1 fw-bold">
           <span>See All</span>
@@ -53,19 +54,30 @@ const RecommendedProperties: React.FC<RecommendedPropertiesProps> = ({
           <button className="nb-scroll-arrow nb-scroll-arrow-right" aria-label="Scroll right"><ChevronRight size={24} /></button>
           <div className="nb-horizontal-scroll">
             {items.map((p) => {
-              const imagesList = Array.isArray(p.image_urls) ? p.image_urls : [];
-              const thumbnail = p.thumbnail_url || imagesList[0] || '';
+              const imagesList = Array.isArray(p.image_urls)
+                ? p.image_urls
+                : typeof p.images === 'string' && p.images.startsWith('[')
+                  ? (() => { try { return JSON.parse(p.images); } catch { return []; } })()
+                  : Array.isArray(p.images)
+                    ? p.images
+                    : [];
+              const rawThumb = p.thumbnail_url || imagesList[0] || '';
+              const thumbnail = rawThumb ? toFrontendAssetUrl(rawThumb) : '';
+              const detailUrl = `/property/${p.slug || p.id}`;
               const isLiked = wishlistedIds.includes(p.id);
               return (
                 <div key={p.id} className="nb-classic-property-card-wrap">
                   <div className="nb-classic-card">
                     <div className="nb-classic-card-img-container">
-                      <Link href={`/property/${p.slug}`}>
+                      <Link href={detailUrl}>
                         {thumbnail ? (
                           <img
                             src={thumbnail}
                             alt={p.title}
                             className="nb-classic-card-img"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://placehold.co/320x200/f3f4f6/9ca3af?text=Property';
+                            }}
                           />
                         ) : (
                           <div className="w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-light text-muted small">
@@ -101,7 +113,7 @@ const RecommendedProperties: React.FC<RecommendedPropertiesProps> = ({
                     <div className="nb-classic-card-body">
                       <div>
                         <h3 className="nb-classic-card-title text-truncate" title={p.title}>
-                          <Link href={`/property/${p.slug}`} className="text-decoration-none text-dark fw-bold">
+                          <Link href={detailUrl} className="text-decoration-none text-dark fw-bold">
                             {p.bedrooms ? `${p.bedrooms} BHK ` : ''}{getPropertyTypeLabel(p.property_type)}
                           </Link>
                         </h3>

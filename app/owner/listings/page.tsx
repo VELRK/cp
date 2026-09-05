@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { getOwnerListings } from '@/lib/frontendApi';
 import { ArrowLeft, Plus, Eye, Edit, Home, Grid, MapPin, Layers, CheckCircle, Clock, BarChart2, CalendarCheck } from 'lucide-react';
+import { toFrontendAssetUrl } from '@/lib/cityImages';
 
 interface Listing {
   id: number;
@@ -178,12 +179,13 @@ export default function OwnerListingsPage() {
                 <div className="property-list-wrapper d-flex flex-column gap-3">
                   {listings.map((p) => {
                     const isPublished = Number(p.is_active) === 1;
-                    const mainImage =
+                    const rawMain =
                       (p.image_urls && p.image_urls.length > 0 && p.image_urls[0]) ||
-                      (p.images && p.images.length > 0 && `/${p.images[0].replace(/^\//, '')}`) ||
+                      (p.images && p.images.length > 0 && p.images[0]) ||
                       p.thumbnail_url ||
                       p.location_image_url ||
-                      '/images/property-placeholder.jpg';
+                      '';
+                    const mainImage = rawMain ? toFrontendAssetUrl(rawMain) : '/images/property-placeholder.jpg';
 
                     return (
                       <div key={p.id} className="property-item-card p-3 rounded-3 border bg-white d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 transition">
@@ -211,7 +213,7 @@ export default function OwnerListingsPage() {
                               </span>
                               <span className="d-flex align-items-center gap-1">
                                 <Layers size={12} className="text-primary" />
-                                <span className="text-capitalize">{p.property_type.replace('-', ' ')}</span>
+                                <span className="text-capitalize">{(p.property_type || 'property').replace(/-/g, ' ')}</span>
                               </span>
                               <span className="badge bg-light text-dark border text-capitalize">{p.listing_type || 'sale'}</span>
                             </div>
@@ -243,7 +245,7 @@ export default function OwnerListingsPage() {
                         {/* Right Side: Actions */}
                         <div className="d-flex align-items-center gap-2 flex-shrink-0">
                           {isPublished ? (
-                            <Link href={`/property/${p.slug}/`} className="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1">
+                            <Link href={`/property/${p.slug || p.id}`} className="btn btn-sm btn-outline-primary rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1">
                               <Eye size={13} />
                               <span>View</span>
                             </Link>

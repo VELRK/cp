@@ -70,6 +70,8 @@ if (!isStaticExport) {
       { source: '/api/:path*', destination: `${phpBase}/api/:path*` },
       { source: '/uploads/:path*', destination: `${cpBase}/uploads/:path*` },
       { source: '/assets/:path*', destination: `${cpBase}/assets/:path*` },
+      { source: '/cp/uploads/:path*', destination: `${cpBase}/uploads/:path*` },
+      { source: '/cp/assets/:path*', destination: `${cpBase}/assets/:path*` },
       { source: '/promo_agent.png', destination: `${cpBase}/promo_agent.png` },
     ],
   });

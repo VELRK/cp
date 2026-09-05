@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 import { Property } from '@/components/property/PropertyCard';
+import { toFrontendAssetUrl } from '@/lib/cityImages';
 
 interface RecommendedProjectsProps {
   featured: Property[];
@@ -38,9 +39,10 @@ const RecommendedProjects: React.FC<RecommendedProjectsProps> = ({
         <button className="nb-scroll-arrow nb-scroll-arrow-right" aria-label="Scroll right"><ChevronRight size={24} /></button>
         <div className="nb-horizontal-scroll">
           {featured.slice(0, 5).map((proj) => {
-            const imgUrl = proj.thumbnail_url || (proj.image_urls && proj.image_urls.length > 0 ? proj.image_urls[0] : 'https://placehold.co/400x300?text=No+Image');
+            const rawImg = proj.thumbnail_url || (proj.image_urls && proj.image_urls.length > 0 ? proj.image_urls[0] : (Array.isArray(proj.images) && proj.images.length > 0 ? proj.images[0] : ''));
+            const imgUrl = rawImg ? toFrontendAssetUrl(rawImg) : 'https://placehold.co/400x300?text=No+Image';
             return (
-              <Link key={proj.id} href={`/property-detail/${proj.slug}`} className="text-decoration-none d-block flex-shrink-0">
+              <Link key={proj.id} href={`/property/${proj.slug || proj.id}`} className="text-decoration-none d-block flex-shrink-0">
                 <div className="card border-0 shadow-sm rounded-4 overflow-hidden flex-shrink-0 nb-insight-card-hover" style={{ width: '260px', marginRight: '1rem' }}>
                   <div className="position-relative" style={{ height: '140px' }}>
                     <img src={imgUrl} alt={proj.title} className="w-100 h-100 object-fit-cover" />

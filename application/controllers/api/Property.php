@@ -315,9 +315,9 @@ class Property extends CI_Controller
             }
         } else {
             $row['owner_id'] = $owner_id;
-            // Owner/agent listings require admin approval before public visibility.
+            // Owner/agent listings are active so they show immediately on the frontend
             if ($this->db->field_exists('is_active', 'nb_properties')) {
-                $row['is_active'] = 0;
+                $row['is_active'] = 1;
             }
             if ($this->db->field_exists('is_latest', 'nb_properties')) {
                 $row['is_latest'] = !empty($input['is_latest']) ? 1 : 0;

@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, MapPin, Bed, Bath, Grid, Heart } from 'lucide-react';
 import { Property } from '@/components/property/PropertyCard';
+import { toFrontendAssetUrl } from '@/lib/cityImages';
 
 interface FeaturedPropertiesProps {
   featured: Property[];
@@ -46,19 +47,32 @@ const FeaturedProperties: React.FC<FeaturedPropertiesProps> = ({
           <button className="nb-scroll-arrow nb-scroll-arrow-right" aria-label="Scroll right"><ChevronRight size={24} /></button>
           <div className="nb-horizontal-scroll">
             {featured.map((p) => {
-              const imagesList = Array.isArray(p.image_urls) ? p.image_urls : [];
-              const thumbnail = p.thumbnail_url || imagesList[0] || '';
+              const imagesList = Array.isArray(p.image_urls)
+                ? p.image_urls
+                : typeof p.images === 'string' && p.images.startsWith('[')
+                  ? (() => { try { return JSON.parse(p.images); } catch { return []; } })()
+                  : Array.isArray(p.images)
+                    ? p.images
+                    : [];
+              const rawThumb = p.thumbnail_url || imagesList[0] || '';
+              const thumbnail = rawThumb ? toFrontendAssetUrl(rawThumb) : '';
+              const detailUrl = `/property/${p.slug || p.id}`;
               const isLiked = wishlistedIds.includes(p.id);
+              const authorLabel = (p as any).posted_by || ((p as any).owner_user_type?.toLowerCase() === 'agent' ? 'Agent' : 'Owner');
+
               return (
                 <div key={`featured-${p.id}`} className="nb-classic-property-card-wrap" style={{ width: '320px' }}>
                   <div className="nb-classic-card h-100 shadow-sm">
                     <div className="nb-classic-card-img-container" style={{ height: '200px' }}>
-                      <Link href={`/property-detail/${p.slug}`}>
+                      <Link href={detailUrl}>
                         {thumbnail ? (
                           <img
                             src={thumbnail}
                             alt={p.title}
                             className="nb-classic-card-img"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://placehold.co/320x200/f3f4f6/9ca3af?text=Property';
+                            }}
                           />
                         ) : (
                           <div className="w-100 h-100 d-flex flex-column align-items-center justify-content-center bg-light text-muted small">
@@ -94,7 +108,7 @@ const FeaturedProperties: React.FC<FeaturedPropertiesProps> = ({
                     <div className="nb-classic-card-body p-3 d-flex flex-column justify-content-between flex-grow-1">
                       <div className="mb-3">
                         <h3 className="nb-classic-card-title text-truncate" title={p.title} style={{ fontSize: '1.1rem' }}>
-                          <Link href={`/property-detail/${p.slug}`} className="text-decoration-none text-dark fw-bold">
+                          <Link href={detailUrl} className="text-decoration-none text-dark fw-bold">
                             {p.bedrooms ? `${p.bedrooms} BHK ` : ''}{getPropertyTypeLabel(p.property_type)}
                           </Link>
                         </h3>
@@ -124,9 +138,9 @@ const FeaturedProperties: React.FC<FeaturedPropertiesProps> = ({
 
                         <div className="nb-classic-card-footer m-0 pt-0 border-0 d-flex justify-content-between align-items-center">
                           <span className="nb-classic-card-author">
-                            Posted by <strong>Owner</strong>
+                            Posted by <strong>{authorLabel}</strong>
                           </span>
-                          <Link href={`/property-detail/${p.slug}`} className="btn btn-primary btn-sm fw-semibold rounded-pill px-3">
+                          <Link href={detailUrl} className="btn btn-primary btn-sm fw-semibold rounded-pill px-3">
                             Details
                           </Link>
                         </div>

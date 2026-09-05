@@ -17,8 +17,8 @@ import {
   Car, Wifi, Wind, Tv, Coffee, Dumbbell, Trees, Shield, Droplets, Zap
 } from 'lucide-react';
 
-const getAmenityInfo = (name: string) => {
-  const n = name.toLowerCase();
+const getAmenityInfo = (name: unknown) => {
+  const n = String(name || '').toLowerCase();
   if (n.includes('park') || n.includes('garage') || n.includes('car')) return { icon: <Car size={18} />, color: '#0d6efd', bg: '#e8f4fd' };
   if (n.includes('wifi') || n.includes('internet')) return { icon: <Wifi size={18} />, color: '#6b46c1', bg: '#f2eefb' };
   if (n.includes('ac') || n.includes('air cond') || n.includes('hvac')) return { icon: <Wind size={18} />, color: '#0891b2', bg: '#e0f2fe' };
@@ -231,7 +231,17 @@ export default function PropertyDetailClient({ slug: slugProp }: PropertyDetailC
     );
   }
 
-  const images = (Array.isArray(property.image_urls) ? property.image_urls : [])
+  const rawImages: string[] = Array.isArray(property.image_urls) && property.image_urls.length > 0
+    ? property.image_urls
+    : Array.isArray(property.images) && property.images.length > 0
+      ? property.images
+      : typeof property.images === 'string' && property.images.startsWith('[')
+        ? (() => { try { const p = JSON.parse(property.images); return Array.isArray(p) ? p : []; } catch { return []; } })()
+        : property.thumbnail_url
+          ? [property.thumbnail_url]
+          : [];
+
+  const images = rawImages
     .filter((url: unknown): url is string => typeof url === 'string' && url.trim() !== '')
     .map((url: string) => toFrontendAssetUrl(url));
   const amenities = Array.isArray(property.amenities) ? property.amenities : [];
@@ -272,10 +282,8 @@ export default function PropertyDetailClient({ slug: slugProp }: PropertyDetailC
   const mapQuery = hasCoords
     ? `${property.latitude},${property.longitude}`
     : `${property.address || property.locality || ''}, ${property.city_name || ''}`;
-  const mapUrl = savedMapUrl
-    ? (savedMapUrl.includes('output=embed')
-      ? savedMapUrl
-      : `https://maps.google.com/maps?q=${encodeURIComponent(savedMapUrl)}&t=&z=15&ie=UTF8&iwloc=&output=embed`)
+  const mapUrl = (savedMapUrl && savedMapUrl.includes('output=embed'))
+    ? savedMapUrl
     : `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
 
   const locationImageUrl = property.location_image_url

@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 import { Property } from '@/components/property/PropertyCard';
+import { toFrontendAssetUrl } from '@/lib/cityImages';
 
 interface VerifiedPropertiesProps {
   items: Property[];
@@ -29,7 +30,7 @@ const VerifiedProperties: React.FC<VerifiedPropertiesProps> = ({
       <div className="d-flex justify-content-between align-items-end mb-3">
         <div>
           <h2 className="h4 fw-bold text-dark m-0">Verified Properties</h2>
-          <p className="text-muted small m-0">Admin-verified listings in {cityName}</p>
+          <p className="text-muted small m-0">Admin-verified listings in {cityName || 'All Cities'}</p>
         </div>
         <Link
           href="/search?is_verified_property=1"
@@ -53,15 +54,16 @@ const VerifiedProperties: React.FC<VerifiedPropertiesProps> = ({
           )}
           {!loading &&
             items.slice(0, 8).map((proj) => {
-              const imgUrl =
+              const rawImg =
                 proj.thumbnail_url ||
                 (proj.image_urls && proj.image_urls.length > 0
                   ? proj.image_urls[0]
-                  : 'https://placehold.co/400x300?text=No+Image');
+                  : (Array.isArray(proj.images) && proj.images.length > 0 ? proj.images[0] : ''));
+              const imgUrl = rawImg ? toFrontendAssetUrl(rawImg) : 'https://placehold.co/400x300?text=No+Image';
               return (
                 <Link
                   key={proj.id}
-                  href={`/property/${proj.slug}`}
+                  href={`/property/${proj.slug || proj.id}`}
                   className="text-decoration-none d-block flex-shrink-0"
                 >
                   <div

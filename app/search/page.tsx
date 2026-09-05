@@ -38,6 +38,7 @@ import {
   ShieldAlert
 } from 'lucide-react';
 import Link from 'next/link';
+import { toFrontendAssetUrl } from '@/lib/cityImages';
 
 interface City {
   id: number;
@@ -866,10 +867,18 @@ function SearchContent() {
                 {/* Wide Card List */}
                 <div className="d-flex flex-column gap-4">
                   {results.map((p) => {
-                    const imagesList = Array.isArray(p.image_urls) ? p.image_urls : [];
-                    const thumbnail = p.thumbnail_url || imagesList[0] || '';
+                    const imagesList = Array.isArray(p.image_urls)
+                      ? p.image_urls
+                      : typeof p.images === 'string' && p.images.startsWith('[')
+                        ? (() => { try { return JSON.parse(p.images); } catch { return []; } })()
+                        : Array.isArray(p.images)
+                          ? p.images
+                          : [];
+                    const rawThumb = p.thumbnail_url || imagesList[0] || '';
+                    const thumbnail = rawThumb ? toFrontendAssetUrl(rawThumb) : '';
+                    const detailUrl = `/property/${p.slug || p.id}`;
                     const isWishlisted = wishlistIds.includes(p.id);
-                    const brochureUrl = resolveBrochureUrl(p.brochure_url);
+                    const brochureUrl = p.brochure_url ? toFrontendAssetUrl(p.brochure_url) : resolveBrochureUrl(p.brochure_url);
                     const tags = getPropertyTags(p);
                     const typeLabel = p.property_type_label || p.property_type?.replace(/_/g, ' ') || 'Property';
                     const locationLine = [
@@ -887,11 +896,14 @@ function SearchContent() {
                           {/* Image Column */}
                           <div className="col-md-5">
                             <div className="nb-search-list-card__img-wrap">
-                              <Link href={`/property/${p.slug}`} className="nb-search-list-card__img-link">
+                              <Link href={detailUrl} className="nb-search-list-card__img-link">
                                 {thumbnail ? (
                                   <img
                                     src={thumbnail}
                                     alt={p.title}
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).src = 'https://placehold.co/400x300/f3f4f6/9ca3af?text=Property';
+                                    }}
                                   />
                                 ) : (
                                   <div className="nb-search-list-card__img-placeholder bg-light text-muted d-flex flex-column align-items-center justify-content-center">
@@ -936,7 +948,7 @@ function SearchContent() {
                             <div className="nb-search-list-card__body">
                               <div>
                                 <h3 className="nb-search-list-card__title">
-                                  <Link href={`/property/${p.slug}`} className="text-decoration-none text-dark">
+                                  <Link href={detailUrl} className="text-decoration-none text-dark">
                                     {p.title}
                                   </Link>
                                 </h3>

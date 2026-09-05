@@ -138,13 +138,6 @@ export default function Home() {
       .then((res) => {
         if (res.data?.success && Array.isArray(res.data.cities)) {
           setCities(res.data.cities);
-          // Auto-select Coimbatore if present
-          const cbe = res.data.cities.find((c: City) => c.name.toLowerCase().includes('coimbatore'));
-          if (cbe) {
-            setCityId(cbe.id.toString());
-          } else if (res.data.cities.length > 0) {
-            setCityId(res.data.cities[0].id.toString());
-          }
         }
       })
       .catch((e) => console.warn('Could not fetch cities', e));
@@ -205,7 +198,7 @@ export default function Home() {
       .finally(() => setLoadingHero(false));
   }, []);
 
-  // Homepage sections — active listings filtered by DB flags
+  // Homepage sections — active listings (with fallback to latest properties so new additions always show)
   useEffect(() => {
     const cityParams = cityId ? { city_id: cityId } : {};
     const baseParams = { limit: 12, ...cityParams };
@@ -217,10 +210,16 @@ export default function Home() {
 
     searchProperties({ ...baseParams, is_recommended: 1 })
       .then((res) => {
-        if (res.data?.success && Array.isArray(res.data.items)) {
+        if (res.data?.success && Array.isArray(res.data.items) && res.data.items.length > 0) {
           setRecommended(res.data.items);
         } else {
-          setRecommended([]);
+          searchProperties({ ...baseParams, sort: 'new' }).then((fRes) => {
+            if (fRes.data?.success && Array.isArray(fRes.data.items)) {
+              setRecommended(fRes.data.items);
+            } else {
+              setRecommended([]);
+            }
+          }).catch(() => setRecommended([]));
         }
       })
       .catch((e) => console.warn('Could not fetch recommended listings', e))
@@ -228,10 +227,16 @@ export default function Home() {
 
     searchProperties({ ...baseParams, is_newly_launched: 1 })
       .then((res) => {
-        if (res.data?.success && Array.isArray(res.data.items)) {
+        if (res.data?.success && Array.isArray(res.data.items) && res.data.items.length > 0) {
           setNewlyLaunched(res.data.items);
         } else {
-          setNewlyLaunched([]);
+          searchProperties({ ...baseParams, sort: 'new' }).then((fRes) => {
+            if (fRes.data?.success && Array.isArray(fRes.data.items)) {
+              setNewlyLaunched(fRes.data.items);
+            } else {
+              setNewlyLaunched([]);
+            }
+          }).catch(() => setNewlyLaunched([]));
         }
       })
       .catch((e) => console.warn('Could not fetch newly launched listings', e))
@@ -239,10 +244,16 @@ export default function Home() {
 
     searchProperties({ ...baseParams, is_verified_property: 1 })
       .then((res) => {
-        if (res.data?.success && Array.isArray(res.data.items)) {
+        if (res.data?.success && Array.isArray(res.data.items) && res.data.items.length > 0) {
           setVerified(res.data.items);
         } else {
-          setVerified([]);
+          searchProperties({ ...baseParams, sort: 'new' }).then((fRes) => {
+            if (fRes.data?.success && Array.isArray(fRes.data.items)) {
+              setVerified(fRes.data.items);
+            } else {
+              setVerified([]);
+            }
+          }).catch(() => setVerified([]));
         }
       })
       .catch((e) => console.warn('Could not fetch verified listings', e))
@@ -250,10 +261,16 @@ export default function Home() {
 
     searchProperties({ ...baseParams, is_featured: 1 })
       .then((res) => {
-        if (res.data?.success && Array.isArray(res.data.items)) {
+        if (res.data?.success && Array.isArray(res.data.items) && res.data.items.length > 0) {
           setFeatured(res.data.items);
         } else {
-          setFeatured([]);
+          searchProperties({ ...baseParams, sort: 'new' }).then((fRes) => {
+            if (fRes.data?.success && Array.isArray(fRes.data.items)) {
+              setFeatured(fRes.data.items);
+            } else {
+              setFeatured([]);
+            }
+          }).catch(() => setFeatured([]));
         }
       })
       .catch((e) => console.warn('Could not fetch featured listings', e))

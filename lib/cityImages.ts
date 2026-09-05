@@ -56,14 +56,25 @@ function normalizeAssetPath(pathname: string): string {
   return path;
 }
 
-/** Convert PHP base_url paths to browser-loadable paths (handles /cp on production). */
 export function toFrontendAssetUrl(image: string): string {
   const value = image.trim();
   if (!value) return value;
 
   if (/^https?:\/\//i.test(value)) {
     try {
-      return normalizeAssetPath(new URL(value).pathname);
+      const parsed = new URL(value);
+      const isLocalHost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+      const hasAssetSegment =
+        parsed.pathname.startsWith('/assets/') ||
+        parsed.pathname.startsWith('/uploads/') ||
+        parsed.pathname.startsWith('/cp/assets/') ||
+        parsed.pathname.startsWith('/cp/uploads/');
+
+      // Only normalize if it points to local uploads/assets or is from local server
+      if (hasAssetSegment || isLocalHost) {
+        return normalizeAssetPath(parsed.pathname);
+      }
+      return value;
     } catch {
       return value;
     }

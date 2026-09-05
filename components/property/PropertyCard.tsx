@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { checkWishlist, toggleWishlist } from '@/lib/frontendApi';
 import { Heart, Image as ImageIcon, MapPin, Bed, Bath, Grid, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { toFrontendAssetUrl } from '@/lib/cityImages';
 
 export interface Property {
   id: number;
@@ -51,9 +52,12 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
           return [];
         }
       })()
-      : [];
+      : Array.isArray(property.images)
+        ? property.images
+        : [];
 
-  const thumbnail = property.thumbnail_url || imagesList[0] || '';
+  const rawThumbnail = property.thumbnail_url || imagesList[0] || '';
+  const thumbnail = rawThumbnail ? toFrontendAssetUrl(rawThumbnail) : '';
 
   useEffect(() => {
     if (user) {
@@ -98,9 +102,9 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
 
   const getListingTypeLabel = () => property.listing_type === 'rent' ? 'Rent' : 'Sale';
   const getPropertyTypeLabel = () => property.property_type_label || property.property_type;
-  const formatPrice = (price: number) => property.price_formatted || `₹${price.toLocaleString('en-IN')}`;
+  const formatPrice = (price: number) => property.price_formatted || `₹${Number(price || 0).toLocaleString('en-IN')}`;
 
-  const detailUrl = `/property/${property.slug}`;
+  const detailUrl = `/property/${property.slug || property.id}`;
 
   return (
     <>
@@ -343,6 +347,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
                     alt={property.title}
                     loading="lazy"
                     onLoad={() => setImgLoaded(true)}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://placehold.co/400x300/f3f4f6/9ca3af?text=Property';
+                      setImgLoaded(true);
+                    }}
                   />
                 ) : (
                   <div className="pc-placeholder">

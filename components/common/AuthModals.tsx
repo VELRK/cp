@@ -29,7 +29,7 @@ const AuthModals: React.FC = () => {
   const [cities, setCities] = useState<City[]>([]);
 
   // Login flow
-  const [loginMode, setLoginMode] = useState<LoginMode>('email');
+  const [loginMode, setLoginMode] = useState<LoginMode>('otp');
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginStep, setLoginStep] = useState<LoginStep>('phone');
@@ -51,7 +51,7 @@ const AuthModals: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
   const resetLoginFlow = useCallback(() => {
-    setLoginMode('email');
+    setLoginMode('otp');
     setLoginEmail('');
     setLoginPassword('');
     setLoginStep('phone');
@@ -272,12 +272,11 @@ const AuthModals: React.FC = () => {
         <div className="modal-content border-0 shadow-lg rounded-4 overflow-hidden animate-fade-in">
           <div className="row g-0">
             {/* Left Panel */}
-            <div className="col-md-5 d-none d-md-flex flex-column justify-content-between p-4" style={{ backgroundColor: 'var(--bs-primary, #0b2c56)', color: 'white' }}>
+            <div className="col-md-5 d-none d-md-flex flex-column justify-content-between p-4" style={{ backgroundColor: 'var(--nb-primary)', color: 'white' }}>
               <div>
-                <h3 className="fw-bold mb-4 d-flex align-items-center gap-2">
-                  <span className="bg-white text-primary rounded d-flex align-items-center justify-content-center fw-bolder" style={{ width: '32px', height: '32px' }}>CP</span>
-                  Coimbatore Properties
-                </h3>
+                <div className="mb-4">
+                  <img src="/assets/images/logo/cplogo.png" alt="Coimbatore Properties" className="bg-white p-2 rounded" style={{ height: '48px', objectFit: 'contain' }} />
+                </div>
               </div>
               
               <div className="text-center position-relative my-4 flex-grow-1 d-flex flex-column justify-content-center align-items-center">
@@ -332,91 +331,7 @@ const AuthModals: React.FC = () => {
 
             {isAuthModalOpen === 'login' ? (
               <>
-                {loginStep === 'phone' && (
-                  <div className="d-flex rounded-pill bg-light p-1 gap-1 mb-3">
-                    <button
-                      type="button"
-                      className={`btn btn-sm flex-fill rounded-pill fw-semibold ${loginMode === 'email' ? 'btn-danger text-dark' : 'btn-light border-0 text-muted'}`}
-                      onClick={() => {
-                        setLoginMode('email');
-                        setErrorMsg(null);
-                        setSuccessMsg(null);
-                      }}
-                    >
-                      Email
-                    </button>
-                    <button
-                      type="button"
-                      className={`btn btn-sm flex-fill rounded-pill fw-semibold ${loginMode === 'otp' ? 'btn-danger text-dark' : 'btn-light border-0 text-muted'}`}
-                      onClick={() => {
-                        setLoginMode('otp');
-                        setErrorMsg(null);
-                        setSuccessMsg(null);
-                      }}
-                    >
-                      Phone OTP
-                    </button>
-                  </div>
-                )}
-
-                {loginMode === 'email' ? (
-                  <form onSubmit={handleEmailLogin}>
-                    <div className="mb-3">
-                      <label className="form-label small fw-semibold">Email Address</label>
-                      <div className="input-group">
-                        <span className="input-group-text bg-light border-end-0">
-                          <Mail size={16} className="text-muted" />
-                        </span>
-                        <input
-                          type="email"
-                          className="form-control border-start-0"
-                          placeholder="you@example.com"
-                          value={loginEmail}
-                          onChange={(e) => setLoginEmail(e.target.value)}
-                          autoComplete="email"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="mb-3">
-                      <label className="form-label small fw-semibold">Password</label>
-                      <div className="input-group">
-                        <span className="input-group-text bg-light border-end-0">
-                          <Lock size={16} className="text-muted" />
-                        </span>
-                        <input
-                          type="password"
-                          className="form-control border-start-0"
-                          placeholder="Your password"
-                          value={loginPassword}
-                          onChange={(e) => setLoginPassword(e.target.value)}
-                          autoComplete="current-password"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      className="btn btn-danger w-100 py-2.5 fw-semibold rounded-pill nb-btn-nav-danger text-dark"
-                      disabled={loading || !loginEmail.trim() || !loginPassword}
-                    >
-                      {loading ? 'Signing in...' : 'Sign In'}
-                    </button>
-
-                    <p className="small text-muted text-center mt-3 mb-0">
-                      Don&apos;t have an account?{' '}
-                      <button
-                        type="button"
-                        className="btn btn-link p-0 small fw-semibold text-decoration-none"
-                        onClick={() => setAuthModalOpen('register')}
-                      >
-                        Register here
-                      </button>
-                    </p>
-                  </form>
-                ) : loginStep === 'phone' ? (
+                {loginStep === 'phone' ? (
                 <form onSubmit={handleSendOtp}>
                   <div className="mb-3">
                     <label className="form-label small fw-semibold">Mobile Number</label>

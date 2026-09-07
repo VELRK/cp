@@ -91,8 +91,8 @@ const Footer: React.FC = () => {
             &copy; {new Date().getFullYear()} Coimbatore Properties NoBroker. All rights reserved.
           </span>
           <span className="text-white-50 text-center text-md-end flex-shrink-0">
-            <a href="#" className="text-white-50 text-decoration-none me-3 hover-white">Privacy Policy</a>
-            <a href="#" className="text-white-50 text-decoration-none hover-white">Terms of Use</a>
+            <Link href="/privacy-policy" className="text-white-50 text-decoration-none me-3 hover-white">Privacy Policy</Link>
+            <Link href="/terms-and-conditions" className="text-white-50 text-decoration-none hover-white">Terms of Use</Link>
           </span>
         </div>
       </div>

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Home, Facebook, Twitter, Instagram, Linkedin, Mail } from 'lucide-react';
-import { getCities } from '@/lib/frontendApi';
+import { getCities, getHomeUrl } from '@/lib/frontendApi';
 
 interface City {
   id: number;
@@ -53,7 +53,7 @@ const Footer: React.FC = () => {
           <div className="col-6 col-lg-3">
             <div className="fw-semibold text-white mb-3 small text-uppercase tracking-wider">Explore</div>
             <ul className="list-unstyled small mb-0">
-              <li className="mb-2"><Link href="/" className="text-white-50 text-decoration-none hover-white">Home</Link></li>
+              <li className="mb-2"><a href={getHomeUrl()} className="text-white-50 text-decoration-none hover-white">Home</a></li>
               <li className="mb-2"><Link href="/search" className="text-white-50 text-decoration-none hover-white">Search properties</Link></li>
               <li className="mb-2"><Link href="/about" className="text-white-50 text-decoration-none hover-white">About Us</Link></li>
               {/* <li className="mb-2"><Link href="/user/live-updates" className="text-white-50 text-decoration-none hover-white">Live Updates</Link></li> */}

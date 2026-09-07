@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import { getAdminPanelUrl } from '@/lib/frontendApi';
+import { getAdminPanelUrl, getHomeUrl } from '@/lib/frontendApi';
 import { toFrontendAssetUrl } from '@/lib/cityImages';
 import { 
   X, 
@@ -64,7 +64,7 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
         
         {/* Brand Banner with cplogo.png */}
         <div className="p-3 border-bottom d-flex align-items-center justify-content-between bg-white">
-          <Link href="/" className="d-flex align-items-center text-decoration-none" onClick={handleLinkClick}>
+          <a href={getHomeUrl()} className="d-flex align-items-center text-decoration-none" onClick={handleLinkClick}>
             <img 
               src={toFrontendAssetUrl("/assets/images/logo/cplogo.png")}
               alt="Coimbatore Properties" 
@@ -78,7 +78,7 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
                 REAL ESTATE PORTAL
               </div>
             </div>
-          </Link>
+          </a>
           <button className="sidebar-close-btn" onClick={onClose} aria-label="Close menu">
             <X size={22} />
           </button>

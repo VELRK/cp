@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import { getAdminPanelUrl } from '@/lib/frontendApi';
+import { getAdminPanelUrl, getHomeUrl } from '@/lib/frontendApi';
 import { toFrontendAssetUrl } from '@/lib/cityImages';
 import MobileSidebar from './MobileSidebar';
 import {
@@ -33,7 +33,7 @@ const Navbar: React.FC = () => {
       <div className="container-fluid px-xl-5 px-lg-4 px-3 d-flex align-items-center justify-content-between">
 
         {/* Left: Brand logo with official cplogo.png */}
-        <Link href="/" className="navbar-brand d-flex align-items-center text-decoration-none py-1 me-0 me-xl-3 flex-shrink-0" style={{ color: 'var(--nb-primary)' }}>
+        <a href={getHomeUrl()} className="navbar-brand d-flex align-items-center text-decoration-none py-1 me-0 me-xl-3 flex-shrink-0" style={{ color: 'var(--nb-primary)' }}>
           <img
             src={toFrontendAssetUrl("/assets/images/logo/cplogo.png")}
             alt="Coimbatore Properties"
@@ -48,7 +48,7 @@ const Navbar: React.FC = () => {
               Buy • Rent • Sell
             </span>
           </div>
-        </Link>
+        </a>
 
         {/* Center: Desktop horizontal menu links (Perfect alignment) */}
         <div className="collapse navbar-collapse justify-content-center flex-grow-1 mx-xl-3" id="nbNav">

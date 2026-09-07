@@ -10,6 +10,8 @@ import api, { getAdminPanelUrl } from './api';
 
 export { getAdminPanelUrl };
 
+export const getHomeUrl = () => process.env.NODE_ENV === 'production' ? '/cp/' : '/';
+
 /** Route paths used by the web frontend only. */
 export const API_PATHS = {
   // Auth (PHP)

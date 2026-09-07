@@ -33,7 +33,7 @@ interface MobileSidebarProps {
 }
 
 const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
-  const { user, logout, setAuthModalOpen } = useAuth();
+  const { user, loading, logout, setAuthModalOpen } = useAuth();
   
   // Collapsible sections state
   const [buyersOpen, setBuyersOpen] = useState(false);
@@ -86,7 +86,24 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
 
         {/* User Account / Login Bar */}
         <div className="sidebar-header">
-          {user ? (
+          {loading ? (
+            <div className="user-profile-info placeholder-glow w-100 d-flex align-items-center">
+              <div
+                className="placeholder rounded-circle flex-shrink-0"
+                style={{ width: '40px', height: '40px', background: 'rgba(11, 44, 86, 0.12)' }}
+              />
+              <div className="user-details ms-3 d-flex flex-column gap-1 flex-grow-1">
+                <span
+                  className="placeholder rounded col-7"
+                  style={{ height: '14px', background: 'rgba(11, 44, 86, 0.15)' }}
+                ></span>
+                <span
+                  className="placeholder rounded col-4"
+                  style={{ height: '10px', background: 'rgba(11, 44, 86, 0.1)' }}
+                ></span>
+              </div>
+            </div>
+          ) : user ? (
             <div className="user-profile-info">
               <div className="user-avatar-circle">
                 {user.name ? user.name.charAt(0).toUpperCase() : <User size={20} />}

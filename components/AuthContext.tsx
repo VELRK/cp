@@ -1,11 +1,40 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getMe, login as apiLogin, register as apiRegister, logout as apiLogout, sendOtp as apiSendOtp, verifyOtp as apiVerifyOtp, resendOtp as apiResendOtp } from '../lib/frontendApi';
+import {
+  getMe,
+  login as apiLogin,
+  register as apiRegister,
+  logout as apiLogout,
+  sendOtp as apiSendOtp,
+  verifyOtp as apiVerifyOtp,
+  resendOtp as apiResendOtp,
+  invalidateApiCache,
+} from '../lib/frontendApi';
 import { getAppHomeUrl } from '../lib/api';
 import { AuthContext, type AuthUser } from '../lib/auth-context-store';
 
 export type { AuthUser };
+
+const persistAuthSession = (token: string, user: AuthUser) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem('nb_token', token);
+    localStorage.setItem('nb_user', JSON.stringify(user));
+  } catch (e) {
+    console.warn('Could not persist auth session to localStorage', e);
+  }
+};
+
+const clearAuthSession = () => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem('nb_token');
+    localStorage.removeItem('nb_user');
+  } catch (e) {
+    console.warn('Could not clear auth session from localStorage', e);
+  }
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -15,61 +44,136 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUser = async () => {
     try {
+      invalidateApiCache('/api/nb/me');
       const response = await getMe();
-      if (response.data?.success) {
+      if (response.data?.success && response.data.user) {
+        const savedToken = (typeof window !== 'undefined' ? localStorage.getItem('nb_token') : null) || token || '';
         setUser(response.data.user);
+        if (savedToken) {
+          persistAuthSession(savedToken, response.data.user);
+        }
       } else {
-        localStorage.removeItem('nb_token');
+        clearAuthSession();
         setUser(null);
         setToken(null);
       }
     } catch (error) {
       console.error('Error fetching current user:', error);
-      localStorage.removeItem('nb_token');
+      clearAuthSession();
       setUser(null);
       setToken(null);
     }
   };
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('nb_token');
-    if (savedToken) {
+    const savedToken = typeof window !== 'undefined' ? localStorage.getItem('nb_token') : null;
+    const savedUserStr = typeof window !== 'undefined' ? localStorage.getItem('nb_user') : null;
+
+    let parsedUser: AuthUser | null = null;
+    if (savedUserStr) {
+      try {
+        parsedUser = JSON.parse(savedUserStr);
+      } catch {
+        parsedUser = null;
+      }
+    }
+
+    if (savedToken && parsedUser) {
+      // 1. Instant hydration: restore user in 0ms so logged-in state renders immediately
+      setToken(savedToken);
+      setUser(parsedUser);
+      setLoading(false);
+
+      // 2. Background verification (stale-while-revalidate)
+      getMe()
+        .then((response) => {
+          if (response.data?.success && response.data.user) {
+            setUser(response.data.user);
+            persistAuthSession(savedToken, response.data.user);
+          } else if (response.status === 401 || (response.data && response.data.success === false)) {
+            clearAuthSession();
+            setUser(null);
+            setToken(null);
+          }
+        })
+        .catch((err) => {
+          if (err?.response?.status === 401 || err?.response?.status === 403) {
+            clearAuthSession();
+            setUser(null);
+            setToken(null);
+          }
+        });
+    } else if (savedToken) {
+      // Token exists without cached user
       setToken(savedToken);
       getMe()
         .then((response) => {
-          if (response.data?.success) {
+          if (response.data?.success && response.data.user) {
             setUser(response.data.user);
+            persistAuthSession(savedToken, response.data.user);
           } else {
-            localStorage.removeItem('nb_token');
+            clearAuthSession();
+            setUser(null);
+            setToken(null);
           }
         })
         .catch(() => {
-          localStorage.removeItem('nb_token');
+          clearAuthSession();
+          setUser(null);
+          setToken(null);
         })
         .finally(() => {
           setLoading(false);
         });
     } else {
+      // Guest user (not logged in)
       setLoading(false);
     }
+
+    // 3. Cross-tab synchronization
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'nb_token' || e.key === 'nb_user') {
+        const currentToken = localStorage.getItem('nb_token');
+        const currentUserStr = localStorage.getItem('nb_user');
+        if (currentToken && currentUserStr) {
+          try {
+            setUser(JSON.parse(currentUserStr));
+            setToken(currentToken);
+            setLoading(false);
+          } catch {
+            setUser(null);
+            setToken(null);
+            setLoading(false);
+          }
+        } else {
+          setUser(null);
+          setToken(null);
+          setLoading(false);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const login = async (loginId: string, passwordStr: string) => {
     const response = await apiLogin(loginId, passwordStr);
     if (response.data?.success) {
       const { token: receivedToken, user: receivedUser } = response.data;
-      localStorage.setItem('nb_token', receivedToken);
+      persistAuthSession(receivedToken, receivedUser);
       setToken(receivedToken);
       setUser(receivedUser);
+      setLoading(false);
       setAuthModalOpen(null);
     }
     return response.data;
   };
 
   const completeOtpSignIn = (receivedToken: string, receivedUser: AuthUser) => {
-    localStorage.setItem('nb_token', receivedToken);
+    persistAuthSession(receivedToken, receivedUser);
     setToken(receivedToken);
     setUser(receivedUser);
+    setLoading(false);
     setAuthModalOpen(null);
   };
 
@@ -97,9 +201,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (response.data?.success) {
       const { token: receivedToken, user: receivedUser } = response.data;
       if (receivedToken) {
-        localStorage.setItem('nb_token', receivedToken);
+        if (receivedUser) {
+          persistAuthSession(receivedToken, receivedUser);
+        } else {
+          localStorage.setItem('nb_token', receivedToken);
+        }
         setToken(receivedToken);
-        setUser(receivedUser);
+        if (receivedUser) {
+          setUser(receivedUser);
+          setLoading(false);
+        }
       }
       setAuthModalOpen(null);
     }
@@ -107,9 +218,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    localStorage.removeItem('nb_token');
+    clearAuthSession();
     setToken(null);
     setUser(null);
+    setLoading(false);
     setAuthModalOpen(null);
 
     try {
@@ -117,9 +229,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (e) {
       console.error('Logout request failed', e);
     } finally {
-      localStorage.removeItem('nb_token');
+      clearAuthSession();
       setToken(null);
       setUser(null);
+      setLoading(false);
       setAuthModalOpen(null);
       window.location.href = getAppHomeUrl();
     }

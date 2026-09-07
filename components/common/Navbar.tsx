@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 
 const Navbar: React.FC = () => {
-  const { user, logout, setAuthModalOpen } = useAuth();
+  const { user, loading, logout, setAuthModalOpen } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
@@ -120,7 +120,26 @@ const Navbar: React.FC = () => {
           </div>
 
           {/* User Profile / Login Dropdown */}
-          {user ? (
+          {loading ? (
+            <div className="d-flex align-items-center" style={{ minWidth: '130px', height: '38px' }}>
+              <div
+                className="placeholder-glow rounded-pill w-100 h-100 d-flex align-items-center px-3 gap-2 border"
+                style={{
+                  background: 'rgba(11, 44, 86, 0.04)',
+                  borderColor: 'rgba(11, 44, 86, 0.08)',
+                }}
+              >
+                <span
+                  className="placeholder rounded-circle"
+                  style={{ width: '22px', height: '22px', background: 'rgba(11, 44, 86, 0.15)' }}
+                ></span>
+                <span
+                  className="placeholder rounded col-6"
+                  style={{ height: '12px', background: 'rgba(11, 44, 86, 0.15)' }}
+                ></span>
+              </div>
+            </div>
+          ) : user ? (
             <div className="dropdown">
               <button
                 className="btn btn-sm user-dropdown-btn-premium d-flex align-items-center gap-2 rounded-pill px-3 py-2 shadow-sm"

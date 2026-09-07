@@ -6,9 +6,9 @@
  * Next.js app/api/*       — dev only; production uses Api_web.php
  */
 import type { AxiosRequestConfig } from 'axios';
-import api, { getAdminPanelUrl } from './api';
+import api, { getAdminPanelUrl, cachedGet, invalidateApiCache } from './api';
 
-export { getAdminPanelUrl };
+export { getAdminPanelUrl, invalidateApiCache };
 
 export const getHomeUrl = () => process.env.NODE_ENV === 'production' ? '/cp/' : '/';
 
@@ -89,74 +89,96 @@ export type SearchParams = {
 
 // ——— Auth ———
 
-export const getMe = () => api.get(API_PATHS.me, { validateStatus: (status) => status < 500 });
+export const getMe = () =>
+  cachedGet(API_PATHS.me, { validateStatus: (status: number) => status < 500 } as any, 10 * 1000);
 
-export const login = (loginId: string, password: string) =>
-  api.post(API_PATHS.login, { login: loginId, password });
+export const login = async (loginId: string, password: string) => {
+  invalidateApiCache();
+  return api.post(API_PATHS.login, { login: loginId, password });
+};
 
 export const sendOtp = (phone: string, countryCode = '+91') =>
   api.post(API_PATHS.sendOtp, { phone, country_code: countryCode });
 
-export const verifyOtp = (phone: string, otp: string, countryCode = '+91') =>
-  api.post(API_PATHS.verifyOtp, { phone, otp, country_code: countryCode });
+export const verifyOtp = async (phone: string, otp: string, countryCode = '+91') => {
+  invalidateApiCache();
+  return api.post(API_PATHS.verifyOtp, { phone, otp, country_code: countryCode });
+};
 
 export const resendOtp = (phone: string, countryCode = '+91') =>
   api.post(API_PATHS.resendOtp, { phone, country_code: countryCode });
 
-export const register = (formData: FormData, config?: AxiosRequestConfig) =>
-  api.post(API_PATHS.register, formData, config);
+export const register = async (formData: FormData, config?: AxiosRequestConfig) => {
+  invalidateApiCache();
+  return api.post(API_PATHS.register, formData, config);
+};
 
-export const logout = () => api.post(API_PATHS.logout);
+export const logout = async () => {
+  invalidateApiCache();
+  return api.post(API_PATHS.logout);
+};
 
-export const updateProfile = (formData: FormData, config?: AxiosRequestConfig) =>
-  api.post(API_PATHS.updateProfile, formData, config);
+export const updateProfile = async (formData: FormData, config?: AxiosRequestConfig) => {
+  invalidateApiCache(API_PATHS.me);
+  return api.post(API_PATHS.updateProfile, formData, config);
+};
 
-// ——— Cities, search, banners ———
+// ——— Cities, search, banners (High-Performance Cached Endpoints) ———
 
-export const getCities = () => api.get(API_PATHS.cities);
+/** Cached for 5 minutes with instant in-flight deduplication */
+export const getCities = () => cachedGet(API_PATHS.cities, undefined, 5 * 60 * 1000);
 
-/** Cities with active listing counts (Explore Cities homepage). */
-export const getExploreCities = () => api.get(API_PATHS.exploreCities);
+/** Cities with active listing counts (Explore Cities homepage) — cached for 5 minutes */
+export const getExploreCities = () => cachedGet(API_PATHS.exploreCities, undefined, 5 * 60 * 1000);
 
+/** Property search with 30s cache and concurrent request deduplication */
 export const searchProperties = (params?: SearchParams) =>
-  api.get(API_PATHS.search, { params });
+  cachedGet(API_PATHS.search, { params }, 30 * 1000);
 
 export const getSiteBanners = (params?: { limit?: number }) =>
-  api.get(API_PATHS.siteBanners, { params });
+  cachedGet(API_PATHS.siteBanners, { params }, 2 * 60 * 1000);
 
-/** Property listings flagged as home banner (hero with property details). */
+/** Property listings flagged as home banner (hero with property details) — cached 2 minutes */
 export const getHomeBanners = (params?: SearchParams) =>
-  api.get(API_PATHS.homeBanners, { params });
+  cachedGet(API_PATHS.homeBanners, { params }, 2 * 60 * 1000);
 
-/** Sub property type listing counts for homepage categories. */
+/** Sub property type listing counts for homepage categories — cached 3 minutes */
 export const getPropertyTypeCounts = (params?: { city_id?: number | string }) =>
-  api.get(API_PATHS.propertyTypeCounts, { params });
+  cachedGet(API_PATHS.propertyTypeCounts, { params }, 3 * 60 * 1000);
 
-/** Active property types (main + sub_types grouped). */
-export const getPropertyTypes = () => api.get(API_PATHS.propertyTypes);
+/** Active property types (main + sub_types grouped) — cached 5 minutes */
+export const getPropertyTypes = () => cachedGet(API_PATHS.propertyTypes, undefined, 5 * 60 * 1000);
 
-/** Active property types flat list for dropdowns. */
-export const getPropertyTypesFlat = () => api.get(API_PATHS.propertyTypesFlat);
+/** Active property types flat list for dropdowns — cached 5 minutes */
+export const getPropertyTypesFlat = () => cachedGet(API_PATHS.propertyTypesFlat, undefined, 5 * 60 * 1000);
 
 // ——— Wishlist ———
 
 export const getWishlist = (userId: number) =>
-  api.get(API_PATHS.wishlist, { params: { userId } });
+  cachedGet(API_PATHS.wishlist, { params: { userId } }, 15 * 1000);
 
 export const checkWishlist = (
   propertyId: number,
   userId: number,
   paramName: 'userId' | 'user_id' = 'userId'
 ) =>
-  api.get(API_PATHS.wishlistCheck, {
-    params: { property_id: propertyId, [paramName]: userId },
-  });
+  cachedGet(
+    API_PATHS.wishlistCheck,
+    {
+      params: { property_id: propertyId, [paramName]: userId },
+    },
+    60 * 1000
+  );
 
-export const toggleWishlist = (payload: {
+export const toggleWishlist = async (payload: {
   property_id: number;
   userId?: number;
   user_id?: number;
-}) => api.post(API_PATHS.wishlistToggle, payload);
+}) => {
+  invalidateApiCache(API_PATHS.wishlist);
+  invalidateApiCache(API_PATHS.wishlistCheck);
+  return api.post(API_PATHS.wishlistToggle, payload);
+};
 
 // ——— Enquiry & notifications ———
 
@@ -167,18 +189,24 @@ export const getNotifications = () => api.get(API_PATHS.notifications);
 
 // ——— Blogs ———
 
-export const getBlogs = () => api.get(API_PATHS.blogs);
+export const getBlogs = () => cachedGet(API_PATHS.blogs, undefined, 3 * 60 * 1000);
 
 export const getBlogById = (id: string | number) =>
-  api.get(API_PATHS.blogs, { params: { id } });
+  cachedGet(API_PATHS.blogs, { params: { id } }, 3 * 60 * 1000);
 
 // ——— Property ———
 
 export const getProperty = (idOrSlug: string | number) =>
-  api.get(API_PATHS.property(idOrSlug));
+  cachedGet(API_PATHS.property(idOrSlug), undefined, 30 * 1000);
 
-export const saveProperty = (formData: FormData, config?: AxiosRequestConfig) =>
-  api.post(API_PATHS.propertySave, formData, config);
+export const saveProperty = async (formData: FormData, config?: AxiosRequestConfig) => {
+  invalidateApiCache('/api/properties');
+  invalidateApiCache('/api/nb/search');
+  invalidateApiCache('/api/nb/home-banners');
+  invalidateApiCache('/api/nb/explore-cities');
+  invalidateApiCache('/api/nb/property-type-counts');
+  return api.post(API_PATHS.propertySave, formData, config);
+};
 
 // ——— Owner / tenant (Next.js routes) ———
 
@@ -199,11 +227,13 @@ export const submitFeedback = (formData: FormData) =>
 
 // ——— Live updates ———
 
-export const createLiveUpdate = (formData: FormData) =>
-  api.post(API_PATHS.liveUpdateCreate, formData);
+export const createLiveUpdate = async (formData: FormData) => {
+  invalidateApiCache('/api/mobile/live-updates');
+  return api.post(API_PATHS.liveUpdateCreate, formData);
+};
 
 // ——— Videos ———
 
-export const getVideos = () => api.get(API_PATHS.videos);
+export const getVideos = () => cachedGet(API_PATHS.videos, undefined, 3 * 60 * 1000);
 
 export default api;

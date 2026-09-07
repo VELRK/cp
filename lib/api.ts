@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
 
 /** Low-level HTTP client. Import API functions from `./frontendApi` in app/components. */
 
@@ -30,6 +30,7 @@ const getBaseUrl = () => {
 const api = axios.create({
   baseURL: getBaseUrl(),
   withCredentials: true,
+  timeout: 15000,
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
@@ -58,6 +59,99 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+// --- In-flight request deduplication & in-memory TTL caching ---
+interface CacheEntry<T = any> {
+  data: T;
+  timestamp: number;
+  ttl: number;
+}
+
+const cacheStore = new Map<string, CacheEntry>();
+const inFlightRequests = new Map<string, Promise<AxiosResponse<any>>>();
+
+export function getCacheKey(url: string, params?: any): string {
+  if (!params) return url;
+  try {
+    const keys = Object.keys(params).sort();
+    const sorted: Record<string, any> = {};
+    for (const k of keys) {
+      if (params[k] !== undefined && params[k] !== null && params[k] !== '') {
+        sorted[k] = params[k];
+      }
+    }
+    return `${url}?${JSON.stringify(sorted)}`;
+  } catch {
+    return url;
+  }
+}
+
+/**
+ * Intelligent cached GET request:
+ * 1. Checks in-memory cache for valid unexpired data (instant 0ms response).
+ * 2. Deduplicates concurrent in-flight requests for the exact same URL + params so only 1 request is fired.
+ * 3. Caches successful responses for `ttlMs` milliseconds.
+ */
+export async function cachedGet<T = any>(
+  url: string,
+  config?: AxiosRequestConfig,
+  ttlMs = 60000
+): Promise<AxiosResponse<T>> {
+  const cacheKey = getCacheKey(url, config?.params);
+
+  // 1. Memory cache check (client-side only)
+  if (typeof window !== 'undefined' && ttlMs > 0) {
+    const entry = cacheStore.get(cacheKey);
+    if (entry && Date.now() - entry.timestamp < entry.ttl) {
+      return {
+        data: entry.data,
+        status: 200,
+        statusText: 'OK (cached)',
+        headers: {},
+        config: (config || {}) as any,
+      };
+    }
+  }
+
+  // 2. In-flight request deduplication: reuse active pending promise
+  if (inFlightRequests.has(cacheKey)) {
+    return inFlightRequests.get(cacheKey)! as Promise<AxiosResponse<T>>;
+  }
+
+  // 3. Initiate real network request
+  const requestPromise = api.get<T>(url, config)
+    .then((response) => {
+      if (typeof window !== 'undefined' && ttlMs > 0 && response.status >= 200 && response.status < 300) {
+        cacheStore.set(cacheKey, {
+          data: response.data,
+          timestamp: Date.now(),
+          ttl: ttlMs,
+        });
+      }
+      return response;
+    })
+    .finally(() => {
+      inFlightRequests.delete(cacheKey);
+    });
+
+  inFlightRequests.set(cacheKey, requestPromise);
+  return requestPromise;
+}
+
+/**
+ * Invalidate cached API entries matching a substring/regex, or purge all cache if no argument provided.
+ */
+export function invalidateApiCache(pattern?: string | RegExp): void {
+  if (!pattern) {
+    cacheStore.clear();
+    return;
+  }
+  for (const key of cacheStore.keys()) {
+    if (typeof pattern === 'string' ? key.includes(pattern) : pattern.test(key)) {
+      cacheStore.delete(key);
+    }
+  }
+}
 
 export default api;
 

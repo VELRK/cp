@@ -282,7 +282,7 @@ const AuthModals: React.FC = () => {
               
               <div className="text-center position-relative my-4 flex-grow-1 d-flex flex-column justify-content-center align-items-center">
                 <div className="position-relative overflow-hidden shadow-sm" style={{ width: '100%', maxWidth: '260px', aspectRatio: '1/1', margin: '0 auto', borderRadius: '30px' }}>
-                  <img src="/images/login-banner.png" alt="Happy family moving home" className="w-100 h-100 object-fit-cover" />
+                  <img src={toFrontendAssetUrl("/images/login-banner.png")} alt="Happy family moving home" className="w-100 h-100 object-fit-cover" />
                 </div>
                 <div className="mt-4 text-center">
                    <p className="fw-bold mb-0" style={{ fontSize: '1.2rem', letterSpacing: '0.5px' }}>

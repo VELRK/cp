@@ -47,7 +47,7 @@ const NewlyLaunchedProjects: React.FC<NewlyLaunchedProjectsProps> = ({
               const imgUrl = rawImg ? toFrontendAssetUrl(rawImg) : 'https://placehold.co/400x300?text=No+Image';
               return (
                 <Link key={`new-launch-${proj.id}`} href={`/property/${proj.slug || proj.id}`} className="text-decoration-none d-block flex-shrink-0" style={{ marginRight: '1rem' }}>
-                  <div className="card border-0 shadow-sm rounded-4 bg-white position-relative" style={{ width: '420px' }}>
+                  <div className="card border-0 shadow-sm rounded-4 bg-white position-relative nb-new-launch-card">
 
                     {/* Top Tag */}
                     <div className="position-absolute" style={{ top: '15px', left: '-5px', zIndex: 2 }}>

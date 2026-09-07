@@ -18,6 +18,7 @@ import {
   resolveSearchFilterParams,
 } from '@/lib/searchFilters';
 import { PropertyTypeFilterFields } from '@/components/common/PropertyTypeSelects';
+import { fetchRealDataFacets, getCachedRealFacets, type RealFilterFacet } from '@/lib/realDataFilters';
 import OwnerPhoneModal from '@/components/common/OwnerPhoneModal';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -217,15 +218,33 @@ function SearchContent() {
     propertyTitle?: string | null;
   } | null>(null);
 
-  // Fetch cities list
+  // Real data facets state for filters (property types, cities, bedrooms, listings, localities)
+  const [realFacets, setRealFacets] = useState<RealFilterFacet>(getCachedRealFacets());
+
+  // Fetch real data facets & cities
   useEffect(() => {
-    getCities()
-      .then((res) => {
-        if (res.data?.success && Array.isArray(res.data.cities)) {
-          setCities(res.data.cities);
+    fetchRealDataFacets()
+      .then((facets) => {
+        setRealFacets(facets);
+        if (facets.cities.length > 0) {
+          setCities(
+            facets.cities.map((c) => ({
+              id: c.id,
+              name: c.name,
+              state: 'Tamil Nadu',
+            }))
+          );
+        } else {
+          getCities()
+            .then((res) => {
+              if (res.data?.success && Array.isArray(res.data.cities)) {
+                setCities(res.data.cities);
+              }
+            })
+            .catch(() => {});
         }
       })
-      .catch((err) => console.error('Error fetching cities', err));
+      .catch((err) => console.error('Error fetching real data facets', err));
   }, []);
 
   // Keep filter state in sync when URL query changes (e.g. Explore Cities link)
@@ -543,9 +562,9 @@ function SearchContent() {
           value={cityId}
           onChange={(e) => setCityId(e.target.value)}
         >
-          <option value="">Any City</option>
-          {cities.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
+          <option value="">Any City (All)</option>
+          {realFacets.cities.map((c) => (
+            <option key={c.id} value={c.id.toString()}>{c.name} ({c.count})</option>
           ))}
         </select>
       </div>
@@ -556,37 +575,64 @@ function SearchContent() {
         <input
           type="text"
           id={`locality-search-${sfx}`}
-          className="form-control form-control-sm nb-filter-control"
-          placeholder="Gandhipuram, Peelamedu..."
+          className="form-control form-control-sm nb-filter-control mb-1.5"
+          placeholder="Type locality or area..."
           value={locality}
           onChange={(e) => setLocality(e.target.value)}
         />
+        {realFacets.localities.length > 0 && (
+          <div className="d-flex flex-wrap gap-1 mt-1">
+            {realFacets.localities.map((loc) => {
+              const active = locality.trim().toLowerCase() === loc.name.toLowerCase();
+              return (
+                <button
+                  key={loc.name}
+                  type="button"
+                  className={`badge rounded-pill border transition-all ${
+                    active ? 'bg-primary text-white border-primary' : 'bg-light text-dark border-secondary-subtle'
+                  }`}
+                  style={{ cursor: 'pointer', fontSize: '0.72rem', padding: '4px 8px' }}
+                  onClick={() => setLocality(active ? '' : loc.name)}
+                >
+                  {loc.name} ({loc.count})
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Listing */}
       <div className="mb-3">
-        <label className="form-label nb-filter-label">Listing</label>
+        <label className="form-label nb-filter-label">Listing Type</label>
         <select
           className="form-select form-select-sm nb-filter-control"
           value={listingType}
           onChange={(e) => setListingType(e.target.value)}
         >
-          <option value="">Buy or Rent</option>
-          <option value="sale">Buy</option>
-          <option value="rent">Rent</option>
+          <option value="">Buy or Rent (All)</option>
+          {realFacets.listingTypes.map((l) => (
+            <option key={l.type} value={l.type}>{l.label} ({l.count})</option>
+          ))}
         </select>
       </div>
 
-      {/* Property types from API — sub type after city */}
-      <PropertyTypeFilterFields
-        mainTypes={mainTypes}
-        mainTypeSlug={mainTypeSlug}
-        subTypeSlug={subTypeSlug}
-        subTypes={subTypes}
-        onMainChange={handleMainTypeChange}
-        onSubChange={handleSubTypeChange}
-        loading={typesLoading}
-      />
+      {/* Property types from real data only */}
+      <div className="mb-3">
+        <label className="form-label nb-filter-label">Property Type</label>
+        <select
+          className="form-select form-select-sm nb-filter-control"
+          value={mainTypeSlug}
+          onChange={(e) => handleMainTypeChange(e.target.value)}
+        >
+          <option value="">All Property Types</option>
+          {realFacets.propertyTypes.map((pt) => (
+            <option key={pt.slug} value={pt.slug}>
+              {pt.name} ({pt.count})
+            </option>
+          ))}
+        </select>
+      </div>
 
       {/* Budget */}
       <div className="mb-3">
@@ -615,7 +661,7 @@ function SearchContent() {
         </div>
       </div>
 
-      {/* Layout BHK */}
+      {/* Layout BHK with real data only */}
       <div className="mb-3">
         <label className="form-label nb-filter-label">BHK / Layout</label>
         <select
@@ -624,8 +670,8 @@ function SearchContent() {
           onChange={(e) => setBedrooms(e.target.value)}
         >
           <option value="">Any BHK</option>
-          {[1, 2, 3, 4, 5].map((b) => (
-            <option key={b} value={b}>{b} BHK</option>
+          {realFacets.bedrooms.map((b) => (
+            <option key={b.bedrooms} value={b.bedrooms.toString()}>{b.label} ({b.count})</option>
           ))}
         </select>
       </div>
@@ -774,49 +820,86 @@ function SearchContent() {
           {/* Right Column: Search Results List */}
           <div className="col-lg-9">
 
-            {/* Top horizontal filter pills */}
-            <div className="nb-search-horizontal-filters">
+            {/* Top horizontal filter pills with real data values */}
+            <div className="nb-search-horizontal-filters d-flex align-items-center flex-wrap gap-2 mb-3">
+              {/* All properties pill */}
+              <button
+                type="button"
+                className={`nb-search-filter-pill ${!mainTypeSlug && !cityId && !bedrooms ? 'active' : ''}`}
+                onClick={() => {
+                  clearPropertyTypeFilter();
+                  setCityId('');
+                  setBedrooms('');
+                }}
+              >
+                All ({realFacets.propertyTypes.reduce((acc, t) => acc + t.count, 0) || totalResults})
+              </button>
+
+              {/* Real Property Type pills */}
+              {realFacets.propertyTypes.map((pt) => {
+                const isActive = mainTypeSlug === pt.slug;
+                return (
+                  <button
+                    key={pt.slug}
+                    type="button"
+                    className={`nb-search-filter-pill ${isActive ? 'active' : ''}`}
+                    onClick={() => handleMainTypeChange(isActive ? '' : pt.slug)}
+                  >
+                    {pt.name} ({pt.count})
+                  </button>
+                );
+              })}
+
+              {/* Real City pills */}
+              {realFacets.cities.map((c) => {
+                const isActive = cityId === String(c.id);
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className={`nb-search-filter-pill ${isActive ? 'active' : ''}`}
+                    onClick={() => setCityId(isActive ? '' : String(c.id))}
+                  >
+                    📍 {c.name} ({c.count})
+                  </button>
+                );
+              })}
+
+              {/* Real BHK pills */}
+              {realFacets.bedrooms.map((b) => {
+                const isActive = bedrooms === String(b.bedrooms);
+                return (
+                  <button
+                    key={b.bedrooms}
+                    type="button"
+                    className={`nb-search-filter-pill ${isActive ? 'active' : ''}`}
+                    onClick={() => setBedrooms(isActive ? '' : String(b.bedrooms))}
+                  >
+                    🛏️ {b.label} ({b.count})
+                  </button>
+                );
+              })}
+
+              <button
+                type="button"
+                className={`nb-search-filter-pill ${verifiedOnly ? 'active' : ''}`}
+                onClick={() => handleVerifiedToggle(!verifiedOnly)}
+              >
+                ✓ Verified
+              </button>
               <button
                 type="button"
                 className={`nb-search-filter-pill ${activeQuickFilters.includes('new_launch') ? 'active' : ''}`}
                 onClick={() => toggleQuickFilter('new_launch')}
               >
-                ★ NEW LAUNCH
+                ★ New Launch
               </button>
               <button
                 type="button"
                 className={`nb-search-filter-pill ${activeQuickFilters.includes('owner') ? 'active' : ''}`}
                 onClick={() => toggleQuickFilter('owner')}
               >
-                Owner
-              </button>
-              <button
-                type="button"
-                className={`nb-search-filter-pill ${activeQuickFilters.includes('verified') ? 'active' : ''}`}
-                onClick={() => toggleQuickFilter('verified')}
-              >
-                Verified
-              </button>
-              <button
-                type="button"
-                className={`nb-search-filter-pill ${activeQuickFilters.includes('under_const') ? 'active' : ''}`}
-                onClick={() => toggleQuickFilter('under_const')}
-              >
-                Under Construction
-              </button>
-              <button
-                type="button"
-                className={`nb-search-filter-pill ${activeQuickFilters.includes('ready_move') ? 'active' : ''}`}
-                onClick={() => toggleQuickFilter('ready_move')}
-              >
-                Ready To Move
-              </button>
-              <button
-                type="button"
-                className={`nb-search-filter-pill ${activeQuickFilters.includes('video') ? 'active' : ''}`}
-                onClick={() => toggleQuickFilter('video')}
-              >
-                With Video
+                Owner Only
               </button>
             </div>
 

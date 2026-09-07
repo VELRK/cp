@@ -23,8 +23,13 @@ export interface Property {
   city_name?: string;
   city_id?: number;
   is_featured?: number;
+  is_recommended?: number;
+  is_newly_launched?: number;
+  is_verified_property?: number;
   is_home_banner?: number;
   home_banner_image_url?: string;
+  tags_best_rate_localities?: number;
+  tags_high_growth_localities?: number;
   images?: string | string[];
   image_urls?: string[];
   thumbnail_url?: string;

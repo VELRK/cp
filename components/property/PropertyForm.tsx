@@ -126,7 +126,7 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
     propertyType,
     setMainTypeSlug,
     setSubTypeSlug,
-  } = usePropertyTypeFilters(initialData?.property_type || '');
+  } = usePropertyTypeFilters(initialData?.property_type || '', { realDataOnly: false, defaultAll: false });
 
   // Listing type locked to 'sale'
   const [listingType] = useState<'sale'>('sale');

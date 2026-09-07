@@ -8,26 +8,41 @@ import {
   subTypesForMain,
   type PropertyTypeItem,
 } from '@/lib/propertyTypes';
+import { realPropertyTypesToItems, DEFAULT_REAL_FACETS } from '@/lib/realDataFilters';
 
-export function usePropertyTypeFilters(initialSlug = '') {
-  const [mainTypes, setMainTypes] = useState<PropertyTypeItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [mainTypeSlug, setMainTypeSlug] = useState('');
+interface UsePropertyTypeFiltersOptions {
+  realDataOnly?: boolean;
+  defaultAll?: boolean;
+}
+
+export function usePropertyTypeFilters(
+  initialSlug = '',
+  options: UsePropertyTypeFiltersOptions = {}
+) {
+  const { realDataOnly = true, defaultAll = true } = options;
+
+  // Initialize with real data fallback so there is never an empty state or layout shift
+  const [mainTypes, setMainTypes] = useState<PropertyTypeItem[]>(() =>
+    realPropertyTypesToItems(DEFAULT_REAL_FACETS.propertyTypes)
+  );
+  const [loading, setLoading] = useState(false);
+  const [mainTypeSlug, setMainTypeSlug] = useState(initialSlug || '');
   const [subTypeSlug, setSubTypeSlug] = useState('');
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    fetchActivePropertyTypes()
+    fetchActivePropertyTypes(realDataOnly)
       .then((items) => {
         if (cancelled) return;
-        setMainTypes(items);
+        if (items.length > 0) {
+          setMainTypes(items);
+        }
         const seed = initialSlug || '';
         if (seed) {
           const { mainSlug, subSlug } = splitPropertyTypeSlug(seed, items);
           setMainTypeSlug(mainSlug);
           setSubTypeSlug(subSlug);
-        } else if (items.length > 0) {
+        } else if (!defaultAll && items.length > 0) {
           setMainTypeSlug(items[0].slug);
         }
       })
@@ -38,7 +53,7 @@ export function usePropertyTypeFilters(initialSlug = '') {
     return () => {
       cancelled = true;
     };
-  }, [initialSlug]);
+  }, [initialSlug, realDataOnly, defaultAll]);
 
   const subTypes = useMemo(
     () => subTypesForMain(mainTypes, mainTypeSlug),

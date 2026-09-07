@@ -1,4 +1,5 @@
 import { getPropertyTypes } from './frontendApi';
+import { fetchRealDataFacets, realPropertyTypesToItems, DEFAULT_REAL_FACETS } from './realDataFilters';
 
 export interface PropertyTypeItem {
   id: number;
@@ -9,15 +10,40 @@ export interface PropertyTypeItem {
   sort_order: number;
   is_active: number;
   sub_types?: PropertyTypeItem[];
+  count?: number;
 }
 
-/** Load active main types with nested sub_types from API. */
-export async function fetchActivePropertyTypes(): Promise<PropertyTypeItem[]> {
-  const res = await getPropertyTypes();
-  if (res.data?.success && Array.isArray(res.data.items)) {
-    return res.data.items as PropertyTypeItem[];
+let cachedPropertyTypes: PropertyTypeItem[] | null = null;
+
+/** Load active main types with nested sub_types from API, optionally filtered to real data only. */
+export async function fetchActivePropertyTypes(realDataOnly = false): Promise<PropertyTypeItem[]> {
+  if (realDataOnly) {
+    try {
+      const facets = await fetchRealDataFacets();
+      if (facets.propertyTypes.length > 0) {
+        return realPropertyTypesToItems(facets.propertyTypes);
+      }
+    } catch (err) {
+      console.warn('Using default real property types', err);
+    }
+    return realPropertyTypesToItems(DEFAULT_REAL_FACETS.propertyTypes);
   }
-  return [];
+
+  if (cachedPropertyTypes && cachedPropertyTypes.length > 0) {
+    return cachedPropertyTypes;
+  }
+
+  try {
+    const res = await getPropertyTypes();
+    if (res.data?.success && Array.isArray(res.data.items) && res.data.items.length > 0) {
+      cachedPropertyTypes = res.data.items as PropertyTypeItem[];
+      return cachedPropertyTypes;
+    }
+  } catch (err) {
+    console.warn('Could not fetch property types from API, using real data fallback', err);
+  }
+
+  return realPropertyTypesToItems(DEFAULT_REAL_FACETS.propertyTypes);
 }
 
 /** Resolve main + sub slugs from a stored property_type slug. */

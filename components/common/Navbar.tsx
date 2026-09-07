@@ -5,18 +5,16 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { getAdminPanelUrl } from '@/lib/frontendApi';
 import MobileSidebar from './MobileSidebar';
-import { 
-  Home, 
-  User, 
-  Menu, 
-  LogOut, 
-  Key, 
-  PlusCircle, 
-  Bookmark, 
-  Compass, 
-  MessageSquare, 
-  Newspaper, 
-  FileText, 
+import {
+  Home,
+  User,
+  Menu,
+  LogOut,
+  Key,
+  PlusCircle,
+  Bookmark,
+  Compass,
+  MessageSquare,
   ChevronDown,
   LayoutGrid,
   Headphones,
@@ -32,12 +30,12 @@ const Navbar: React.FC = () => {
   return (
     <nav className="navbar navbar-expand-lg fixed-top navbar-light navbar-classic-fresh" id="nbNavbar">
       <div className="container-fluid px-xl-5 px-lg-4 px-3 d-flex align-items-center justify-content-between">
-        
+
         {/* Left: Brand logo with official cplogo.png */}
         <Link href="/" className="navbar-brand d-flex align-items-center text-decoration-none py-1 me-0 me-xl-3 flex-shrink-0" style={{ color: 'var(--nb-primary)' }}>
-          <img 
-            src="/assets/images/logo/cplogo.png" 
-            alt="Coimbatore Properties" 
+          <img
+            src="/assets/images/logo/cplogo.png"
+            alt="Coimbatore Properties"
             className="nb-logo-img me-2"
             style={{ height: '48px', width: 'auto', objectFit: 'contain' }}
           />
@@ -57,30 +55,11 @@ const Navbar: React.FC = () => {
             <li className="nav-item">
               <Link href="/search" className="nav-link nav-link-premium text-nowrap">Search</Link>
             </li>
-            <li className="nav-item dropdown">
-              <a className="nav-link nav-link-premium text-nowrap dropdown-toggle d-flex align-items-center gap-1" href="#" id="knowledgeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                <span>Knowledge Centre</span>
-              </a>
-              <ul className="dropdown-menu dropdown-menu-premium border-0 shadow mt-2" aria-labelledby="knowledgeDropdown">
-                <li>
-                  <Link href="/knowledge-centre" className="dropdown-item py-2">
-                    <Compass size={16} className="text-primary" />
-                    <span>Insights Hub</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/articles" className="dropdown-item py-2">
-                    <FileText size={16} className="text-primary" />
-                    <span>Articles</span>
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/news" className="dropdown-item py-2">
-                    <Newspaper size={16} className="text-primary" />
-                    <span>Real Estate News</span>
-                  </Link>
-                </li>
-              </ul>
+            <li className="nav-item">
+              <Link href="/blog" className="nav-link nav-link-premium text-nowrap">Blog</Link>
+            </li>
+            <li className="nav-item">
+              <Link href="/user/wishlist" className="nav-link nav-link-premium text-nowrap">My Wishlist</Link>
             </li>
 
             {user && (
@@ -102,10 +81,10 @@ const Navbar: React.FC = () => {
 
         {/* Right: Unified Action Buttons (Always cleanly aligned on mobile & desktop) */}
         <div className="d-flex align-items-center gap-2 flex-shrink-0 ms-auto ms-lg-0">
-          
+
           {/* Post Property button (Always shown for all roles including tenant) */}
-          <Link 
-            href={user ? "/owner/property/add" : "/register"} 
+          <Link
+            href={user ? "/owner/property/add" : "/register"}
             className="btn btn-sm post-property-btn-navbar rounded-pill px-3 py-1.5 fw-semibold d-none d-md-flex align-items-center gap-1.5 shadow-sm text-decoration-none"
           >
             <span>Post Property</span>
@@ -114,7 +93,7 @@ const Navbar: React.FC = () => {
 
           {/* Support Dropdown */}
           <div className="dropdown">
-            <button 
+            <button
               className="btn btn-sm btn-link text-decoration-none text-muted p-2 rounded-circle hover-bg-light d-flex align-items-center justify-content-center support-dropdown-btn"
               type="button"
               id="supportDropdown"
@@ -304,7 +283,7 @@ const Navbar: React.FC = () => {
               <ul className="dropdown-menu dropdown-menu-end dropdown-menu-premium shadow border-0 animate-fade-in mt-2" aria-labelledby="guestDropdown" style={{ width: '250px', borderRadius: '12px' }}>
                 <li className="p-3 text-center border-bottom">
                   <p className="text-muted small mb-2" style={{ lineHeight: '1.4' }}>Login to manage properties, bookmarks & activities</p>
-                  <button 
+                  <button
                     className="btn btn-danger btn-sm w-100 fw-bold text-white rounded-pill py-2 shadow-sm hover-scale-sm"
                     style={{ background: 'linear-gradient(135deg, var(--nb-accent) 0%, var(--nb-accent-dark) 100%)', border: 'none' }}
                     onClick={() => setAuthModalOpen('login')}

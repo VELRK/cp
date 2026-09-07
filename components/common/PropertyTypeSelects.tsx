@@ -110,7 +110,7 @@ export const PropertyTypeFilterFields: React.FC<
           <option value="">{mainLabel}</option>
           {mainTypes.map((m) => (
             <option key={m.id} value={m.slug}>
-              {m.name}
+              {m.name}{m.count !== undefined ? ` (${m.count})` : ''}
             </option>
           ))}
         </select>

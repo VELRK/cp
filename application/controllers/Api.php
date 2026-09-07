@@ -125,26 +125,62 @@ class Api extends CI_Controller
     }
 
     /**
-     * GET /api/blogs — blog articles from housing_news (same content as panel housing-news).
+     * GET /api/blogs — blog articles from housing_news and blogs table.
      */
     public function blogs($id = null)
     {
         $this->load->database();
-        $this->load->model('Housing_news_model');
+        $this->load->model(array('Housing_news_model', 'Blog_model'));
         if ($id === null) {
             $id = $this->input->get('id');
         }
 
         if ($id !== null && $id !== '') {
             $r = $this->Housing_news_model->get_by_id((int) $id);
-            if (!$r) {
-                $this->output
-                    ->set_status_header(404)
-                    ->set_content_type('application/json')
-                    ->set_output(json_encode(array('success' => false, 'message' => 'Blog not found')));
+            if ($r) {
+                $this->output->set_content_type('application/json')->set_output(json_encode(nb_housing_news_to_blog($r)));
                 return;
             }
-            $this->output->set_content_type('application/json')->set_output(json_encode(nb_housing_news_to_blog($r)));
+
+            $b = $this->Blog_model->get_by_id((int) $id);
+            if ($b && (!isset($b->status) || $b->status === 'active')) {
+                $gallery = array();
+                if (!empty($b->gallery)) {
+                    $gallery_decoded = json_decode($b->gallery, true);
+                    if (is_array($gallery_decoded)) {
+                        foreach ($gallery_decoded as $g_img) {
+                            $gallery[] = preg_match('#^https?://#i', $g_img) ? $g_img : base_url($g_img);
+                        }
+                    }
+                }
+                $item = array(
+                    'id'          => (int) $b->id,
+                    'title'       => (string) $b->name,
+                    'name'        => (string) $b->name,
+                    'subtitle'    => isset($b->short_notes) ? (string) $b->short_notes : '',
+                    'author'      => !empty($b->author) ? (string) $b->author : 'Admin',
+                    'authorName'  => !empty($b->author) ? (string) $b->author : 'Admin',
+                    'date'        => isset($b->date) ? (string) $b->date : '',
+                    'publishedAt' => isset($b->date) ? (string) $b->date : null,
+                    'createdAt'   => isset($b->created_at) ? (string) $b->created_at : null,
+                    'excerpt'     => isset($b->short_notes) ? (string) $b->short_notes : '',
+                    'short_notes' => isset($b->short_notes) ? (string) $b->short_notes : '',
+                    'description' => isset($b->description) ? (string) $b->description : '',
+                    'content'     => isset($b->description) ? (string) $b->description : '',
+                    'category'    => 'market',
+                    'slug'        => url_title((string) $b->name, '-', true),
+                    'gallery'     => $gallery,
+                    'multiImages' => $gallery,
+                    'image'       => count($gallery) > 0 ? $gallery[0] : null,
+                );
+                $this->output->set_content_type('application/json')->set_output(json_encode($item));
+                return;
+            }
+
+            $this->output
+                ->set_status_header(404)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(array('success' => false, 'message' => 'Blog not found')));
             return;
         }
 
@@ -157,6 +193,43 @@ class Api extends CI_Controller
                 $out[] = $item;
             }
         }
+
+        // Also check if admin blogs table has active rows
+        $adminBlogs = $this->Blog_model->get_all('active');
+        if (!empty($adminBlogs)) {
+            foreach ($adminBlogs as $b) {
+                $gallery = array();
+                if (!empty($b->gallery)) {
+                    $gallery_decoded = json_decode($b->gallery, true);
+                    if (is_array($gallery_decoded)) {
+                        foreach ($gallery_decoded as $g_img) {
+                            $gallery[] = preg_match('#^https?://#i', $g_img) ? $g_img : base_url($g_img);
+                        }
+                    }
+                }
+                $out[] = array(
+                    'id'          => (int) $b->id,
+                    'title'       => (string) $b->name,
+                    'name'        => (string) $b->name,
+                    'subtitle'    => isset($b->short_notes) ? (string) $b->short_notes : '',
+                    'author'      => !empty($b->author) ? (string) $b->author : 'Admin',
+                    'authorName'  => !empty($b->author) ? (string) $b->author : 'Admin',
+                    'date'        => isset($b->date) ? (string) $b->date : '',
+                    'publishedAt' => isset($b->date) ? (string) $b->date : null,
+                    'createdAt'   => isset($b->created_at) ? (string) $b->created_at : null,
+                    'excerpt'     => isset($b->short_notes) ? (string) $b->short_notes : '',
+                    'short_notes' => isset($b->short_notes) ? (string) $b->short_notes : '',
+                    'description' => isset($b->description) ? (string) $b->description : '',
+                    'content'     => isset($b->description) ? (string) $b->description : '',
+                    'category'    => 'market',
+                    'slug'        => url_title((string) $b->name, '-', true),
+                    'gallery'     => $gallery,
+                    'multiImages' => $gallery,
+                    'image'       => count($gallery) > 0 ? $gallery[0] : null,
+                );
+            }
+        }
+
         $this->output->set_content_type('application/json')->set_output(json_encode($out));
     }
 

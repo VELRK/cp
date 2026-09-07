@@ -58,11 +58,11 @@ const SidebarConsole: React.FC<SidebarConsoleProps> = ({
         {user ? (
           <>
             <Link
-              href={getDashboardPath()}
+              href="/user/wishlist"
               className="btn w-100 py-2 rounded-3 small fw-bold text-white mb-2 text-center text-decoration-none"
               style={{ backgroundColor: 'var(--nb-primary)', borderColor: 'var(--nb-primary)' }}
             >
-              Go to Dashboard
+              Go to Wishlist
             </Link>
             {/*
             <button

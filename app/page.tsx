@@ -12,6 +12,7 @@ import {
 } from '@/lib/frontendApi';
 import { toFrontendAssetUrl } from '@/lib/cityImages';
 import { buildSearchUrlParams } from '@/lib/searchFilters';
+import { fetchRealDataFacets } from '@/lib/realDataFilters';
 import confetti from 'canvas-confetti';
 import { usePropertyTypeFilters } from '@/hooks/usePropertyTypeFilters';
 import { useAuth } from '@/hooks/useAuth';
@@ -60,6 +61,9 @@ export interface Property {
   city_name?: string;
   city_id?: number;
   is_featured?: number;
+  is_recommended?: number;
+  is_newly_launched?: number;
+  is_verified_property?: number;
   is_home_banner?: number;
   tags_best_rate_localities?: number;
   tags_high_growth_localities?: number;
@@ -123,7 +127,7 @@ export default function Home() {
   const cityName = activeCity ? activeCity.name : 'Coimbatore';
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
-  const [activeBlogCategory, setActiveBlogCategory] = useState<'news' | 'tax' | 'guide' | 'investment'>('news');
+  const [activeBlogCategory, setActiveBlogCategory] = useState<'all' | 'news' | 'tax' | 'guide' | 'investment'>('all');
 
   // Hero slideshow — properties with Home Banner enabled (property edit toggle)
   const [heroSlides, setHeroSlides] = useState<PropertyBannerSlide[]>([]);
@@ -139,16 +143,39 @@ export default function Home() {
   // Live Update Modal
   // const [showLiveUpdateModal, setShowLiveUpdateModal] = useState(false);
 
-  // Fetch Cities and Blogs once on mount
+  // Fetch real cities & blogs on mount
   useEffect(() => {
-    // 1. Cities
-    getCities()
-      .then((res) => {
-        if (res.data?.success && Array.isArray(res.data.cities)) {
-          setCities(res.data.cities);
+    // 1. Real cities with real property data
+    fetchRealDataFacets()
+      .then((facets) => {
+        if (facets.cities.length > 0) {
+          setCities(
+            facets.cities.map((c) => ({
+              id: c.id,
+              name: `${c.name} (${c.count})`,
+              state: 'Tamil Nadu',
+            }))
+          );
+        } else {
+          // Fallback to getCities if needed
+          getCities()
+            .then((res) => {
+              if (res.data?.success && Array.isArray(res.data.cities)) {
+                setCities(res.data.cities);
+              }
+            })
+            .catch(() => { });
         }
       })
-      .catch((e) => console.warn('Could not fetch cities', e));
+      .catch(() => {
+        getCities()
+          .then((res) => {
+            if (res.data?.success && Array.isArray(res.data.cities)) {
+              setCities(res.data.cities);
+            }
+          })
+          .catch(() => { });
+      });
 
     // 2. Blogs/Articles
     getBlogs()
@@ -206,10 +233,11 @@ export default function Home() {
       .finally(() => setLoadingHero(false));
   }, []);
 
-  // Homepage sections — active listings (with fallback to latest properties so new additions always show)
+  // Homepage sections — ultra fast single-batch active listings filtered by city & selected property type
   useEffect(() => {
     const cityParams = cityId ? { city_id: cityId } : {};
-    const baseParams = { limit: 12, ...cityParams };
+    const typeParams = mainTypeSlug ? { property_type: mainTypeSlug } : {};
+    const baseParams = { limit: 50, sort: 'new', ...cityParams, ...typeParams };
 
     setLoadingRecommended(true);
     setLoadingNewlyLaunched(true);
@@ -218,108 +246,50 @@ export default function Home() {
     setLoadingBestRated(true);
     setLoadingHighGrowth(true);
 
-    searchProperties({ ...baseParams, is_recommended: 1 })
+    searchProperties(baseParams)
       .then((res) => {
-        if (res.data?.success && Array.isArray(res.data.items) && res.data.items.length > 0) {
-          setRecommended(res.data.items);
-        } else {
-          searchProperties({ ...baseParams, sort: 'new' }).then((fRes) => {
-            if (fRes.data?.success && Array.isArray(fRes.data.items)) {
-              setRecommended(fRes.data.items);
-            } else {
-              setRecommended([]);
-            }
-          }).catch(() => setRecommended([]));
-        }
-      })
-      .catch((e) => console.warn('Could not fetch recommended listings', e))
-      .finally(() => setLoadingRecommended(false));
+        if (res.data?.success && Array.isArray(res.data.items)) {
+          const items: Property[] = res.data.items;
 
-    searchProperties({ ...baseParams, is_newly_launched: 1 })
-      .then((res) => {
-        if (res.data?.success && Array.isArray(res.data.items) && res.data.items.length > 0) {
-          setNewlyLaunched(res.data.items);
-        } else {
-          searchProperties({ ...baseParams, sort: 'new' }).then((fRes) => {
-            if (fRes.data?.success && Array.isArray(fRes.data.items)) {
-              setNewlyLaunched(fRes.data.items);
-            } else {
-              setNewlyLaunched([]);
-            }
-          }).catch(() => setNewlyLaunched([]));
-        }
-      })
-      .catch((e) => console.warn('Could not fetch newly launched listings', e))
-      .finally(() => setLoadingNewlyLaunched(false));
+          // Helper to get subset by flag or fallback to items
+          const filterByFlag = (flagName: keyof Property, fallbackCount = 6) => {
+            const flagged = items.filter((p) => Boolean(p[flagName]));
+            return flagged.length > 0 ? flagged : items.slice(0, fallbackCount);
+          };
 
-    searchProperties({ ...baseParams, is_verified_property: 1 })
-      .then((res) => {
-        if (res.data?.success && Array.isArray(res.data.items) && res.data.items.length > 0) {
-          setVerified(res.data.items);
+          setRecommended(filterByFlag('is_recommended'));
+          setNewlyLaunched(filterByFlag('is_newly_launched'));
+          setVerified(filterByFlag('is_verified_property'));
+          setFeatured(filterByFlag('is_featured'));
+          setBestRated(filterByFlag('tags_best_rate_localities' as keyof Property));
+          setHighGrowth(filterByFlag('tags_high_growth_localities' as keyof Property));
         } else {
-          searchProperties({ ...baseParams, sort: 'new' }).then((fRes) => {
-            if (fRes.data?.success && Array.isArray(fRes.data.items)) {
-              setVerified(fRes.data.items);
-            } else {
-              setVerified([]);
-            }
-          }).catch(() => setVerified([]));
+          setRecommended([]);
+          setNewlyLaunched([]);
+          setVerified([]);
+          setFeatured([]);
+          setBestRated([]);
+          setHighGrowth([]);
         }
       })
-      .catch((e) => console.warn('Could not fetch verified listings', e))
-      .finally(() => setLoadingVerified(false));
-
-    searchProperties({ ...baseParams, is_featured: 1 })
-      .then((res) => {
-        if (res.data?.success && Array.isArray(res.data.items) && res.data.items.length > 0) {
-          setFeatured(res.data.items);
-        } else {
-          searchProperties({ ...baseParams, sort: 'new' }).then((fRes) => {
-            if (fRes.data?.success && Array.isArray(fRes.data.items)) {
-              setFeatured(fRes.data.items);
-            } else {
-              setFeatured([]);
-            }
-          }).catch(() => setFeatured([]));
-        }
+      .catch((e) => {
+        console.warn('Could not fetch listings batch', e);
+        setRecommended([]);
+        setNewlyLaunched([]);
+        setVerified([]);
+        setFeatured([]);
+        setBestRated([]);
+        setHighGrowth([]);
       })
-      .catch((e) => console.warn('Could not fetch featured listings', e))
-      .finally(() => setLoadingFeatured(false));
-
-    searchProperties({ ...baseParams, tags_best_rate_localities: 1 })
-      .then((res) => {
-        if (res.data?.success && Array.isArray(res.data.items) && res.data.items.length > 0) {
-          setBestRated(res.data.items);
-        } else {
-          searchProperties({ limit: 12, tags_best_rate_localities: 1 }).then((fRes) => {
-            if (fRes.data?.success && Array.isArray(fRes.data.items) && fRes.data.items.length > 0) {
-              setBestRated(fRes.data.items);
-            } else {
-              setBestRated([]);
-            }
-          }).catch(() => setBestRated([]));
-        }
-      })
-      .catch((e) => console.warn('Could not fetch best rated listings', e))
-      .finally(() => setLoadingBestRated(false));
-
-    searchProperties({ ...baseParams, tags_high_growth_localities: 1 })
-      .then((res) => {
-        if (res.data?.success && Array.isArray(res.data.items) && res.data.items.length > 0) {
-          setHighGrowth(res.data.items);
-        } else {
-          searchProperties({ limit: 12, tags_high_growth_localities: 1 }).then((fRes) => {
-            if (fRes.data?.success && Array.isArray(fRes.data.items) && fRes.data.items.length > 0) {
-              setHighGrowth(fRes.data.items);
-            } else {
-              setHighGrowth([]);
-            }
-          }).catch(() => setHighGrowth([]));
-        }
-      })
-      .catch((e) => console.warn('Could not fetch high growth listings', e))
-      .finally(() => setLoadingHighGrowth(false));
-  }, [cityId]);
+      .finally(() => {
+        setLoadingRecommended(false);
+        setLoadingNewlyLaunched(false);
+        setLoadingVerified(false);
+        setLoadingFeatured(false);
+        setLoadingBestRated(false);
+        setLoadingHighGrowth(false);
+      });
+  }, [cityId, mainTypeSlug]);
 
   // Fetch wishlist IDs if logged in
   useEffect(() => {
@@ -613,6 +583,19 @@ export default function Home() {
           {/* Left Main Content Column */}
           <div className="col-lg-9">
 
+            {/* Property Categories (Apartments, Villas, etc.) */}
+            <PropertyCategories
+              cityId={cityId}
+              cityName={cityName}
+            />
+
+
+            <NewlyLaunchedProjects
+              items={newlyLaunched}
+              loading={loadingNewlyLaunched}
+              formatPrice={formatPrice}
+              getPropertyTypeLabel={getPropertyTypeLabel}
+            />
             {/* Recommended Properties Horizontal Slider */}
             <RecommendedProperties
               items={recommended}
@@ -624,14 +607,6 @@ export default function Home() {
               getPropertyTypeLabel={getPropertyTypeLabel}
             />
 
-            {/* Recommended Sellers Carousel */}
-
-            <NewlyLaunchedProjects
-              items={newlyLaunched}
-              loading={loadingNewlyLaunched}
-              formatPrice={formatPrice}
-              getPropertyTypeLabel={getPropertyTypeLabel}
-            />
 
             {/* Best Rated Properties Section */}
             <BestRatedProperties
@@ -644,6 +619,28 @@ export default function Home() {
               getPropertyTypeLabel={getPropertyTypeLabel}
             />
 
+
+
+
+
+
+            {/* Handpicked Projects Section */}
+            <HandpickedProjects
+              featured={featured}
+              loadingFeatured={loadingFeatured}
+            />
+
+            {/* Magic Loans Auto Scroll Banner */}
+            <MagicLoans />
+            <VerifiedProperties
+              items={verified}
+              loading={loadingVerified}
+              cityName={cityName}
+              formatPrice={formatPrice}
+              getPropertyTypeLabel={getPropertyTypeLabel}
+            />
+            {/* Verified Listings Banner */}
+            <VerifiedBanner />
             {/* High Growth Properties Section */}
             <HighGrowthProperties
               items={highGrowth}
@@ -654,33 +651,6 @@ export default function Home() {
               formatPrice={formatPrice}
               getPropertyTypeLabel={getPropertyTypeLabel}
             />
-
-            <VerifiedProperties
-              items={verified}
-              loading={loadingVerified}
-              cityName={cityName}
-              formatPrice={formatPrice}
-              getPropertyTypeLabel={getPropertyTypeLabel}
-            />
-
-            {/* Property Categories (Apartments, Villas, etc.) */}
-            <PropertyCategories
-              cityId={cityId}
-              cityName={cityName}
-            />
-
-            {/* Handpicked Projects Section */}
-            <HandpickedProjects
-              featured={featured}
-              loadingFeatured={loadingFeatured}
-            />
-
-            {/* Magic Loans Auto Scroll Banner */}
-            <MagicLoans />
-
-            {/* Verified Listings Banner */}
-            <VerifiedBanner />
-
             {/* Classic Property Research Tools Carousel & Calculators */}
             <ResearchTools />
 
@@ -710,7 +680,7 @@ export default function Home() {
               setAuthModalOpen={setAuthModalOpen}
             />
 
-            {/* Revamped Blogs & Articles Section */}
+            {/* From Our Blog Section */}
             <BlogsSection
               blogs={blogs}
               loadingBlogs={loadingBlogs}

@@ -74,35 +74,31 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
 }) => {
   return (
     <div className="nb-search-card-premium fade-in-up">
-      {/* Tab Header Row — main property types from API */}
+      {/* Tab Header Row — main property types filtered to real data */}
       <div className="nb-search-tabs-premium-row">
         <ul className="nb-search-tabs-premium-list">
-          {typesLoading && mainTypes.length === 0 ? (
-            <li>
-              <span className="nb-search-tab-premium-btn text-muted" style={{ cursor: 'default' }}>
-                Loading…
-              </span>
+          {/* Default 'All Properties' tab */}
+          <li>
+            <button
+              type="button"
+              className={`nb-search-tab-premium-btn ${!mainTypeSlug ? 'active' : ''}`}
+              onClick={() => onMainTypeChange('')}
+            >
+              All Properties
+            </button>
+          </li>
+
+          {mainTypes.map((mt) => (
+            <li key={mt.id || mt.slug}>
+              <button
+                type="button"
+                className={`nb-search-tab-premium-btn ${mainTypeSlug === mt.slug ? 'active' : ''}`}
+                onClick={() => onMainTypeChange(mt.slug)}
+              >
+                {mt.name}
+              </button>
             </li>
-          ) : mainTypes.length === 0 ? (
-            <li>
-              <span className="nb-search-tab-premium-btn text-muted" style={{ cursor: 'default' }}>
-                No property types
-              </span>
-            </li>
-          ) : (
-            mainTypes.map((mt) => (
-              <li key={mt.id}>
-                <button
-                  type="button"
-                  className={`nb-search-tab-premium-btn ${mainTypeSlug === mt.slug ? 'active' : ''}`}
-                  onClick={() => onMainTypeChange(mt.slug)}
-                  disabled={typesLoading}
-                >
-                  {mt.name}
-                </button>
-              </li>
-            ))
-          )}
+          ))}
         </ul>
         <Link href={user ? '/owner/property/add' : '#'} onClick={(e) => {
           if (!user) {
@@ -116,80 +112,56 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
 
       {/* Search Inputs Row */}
       <form onSubmit={handleSearchSubmit} className="nb-search-inputs-premium-row">
-        {/* Sub type dropdown (main type chosen via tabs above) */}
-        {/* {mainTypeSlug && subTypes.length > 0 && (
-          <div className="nb-search-select-premium-wrap" style={{ width: '170px' }}>
+        <div className="nb-search-inputs-main-group">
+          {/* City Selector */}
+          <div className="nb-search-select-premium-wrap">
             <select
               className="form-select"
-              value={subTypeSlug}
-              onChange={(e) => onSubTypeChange(e.target.value)}
-              disabled={typesLoading}
-              aria-label="Sub property type"
+              value={cityId}
+              onChange={(e) => setCityId(e.target.value)}
             >
-              <option value="">Select</option>
-              {subTypes.map((s) => (
-                <option key={s.id} value={s.slug}>
-                  {s.name}
-                </option>
+              <option value="">Any City</option>
+              {cities.map((c) => (
+                <option key={c.id} value={c.id.toString()}>{c.name}</option>
               ))}
             </select>
           </div>
-        )} */}
 
-        {/* City Selector */}
-        <div className="nb-search-select-premium-wrap" style={{ width: '140px' }}>
-          <select
-            className="form-select"
-            value={cityId}
-            onChange={(e) => setCityId(e.target.value)}
-          >
-            <option value="">Any City</option>
-            {cities.map((c) => (
-              <option key={c.id} value={c.id.toString()}>{c.name}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Keyword/Locality Search Input */}
-        <div className="nb-search-input-premium-wrap">
-          <Search size={16} className="nb-search-input-premium-icon" />
-          <input
-            type="text"
-            className="form-control"
-            placeholder="Locality / Area / Project..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <div className="nb-search-input-actions">
-            <button
-              type="button"
-              className={`nb-search-action-btn ${voiceStatus === 'listening' ? 'listening' : ''}`}
-              title={voiceStatus === 'listening' ? 'Listening...' : 'Voice Search'}
-              onClick={handleVoiceSearch}
-            >
-              <Mic size={16} />
-            </button>
-            <button type="button" className="nb-search-action-btn" title="Current Location" onClick={handleLocationSearch}>
-              <Navigation size={16} />
-            </button>
+          {/* Keyword/Locality Search Input */}
+          <div className="nb-search-input-premium-wrap">
+            <Search size={16} className="nb-search-input-premium-icon" />
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Locality / Area / Project..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <div className="nb-search-input-actions">
+              <button type="button" className="nb-search-action-btn" title="Current Location" onClick={handleLocationSearch}>
+                <Navigation size={16} />
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Collapsible Trigger button */}
-        <button
-          type="button"
-          className="btn btn-light border rounded-pill px-3 d-flex align-items-center gap-1.5 my-1"
-          style={{ fontWeight: 600, color: '#4b5563', fontSize: '0.9rem' }}
-          onClick={() => setShowAdvanced(!showAdvanced)}
-        >
-          <Sliders size={14} />
-          <span>Filters</span>
-          <ChevronDown size={14} style={{ transform: showAdvanced ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
-        </button>
+        <div className="nb-search-actions-group">
+          {/* Collapsible Trigger button */}
+          <button
+            type="button"
+            className="btn btn-light border rounded-pill px-3 d-flex align-items-center gap-1.5 my-1 nb-search-filters-btn"
+            style={{ fontWeight: 600, color: '#4b5563', fontSize: '0.9rem' }}
+            onClick={() => setShowAdvanced(!showAdvanced)}
+          >
+            <Sliders size={14} />
+            <span>Filters</span>
+            <ChevronDown size={14} style={{ transform: showAdvanced ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+          </button>
 
-        <button type="submit" className="nb-search-submit-premium-btn">
-          Search
-        </button>
+          <button type="submit" className="nb-search-submit-premium-btn">
+            Search
+          </button>
+        </div>
       </form>
 
       {/* Collapsible Advanced Options */}

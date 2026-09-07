@@ -12,7 +12,7 @@ interface PromoSectionProps {
 
 const PromoSection: React.FC<PromoSectionProps> = ({ user, setAuthModalOpen }) => {
   return (
-    <div className="container mb-5 fade-in-up mt-5">
+    <div className="mb-5 fade-in-up mt-5">
       <div className="row align-items-center">
         {/* Left Side - Image with Gradient Background */}
         <div className="col-md-6 mb-4 mb-md-0 position-relative">

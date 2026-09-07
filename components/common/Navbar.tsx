@@ -54,10 +54,10 @@ const Navbar: React.FC = () => {
         <div className="collapse navbar-collapse justify-content-center flex-grow-1 mx-xl-3" id="nbNav">
           <ul className="navbar-nav align-items-center gap-1 gap-xl-2 mb-0">
             <li className="nav-item">
-              <Link href="/search" className="nav-link nav-link-premium text-nowrap">Search</Link>
+              <Link href="/search" className="nav-link nav-link-premium text-nowrap">Search Properties</Link>
             </li>
             <li className="nav-item">
-              <Link href="/blog" className="nav-link nav-link-premium text-nowrap">Blog</Link>
+              <Link href="/blog" className="nav-link nav-link-premium text-nowrap">Blog's</Link>
             </li>
             <li className="nav-item">
               <Link href="/user/wishlist" className="nav-link nav-link-premium text-nowrap">My Wishlist</Link>

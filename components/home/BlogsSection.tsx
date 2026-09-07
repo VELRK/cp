@@ -59,36 +59,36 @@ const BlogsSection: React.FC<BlogsSectionProps> = ({
   const displayBlogs = filtered.length > 0 ? filtered.slice(0, 4) : (activeBlogCategory === 'all' ? blogs.slice(0, 4) : []);
 
   return (
-    <section className="classic-home-blog-section p-3 p-md-4 rounded-4 shadow-sm bg-white mb-4" style={{ border: '1px solid #e2e8f0' }}>
+    <section className="classic-home-blog-section p-4 rounded-4 shadow-sm bg-white mb-4 border">
       {/* Header Row */}
-      <div className="d-flex justify-content-between align-items-sm-end align-items-start mb-3 flex-wrap gap-2">
+      <div className="d-flex justify-content-between align-items-sm-end align-items-start mb-4 flex-wrap gap-3">
         <div>
-          <div className="d-inline-flex align-items-center gap-1.5 px-2.5 py-1 rounded-pill mb-1.5" style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe' }}>
-            <Sparkles size={12} className="text-primary" />
-            <span className="fw-bold text-primary text-uppercase" style={{ fontSize: '0.68rem', letterSpacing: '0.5px' }}>
+          <div className="d-inline-flex align-items-center gap-2 px-3 py-1.5 rounded-pill mb-2" style={{ backgroundColor: 'var(--nb-primary-soft)', border: '1px solid var(--nb-mint-deep)' }}>
+            <Sparkles size={14} style={{ color: 'var(--nb-primary)' }} />
+            <span className="fw-bold text-uppercase" style={{ color: 'var(--nb-primary)', fontSize: '0.75rem', letterSpacing: '0.5px' }}>
               Insights & Market Guides
             </span>
           </div>
-          <h2 className="fw-bold m-0 text-dark" style={{ fontSize: 'clamp(1.2rem, 1.8vw, 1.45rem)', letterSpacing: '-0.025em', color: '#0f172a' }}>
+          <h2 className="fw-bold m-0 text-dark mb-1" style={{ fontSize: '1.75rem', letterSpacing: '-0.02em' }}>
             From Our Blog
           </h2>
-          <p className="text-muted m-0 mt-1" style={{ fontSize: 'clamp(0.8rem, 1vw, 0.86rem)' }}>
+          <p className="text-secondary m-0" style={{ fontSize: '0.95rem' }}>
             Expert insights, verified property documentation tips, and local market trends.
           </p>
         </div>
 
         <Link
           href="/blog"
-          className="btn btn-outline-primary btn-sm rounded-pill px-3 py-1.5 fw-semibold d-inline-flex align-items-center gap-1.5 shadow-none"
-          style={{ fontSize: '0.8rem', transition: 'all 0.2s ease' }}
+          className="btn rounded-pill px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2 shadow-sm text-white"
+          style={{ backgroundColor: 'var(--nb-primary)', borderColor: 'var(--nb-primary)', fontSize: '0.9rem', transition: 'all 0.2s ease' }}
         >
           <span>View All Articles</span>
-          <ArrowRight size={14} />
+          <ArrowRight size={16} />
         </Link>
       </div>
 
       {/* Filter Tabs */}
-      <div className="mb-3 pb-1 border-bottom d-flex gap-2 overflow-auto" style={{ scrollbarWidth: 'none' }}>
+      <div className="mb-4 pb-2 border-bottom d-flex gap-2 overflow-auto" style={{ scrollbarWidth: 'none' }}>
         {[
           { key: 'all', label: 'All Articles' },
           { key: 'news', label: 'Market News' },
@@ -101,12 +101,15 @@ const BlogsSection: React.FC<BlogsSectionProps> = ({
             <button
               key={tab.key}
               type="button"
-              className={`btn btn-sm rounded-pill px-3 py-1.5 fw-semibold text-nowrap transition-all ${
+              className={`btn btn-sm rounded-pill px-4 py-2 fw-semibold text-nowrap transition-all ${
                 isActive
-                  ? 'btn-primary text-white shadow-sm'
+                  ? 'text-white shadow-sm'
                   : 'btn-light bg-light text-secondary border-0'
               }`}
-              style={{ fontSize: '0.8rem' }}
+              style={{
+                fontSize: '0.85rem',
+                ...(isActive ? { backgroundColor: 'var(--nb-primary)', borderColor: 'var(--nb-primary)' } : {})
+              }}
               onClick={() => setActiveBlogCategory(tab.key as any)}
             >
               {tab.label}
@@ -116,16 +119,16 @@ const BlogsSection: React.FC<BlogsSectionProps> = ({
       </div>
 
       {/* Grid of Cards */}
-      <div className="row g-3">
+      <div className="row g-4">
         {loadingBlogs ? (
           Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="col-lg-3 col-sm-6 col-12 placeholder-glow">
-              <div className="card border-0 rounded-3 overflow-hidden h-100 shadow-sm" style={{ border: '1px solid #e2e8f0' }}>
-                <div className="placeholder w-100" style={{ height: '160px', backgroundColor: '#e2e8f0' }}></div>
-                <div className="card-body p-3">
-                  <div className="placeholder col-6 mb-2"></div>
-                  <div className="placeholder col-12 mb-2" style={{ height: '20px' }}></div>
-                  <div className="placeholder col-9 mb-3"></div>
+              <div className="card border rounded-4 overflow-hidden h-100 shadow-sm">
+                <div className="placeholder w-100" style={{ height: '180px' }}></div>
+                <div className="card-body p-4">
+                  <div className="placeholder col-6 mb-3"></div>
+                  <div className="placeholder col-12 mb-2" style={{ height: '24px' }}></div>
+                  <div className="placeholder col-9 mb-4"></div>
                   <div className="placeholder col-5"></div>
                 </div>
               </div>
@@ -133,10 +136,11 @@ const BlogsSection: React.FC<BlogsSectionProps> = ({
           ))
         ) : displayBlogs.length === 0 ? (
           <div className="col-12 text-center py-5">
-            <p className="text-muted small mb-2">No articles found in this category.</p>
+            <p className="text-muted mb-3">No articles found in this category.</p>
             <button
               type="button"
-              className="btn btn-sm btn-outline-primary rounded-pill px-3"
+              className="btn rounded-pill px-4 py-2 fw-semibold"
+              style={{ color: 'var(--nb-primary)', border: '1px solid var(--nb-primary)', backgroundColor: 'transparent' }}
               onClick={() => setActiveBlogCategory('all')}
             >
               View all articles
@@ -152,8 +156,7 @@ const BlogsSection: React.FC<BlogsSectionProps> = ({
               ? new Date(blog.date).toLocaleDateString('en-IN', { month: 'short', day: '2-digit', year: 'numeric' })
               : '';
             const author = blog.author && blog.author.toLowerCase() !== 'nobroker' ? blog.author : 'Editorial Desk';
-            
-            // Prefer rich article description for excerpt; fallback to short_notes or cleanDesc
+
             const cleanDesc = blog.description ? blog.description.replace(/<[^>]*>/g, '').trim() : '';
             const excerpt = cleanDesc.length > 20 ? cleanDesc : (blog.short_notes || cleanDesc);
 
@@ -161,22 +164,33 @@ const BlogsSection: React.FC<BlogsSectionProps> = ({
               <div key={blog.id} className="col-lg-3 col-sm-6 col-12">
                 <Link
                   href={`/blog/${blog.id}`}
-                  className="text-decoration-none d-block h-100 classic-home-blog-card"
+                  className="text-decoration-none d-block h-100 group"
                 >
                   <div
-                    className="card h-100 border-0 rounded-3 overflow-hidden bg-white d-flex flex-column"
+                    className="card h-100 border rounded-4 overflow-hidden bg-white d-flex flex-column"
                     style={{
-                      border: '1px solid #e2e8f0',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                      transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                      cursor: 'pointer'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-5px)';
+                      e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.05)';
                     }}
                   >
                     {/* Card Image */}
-                    <div className="position-relative overflow-hidden" style={{ height: '160px', backgroundColor: '#0f172a' }}>
+                    <div className="position-relative overflow-hidden" style={{ height: '180px' }}>
                       <img
                         src={initialImg}
                         alt={blog.name}
-                        className="w-100 h-100 object-fit-cover classic-card-img"
+                        className="w-100 h-100 object-fit-cover"
+                        style={{ transition: 'transform 0.5s ease' }}
+                        onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                        onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                         loading="lazy"
                         onError={(e) => {
                           const target = e.currentTarget as HTMLImageElement;
@@ -185,29 +199,26 @@ const BlogsSection: React.FC<BlogsSectionProps> = ({
                           }
                         }}
                       />
-                      {/* Dark Gradient Overlay at bottom of image */}
+                      {/* Gradient Overlay */}
                       <div
                         className="position-absolute bottom-0 start-0 w-100"
                         style={{
-                          height: '45%',
-                          background: 'linear-gradient(to top, rgba(15, 23, 42, 0.65), transparent)',
+                          height: '60%',
+                          background: 'linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent)',
                           pointerEvents: 'none'
                         }}
                       />
 
                       {/* Top Category Badge */}
                       <span
-                        className="position-absolute top-0 start-0 m-2 badge rounded-pill text-truncate"
+                        className="position-absolute top-0 start-0 m-3 badge rounded-pill text-white text-truncate shadow-sm"
                         style={{
-                          maxWidth: '60%',
-                          backgroundColor: 'rgba(15, 23, 42, 0.82)',
-                          color: '#ffffff',
-                          fontSize: '0.66rem',
+                          backgroundColor: 'var(--nb-primary)',
+                          maxWidth: '70%',
+                          fontSize: '0.7rem',
                           fontWeight: 600,
-                          padding: '0.28rem 0.58rem',
-                          backdropFilter: 'blur(6px)',
-                          letterSpacing: '0.02em',
-                          border: '1px solid rgba(255,255,255,0.18)'
+                          padding: '0.35rem 0.75rem',
+                          letterSpacing: '0.02em'
                         }}
                         title={categoryLabel}
                       >
@@ -216,96 +227,78 @@ const BlogsSection: React.FC<BlogsSectionProps> = ({
 
                       {/* Top-Right Read Time */}
                       <span
-                        className="position-absolute top-0 end-0 m-2 badge rounded-pill d-inline-flex align-items-center gap-1 flex-shrink-0"
+                        className="position-absolute top-0 end-0 m-3 badge rounded-pill bg-white text-dark shadow-sm d-inline-flex align-items-center gap-1 flex-shrink-0"
                         style={{
-                          backgroundColor: 'rgba(15, 23, 42, 0.75)',
-                          color: '#ffffff',
-                          fontSize: '0.64rem',
-                          fontWeight: 500,
-                          padding: '0.28rem 0.52rem',
-                          backdropFilter: 'blur(6px)',
-                          border: '1px solid rgba(255,255,255,0.15)'
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
+                          padding: '0.35rem 0.75rem'
                         }}
                       >
-                        <Clock size={10} />
+                        <Clock size={12} style={{ color: 'var(--nb-primary)' }} />
                         <span>{readTime} min</span>
                       </span>
                     </div>
 
                     {/* Card Body */}
-                    <div className="p-3 d-flex flex-column flex-grow-1">
-                      {/* Meta info: Author on left, Date on right - Guaranteed no awkward wrapping */}
-                      <div
-                        className="d-flex align-items-center justify-content-between text-muted mb-2 gap-1"
-                        style={{ fontSize: '0.72rem', minWidth: 0 }}
-                      >
-                        <span
-                          className="d-inline-flex align-items-center gap-1.5 text-secondary fw-medium text-truncate"
-                          style={{ minWidth: 0, maxWidth: '60%' }}
-                          title={author}
-                        >
-                          <User size={11} className="text-muted flex-shrink-0" />
+                    <div className="p-4 d-flex flex-column flex-grow-1">
+                      {/* Meta info */}
+                      <div className="d-flex align-items-center justify-content-between text-secondary mb-3 gap-2" style={{ fontSize: '0.8rem' }}>
+                        <span className="d-inline-flex align-items-center gap-1.5 fw-medium text-truncate" title={author}>
+                          <User size={14} style={{ color: 'var(--nb-primary)' }} className="flex-shrink-0" />
                           <span className="text-truncate">{author}</span>
                         </span>
                         {formattedDate && (
-                          <span
-                            className="d-inline-flex align-items-center gap-1 text-muted text-nowrap flex-shrink-0"
-                            style={{ fontSize: '0.71rem' }}
-                          >
-                            <Calendar size={11} className="text-muted flex-shrink-0" />
+                          <span className="d-inline-flex align-items-center gap-1.5 text-nowrap flex-shrink-0">
+                            <Calendar size={14} style={{ color: 'var(--nb-primary)' }} className="flex-shrink-0" />
                             <span>{formattedDate}</span>
                           </span>
                         )}
                       </div>
 
-                      {/* Title - Consistent 2-line height */}
+                      {/* Title */}
                       <h3
-                        className="fw-bold mb-2 text-dark classic-blog-title"
+                        className="fw-bold mb-3 text-dark"
                         style={{
-                          fontSize: 'clamp(0.86rem, 0.82rem + 0.15vw, 0.92rem)',
-                          lineHeight: '1.38',
-                          height: '2.55rem',
+                          fontSize: '1.05rem',
+                          lineHeight: '1.4',
                           display: '-webkit-box',
                           WebkitLineClamp: 2,
                           WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                          color: '#0f172a'
+                          overflow: 'hidden'
                         }}
                         title={blog.name}
                       >
                         {blog.name}
                       </h3>
 
-                      {/* Excerpt - Consistent 2-line height */}
+                      {/* Excerpt */}
                       {excerpt ? (
                         <p
-                          className="text-secondary small mb-3"
+                          className="text-secondary mb-4 flex-grow-1"
                           style={{
-                            fontSize: '0.78rem',
-                            lineHeight: '1.45',
-                            height: '2.3rem',
+                            fontSize: '0.85rem',
+                            lineHeight: '1.5',
                             display: '-webkit-box',
                             WebkitLineClamp: 2,
                             WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                            color: '#64748b'
+                            overflow: 'hidden'
                           }}
                           title={excerpt}
                         >
                           {excerpt}
                         </p>
                       ) : (
-                        <div style={{ height: '2.3rem' }} className="mb-3" />
+                        <div className="flex-grow-1 mb-4" />
                       )}
 
-                      {/* Card Footer CTA - Pinned to bottom cleanly */}
-                      <div className="pt-2.5 mt-auto border-top d-flex align-items-center justify-content-between" style={{ borderColor: '#f1f5f9' }}>
+                      {/* Card Footer CTA */}
+                      <div className="pt-3 mt-auto border-top border-light d-flex align-items-center justify-content-between">
                         <span
-                          className="fw-bold small d-inline-flex align-items-center gap-1 classic-blog-cta"
-                          style={{ color: '#0284c7', fontSize: '0.78rem' }}
+                          className="fw-bold d-inline-flex align-items-center gap-2 transition-all"
+                          style={{ color: 'var(--nb-primary)', fontSize: '0.85rem' }}
                         >
                           <span>Read Full Story</span>
-                          <ArrowRight size={13} className="classic-arrow-icon" />
+                          <ArrowRight size={16} />
                         </span>
                       </div>
                     </div>

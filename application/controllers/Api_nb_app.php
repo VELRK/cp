@@ -120,7 +120,10 @@ class Api_nb_app extends CI_Controller
             $row['kyc_rejection_reason'] = '';
         }
         return nb_api_add_datetime_display($row, array(
-            'created_at', 'updated_at', 'kyc_submitted_at', 'kyc_reviewed_at',
+            'created_at',
+            'updated_at',
+            'kyc_submitted_at',
+            'kyc_reviewed_at',
         ));
     }
 
@@ -514,7 +517,7 @@ class Api_nb_app extends CI_Controller
         if (!$user || empty($user->password) || !password_verify($password, $user->password)) {
             return $this->_json(array('success' => false, 'message' => 'Invalid email or password.'), 401);
         }
-        if (!isset($user->status) || $user->status !== 'approved') {
+        if (!isset($user->status) || ($user->status !== 'approved' && !($user->role === 'admin' && $user->status === 'active'))) {
             return $this->_json(array('success' => false, 'message' => 'Account is not active. Contact support.'), 403);
         }
         $token = $this->_issue_auth_token($user);
@@ -709,8 +712,8 @@ class Api_nb_app extends CI_Controller
     {
         if ($this->_is_test_otp_phone($phone, $full_phone)) {
             return array(
-                'success'          => true,
-                'message'          => 'Test OTP generated (WhatsApp skipped).',
+                'success' => true,
+                'message' => 'Test OTP generated (WhatsApp skipped).',
                 'development_mode' => true,
             );
         }
@@ -748,11 +751,11 @@ class Api_nb_app extends CI_Controller
         $this->Nb_user_model->set_api_token((int) $user->id, $token);
         $this->session->set_userdata('nb_user_id', (int) $user->id);
         $this->session->set_userdata('nb_user', array(
-            'id'     => (int) $user->id,
-            'name'   => $user->name,
-            'email'  => $user->email,
-            'phone'  => isset($user->phone) ? (string) $user->phone : '',
-            'role'   => $user->role,
+            'id' => (int) $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => isset($user->phone) ? (string) $user->phone : '',
+            'role' => $user->role,
             'status' => $user->status,
         ));
         nb_set_api_token_cookie($token);
@@ -974,8 +977,10 @@ class Api_nb_app extends CI_Controller
             'limit' => $limit,
             'offset' => $offset,
             'stats' => array(
-                'active' => count(array_filter($listings, function ($l) { return !empty($l['is_active']); })),
-                'pending' => count(array_filter($listings, function ($l) { return empty($l['is_active']); })),
+                'active' => count(array_filter($listings, function ($l) {
+                    return !empty($l['is_active']); })),
+                'pending' => count(array_filter($listings, function ($l) {
+                    return empty($l['is_active']); })),
             ),
         ));
     }
@@ -1229,130 +1234,130 @@ class Api_nb_app extends CI_Controller
         $update = array();
 
         if (!$kyc_only) {
-        // --- name ---
-        if (isset($input['name'])) {
-            $name = trim(strip_tags((string) $input['name']));
-            if (strlen($name) < 2) {
-                return $this->_json(array('success' => false, 'message' => 'name must be at least 2 characters'), 400);
-            }
-            $update['name'] = $name;
-        }
-
-        // --- email ---
-        if (isset($input['email'])) {
-            $email = strtolower(trim((string) $input['email']));
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                return $this->_json(array('success' => false, 'message' => 'Invalid email address'), 400);
-            }
-            $existing = $this->Nb_user_model->get_by_email($email);
-            if ($existing && (int) $existing->id !== $id) {
-                return $this->_json(array('success' => false, 'message' => 'Email already registered'), 409);
-            }
-            $update['email'] = $email;
-        }
-
-        // --- phone ---
-        if (isset($input['phone'])) {
-            $phone = trim(preg_replace('/[^\d\+\-\s]/', '', (string) $input['phone']));
-            $digits = preg_replace('/\D+/', '', $phone);
-            if (strlen($digits) < 10) {
-                return $this->_json(array('success' => false, 'message' => 'phone must be at least 10 digits'), 400);
-            }
-            $existing = $this->Nb_user_model->get_by_phone($phone);
-            if ($existing && (int) $existing->id !== $id) {
-                return $this->_json(array('success' => false, 'message' => 'Phone number already registered'), 409);
-            }
-            $update['phone'] = $phone;
-        }
-
-        // --- role ---
-        if (isset($input['role'])) {
-            $role = trim(strtolower((string) $input['role']));
-            if (!in_array($role, array('owner', 'tenant'), true)) {
-                return $this->_json(array('success' => false, 'message' => 'role must be owner or tenant'), 400);
-            }
-            $update['role'] = $role;
-        }
-
-        // --- user_type ---
-        if (isset($input['user_type'])) {
-            $user_type = trim(strtolower((string) $input['user_type']));
-            if (!in_array($user_type, array('agent', 'customer'), true)) {
-                return $this->_json(array('success' => false, 'message' => 'user_type must be agent or customer'), 400);
-            }
-            $update['user_type'] = $user_type;
-            if ($user_type === 'agent' && empty($update['role'])) {
-                $update['role'] = 'owner';
-            }
-        }
-
-        // --- city_id ---
-        if (isset($input['city_id'])) {
-            $city_id = (int) $input['city_id'];
-            $update['city_id'] = $city_id > 0 ? $city_id : null;
-        }
-
-        // --- fcm_token ---
-        if (isset($input['fcm_token'])) {
-            $fcm = trim((string) $input['fcm_token']);
-            if ($this->db->field_exists('fcm_token', 'nb_users')) {
-                $update['fcm_token'] = $fcm !== '' ? $fcm : null;
-            }
-        }
-
-        // --- profile_pic (multipart file upload takes priority over base64/path) ---
-        $profileInputField = '';
-        if (!empty($_FILES['profile_image']['name'])) {
-            $profileInputField = 'profile_image';
-        } elseif (!empty($_FILES['profile_pic']['name'])) {
-            $profileInputField = 'profile_pic';
-        }
-        if ($profileInputField !== '') {
-            $targetDir = FCPATH . 'uploads/profiles/';
-            if (!is_dir($targetDir)) {
-                @mkdir($targetDir, 0755, true);
-            }
-            if (!is_dir($targetDir)) {
-                return $this->_json(array('success' => false, 'message' => 'Could not prepare profile upload directory'), 500);
-            }
-            $this->load->library('upload');
-            $this->upload->initialize(array(
-                'upload_path' => $targetDir,
-                'allowed_types' => 'jpg|jpeg|png|webp',
-                'max_size' => 5120,
-                'file_ext_tolower' => true,
-                'remove_spaces' => true,
-                'encrypt_name' => true,
-            ));
-            if (!$this->upload->do_upload($profileInputField)) {
-                return $this->_json(array('success' => false, 'message' => $profileInputField . ' upload failed: ' . strip_tags($this->upload->display_errors('', ''))), 400);
-            }
-            $uProf = $this->upload->data();
-            $update['profile_pic'] = 'uploads/profiles/' . $uProf['file_name'];
-        } else {
-            $picRaw = '';
-            if (isset($input['profile_pic']) && $this->_looks_like_base64_payload($input['profile_pic'])) {
-                $picRaw = (string) $input['profile_pic'];
-            } elseif (isset($input['profile_image_base64'])) {
-                $picRaw = (string) $input['profile_image_base64'];
-            } elseif (isset($input['profile_pic_base64'])) {
-                $picRaw = (string) $input['profile_pic_base64'];
-            } elseif (isset($input['profile_image']) && $this->_looks_like_base64_payload($input['profile_image'])) {
-                $picRaw = (string) $input['profile_image'];
-            }
-            if ($picRaw !== '') {
-                $saved = $this->_save_base64_upload($picRaw, 'profile');
-                if (!$saved['ok']) {
-                    return $this->_json(array('success' => false, 'message' => 'profile_pic upload failed: ' . $saved['error']), 400);
+            // --- name ---
+            if (isset($input['name'])) {
+                $name = trim(strip_tags((string) $input['name']));
+                if (strlen($name) < 2) {
+                    return $this->_json(array('success' => false, 'message' => 'name must be at least 2 characters'), 400);
                 }
-                $update['profile_pic'] = $saved['path'];
-            } elseif (isset($input['profile_pic']) && !$this->_looks_like_base64_payload($input['profile_pic'])) {
-                $picPath = trim((string) $input['profile_pic']);
-                if ($picPath !== '') {
-                    $update['profile_pic'] = $picPath;
+                $update['name'] = $name;
+            }
+
+            // --- email ---
+            if (isset($input['email'])) {
+                $email = strtolower(trim((string) $input['email']));
+                if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    return $this->_json(array('success' => false, 'message' => 'Invalid email address'), 400);
+                }
+                $existing = $this->Nb_user_model->get_by_email($email);
+                if ($existing && (int) $existing->id !== $id) {
+                    return $this->_json(array('success' => false, 'message' => 'Email already registered'), 409);
+                }
+                $update['email'] = $email;
+            }
+
+            // --- phone ---
+            if (isset($input['phone'])) {
+                $phone = trim(preg_replace('/[^\d\+\-\s]/', '', (string) $input['phone']));
+                $digits = preg_replace('/\D+/', '', $phone);
+                if (strlen($digits) < 10) {
+                    return $this->_json(array('success' => false, 'message' => 'phone must be at least 10 digits'), 400);
+                }
+                $existing = $this->Nb_user_model->get_by_phone($phone);
+                if ($existing && (int) $existing->id !== $id) {
+                    return $this->_json(array('success' => false, 'message' => 'Phone number already registered'), 409);
+                }
+                $update['phone'] = $phone;
+            }
+
+            // --- role ---
+            if (isset($input['role'])) {
+                $role = trim(strtolower((string) $input['role']));
+                if (!in_array($role, array('owner', 'tenant'), true)) {
+                    return $this->_json(array('success' => false, 'message' => 'role must be owner or tenant'), 400);
+                }
+                $update['role'] = $role;
+            }
+
+            // --- user_type ---
+            if (isset($input['user_type'])) {
+                $user_type = trim(strtolower((string) $input['user_type']));
+                if (!in_array($user_type, array('agent', 'customer'), true)) {
+                    return $this->_json(array('success' => false, 'message' => 'user_type must be agent or customer'), 400);
+                }
+                $update['user_type'] = $user_type;
+                if ($user_type === 'agent' && empty($update['role'])) {
+                    $update['role'] = 'owner';
                 }
             }
-        }
+
+            // --- city_id ---
+            if (isset($input['city_id'])) {
+                $city_id = (int) $input['city_id'];
+                $update['city_id'] = $city_id > 0 ? $city_id : null;
+            }
+
+            // --- fcm_token ---
+            if (isset($input['fcm_token'])) {
+                $fcm = trim((string) $input['fcm_token']);
+                if ($this->db->field_exists('fcm_token', 'nb_users')) {
+                    $update['fcm_token'] = $fcm !== '' ? $fcm : null;
+                }
+            }
+
+            // --- profile_pic (multipart file upload takes priority over base64/path) ---
+            $profileInputField = '';
+            if (!empty($_FILES['profile_image']['name'])) {
+                $profileInputField = 'profile_image';
+            } elseif (!empty($_FILES['profile_pic']['name'])) {
+                $profileInputField = 'profile_pic';
+            }
+            if ($profileInputField !== '') {
+                $targetDir = FCPATH . 'uploads/profiles/';
+                if (!is_dir($targetDir)) {
+                    @mkdir($targetDir, 0755, true);
+                }
+                if (!is_dir($targetDir)) {
+                    return $this->_json(array('success' => false, 'message' => 'Could not prepare profile upload directory'), 500);
+                }
+                $this->load->library('upload');
+                $this->upload->initialize(array(
+                    'upload_path' => $targetDir,
+                    'allowed_types' => 'jpg|jpeg|png|webp',
+                    'max_size' => 5120,
+                    'file_ext_tolower' => true,
+                    'remove_spaces' => true,
+                    'encrypt_name' => true,
+                ));
+                if (!$this->upload->do_upload($profileInputField)) {
+                    return $this->_json(array('success' => false, 'message' => $profileInputField . ' upload failed: ' . strip_tags($this->upload->display_errors('', ''))), 400);
+                }
+                $uProf = $this->upload->data();
+                $update['profile_pic'] = 'uploads/profiles/' . $uProf['file_name'];
+            } else {
+                $picRaw = '';
+                if (isset($input['profile_pic']) && $this->_looks_like_base64_payload($input['profile_pic'])) {
+                    $picRaw = (string) $input['profile_pic'];
+                } elseif (isset($input['profile_image_base64'])) {
+                    $picRaw = (string) $input['profile_image_base64'];
+                } elseif (isset($input['profile_pic_base64'])) {
+                    $picRaw = (string) $input['profile_pic_base64'];
+                } elseif (isset($input['profile_image']) && $this->_looks_like_base64_payload($input['profile_image'])) {
+                    $picRaw = (string) $input['profile_image'];
+                }
+                if ($picRaw !== '') {
+                    $saved = $this->_save_base64_upload($picRaw, 'profile');
+                    if (!$saved['ok']) {
+                        return $this->_json(array('success' => false, 'message' => 'profile_pic upload failed: ' . $saved['error']), 400);
+                    }
+                    $update['profile_pic'] = $saved['path'];
+                } elseif (isset($input['profile_pic']) && !$this->_looks_like_base64_payload($input['profile_pic'])) {
+                    $picPath = trim((string) $input['profile_pic']);
+                    if ($picPath !== '') {
+                        $update['profile_pic'] = $picPath;
+                    }
+                }
+            }
         }
 
         // --- agent KYC: business_name (required on submit), website (optional) ---
@@ -1881,7 +1886,9 @@ class Api_nb_app extends CI_Controller
         );
 
         return nb_api_add_datetime_display($row, array(
-            'created_at', 'updated_at', 'available_from' => true,
+            'created_at',
+            'updated_at',
+            'available_from' => true,
         ));
     }
 

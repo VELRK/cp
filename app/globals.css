@@ -4062,6 +4062,7 @@ body,
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-height: 0;
 }
 
 /* Badges & Tags */
@@ -4078,6 +4079,7 @@ body,
   text-transform: uppercase;
   font-family: var(--font-sans), system-ui, sans-serif;
   transition: all 0.3s ease;
+  white-space: nowrap;
 }
 
 .nb-classic-cat-card:hover .nb-classic-cat-badge {
@@ -4191,6 +4193,7 @@ body,
 .nb-classic-cat-card-img-wrap {
   height: 48%;
   width: 100%;
+  flex-shrink: 0;
   overflow: hidden;
   position: relative;
   /* Arch dome clip-path curve */

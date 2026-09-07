@@ -165,7 +165,7 @@ const PropertyCategories: React.FC<PropertyCategoriesProps> = ({ cityId, cityNam
           const propsWithPrice = (cityMatchingProps.length > 0 ? cityMatchingProps : matchingProps)
             .filter((p) => p.price && Number(p.price) > 0);
 
-          let priceHint = 'Verified Properties';
+          let priceHint = '';
           if (propsWithPrice.length > 0) {
             const minPrice = Math.min(...propsWithPrice.map((p) => Number(p.price)));
             priceHint = formatPriceShort(minPrice);

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { getAdminPanelUrl } from '@/lib/frontendApi';
+import { toFrontendAssetUrl } from '@/lib/cityImages';
 import { 
   X, 
   User, 
@@ -65,7 +66,7 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
         <div className="p-3 border-bottom d-flex align-items-center justify-content-between bg-white">
           <Link href="/" className="d-flex align-items-center text-decoration-none" onClick={handleLinkClick}>
             <img 
-              src="/assets/images/logo/cplogo.png" 
+              src={toFrontendAssetUrl("/assets/images/logo/cplogo.png")}
               alt="Coimbatore Properties" 
               style={{ height: '38px', width: 'auto', objectFit: 'contain' }} 
             />

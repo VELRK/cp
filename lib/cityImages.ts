@@ -46,7 +46,7 @@ function normalizeAssetPath(pathname: string): string {
     path = underCp[1];
   }
 
-  if (path.startsWith('/assets/') || path.startsWith('/uploads/')) {
+  if (path.startsWith('/assets/') || path.startsWith('/uploads/') || path.startsWith('/images/')) {
     if (usesDevAssetProxy()) {
       return path;
     }
@@ -66,6 +66,7 @@ export function toFrontendAssetUrl(image: string): string {
       const isLocalHost = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
       const hasAssetSegment =
         parsed.pathname.startsWith('/assets/') ||
+        parsed.pathname.startsWith('/images/') ||
         parsed.pathname.startsWith('/uploads/') ||
         parsed.pathname.startsWith('/cp/assets/') ||
         parsed.pathname.startsWith('/cp/uploads/');

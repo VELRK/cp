@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { getAdminPanelUrl } from '@/lib/frontendApi';
+import { toFrontendAssetUrl } from '@/lib/cityImages';
 import MobileSidebar from './MobileSidebar';
 import {
   Home,
@@ -34,7 +35,7 @@ const Navbar: React.FC = () => {
         {/* Left: Brand logo with official cplogo.png */}
         <Link href="/" className="navbar-brand d-flex align-items-center text-decoration-none py-1 me-0 me-xl-3 flex-shrink-0" style={{ color: 'var(--nb-primary)' }}>
           <img
-            src="/assets/images/logo/cplogo.png"
+            src={toFrontendAssetUrl("/assets/images/logo/cplogo.png")}
             alt="Coimbatore Properties"
             className="nb-logo-img me-2"
             style={{ height: '48px', width: 'auto', objectFit: 'contain' }}

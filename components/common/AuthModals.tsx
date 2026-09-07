@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { getCities } from '@/lib/frontendApi';
 import { getDashboardPathForRole } from '@/lib/dashboardPaths';
+import { toFrontendAssetUrl } from '@/lib/cityImages';
 import { X, Lock, Mail, User, Phone, CheckCircle, ShieldAlert, ArrowLeft, MessageCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -275,7 +276,7 @@ const AuthModals: React.FC = () => {
             <div className="col-md-5 d-none d-md-flex flex-column justify-content-between p-4" style={{ backgroundColor: 'var(--nb-primary)', color: 'white' }}>
               <div>
                 <div className="mb-4">
-                  <img src="/assets/images/logo/cplogo.png" alt="Coimbatore Properties" className="bg-white p-2 rounded" style={{ height: '48px', objectFit: 'contain' }} />
+                  <img src={toFrontendAssetUrl("/assets/images/logo/cplogo.png")} alt="Coimbatore Properties" className="bg-white p-2 rounded" style={{ height: '48px', objectFit: 'contain' }} />
                 </div>
               </div>
               

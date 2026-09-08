@@ -9,10 +9,11 @@ import {
   getHomeBanners,
   getWishlist,
   toggleWishlist,
+  getExploreCities,
+  getPropertyTypeCounts,
 } from '@/lib/frontendApi';
 import { toFrontendAssetUrl } from '@/lib/cityImages';
 import { buildSearchUrlParams } from '@/lib/searchFilters';
-import { fetchRealDataFacets } from '@/lib/realDataFilters';
 import confetti from 'canvas-confetti';
 import { usePropertyTypeFilters } from '@/hooks/usePropertyTypeFilters';
 import { useAuth } from '@/hooks/useAuth';
@@ -45,6 +46,7 @@ interface City {
   id: number;
   name: string;
   state: string;
+  count?: number;
 }
 
 export interface Property {
@@ -94,19 +96,14 @@ export default function Home() {
     mainTypes,
     mainTypeSlug,
     subTypeSlug,
-    subTypes,
     propertyType,
-    loading: typesLoading,
     setMainTypeSlug,
-    setSubTypeSlug,
   } = usePropertyTypeFilters('');
   const [cityId, setCityId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
-  const [bedrooms, setBedrooms] = useState('');
-  const [sortBy, setSortBy] = useState('new');
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [typeCounts, setTypeCounts] = useState<Record<string, number>>({});
+  const [allCount, setAllCount] = useState<number | null>(null);
+  const [localitySuggestions, setLocalitySuggestions] = useState<{ name: string; count: number }[]>([]);
 
   // Homepage listing sections (each filtered by DB flags)
   const [recommended, setRecommended] = useState<Property[]>([]);
@@ -124,7 +121,7 @@ export default function Home() {
   // Data states
   const [cities, setCities] = useState<City[]>([]);
   const activeCity = cities.find((c) => c.id.toString() === cityId);
-  const cityName = activeCity ? activeCity.name : 'Coimbatore';
+  const cityName = activeCity ? activeCity.name : '';
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loadingBlogs, setLoadingBlogs] = useState(true);
   const [activeBlogCategory, setActiveBlogCategory] = useState<'all' | 'news' | 'tax' | 'guide' | 'investment'>('all');
@@ -134,48 +131,49 @@ export default function Home() {
   const [loadingHero, setLoadingHero] = useState(true);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Voice Search states
-  const [voiceStatus, setVoiceStatus] = useState<'idle' | 'listening' | 'success' | 'error'>('idle');
-
   // Wishlist states
   const [wishlistedIds, setWishlistedIds] = useState<number[]>([]);
 
   // Live Update Modal
   // const [showLiveUpdateModal, setShowLiveUpdateModal] = useState(false);
 
-  // Fetch real cities & blogs on mount
+  // Fetch real cities with live listing counts
   useEffect(() => {
-    // 1. Real cities with real property data
-    fetchRealDataFacets()
-      .then((facets) => {
-        if (facets.cities.length > 0) {
+    Promise.all([getCities().catch(() => null), getExploreCities().catch(() => null)])
+      .then(([citiesRes, exploreRes]) => {
+        const countMap = new Map<number, number>();
+        const exploreItems = exploreRes?.data?.items || exploreRes?.data?.cities || [];
+        if (Array.isArray(exploreItems)) {
+          exploreItems.forEach((c: { id: number; property_count?: number; listing_count?: number }) => {
+            countMap.set(Number(c.id), Number(c.property_count || c.listing_count || 0));
+          });
+        }
+        const rows = citiesRes?.data?.success && Array.isArray(citiesRes.data.cities)
+          ? citiesRes.data.cities
+          : [];
+        if (rows.length > 0) {
           setCities(
-            facets.cities.map((c) => ({
+            rows.map((c: City) => ({
               id: c.id,
-              name: `${c.name} (${c.count})`,
-              state: 'Tamil Nadu',
+              name: c.name,
+              state: c.state,
+              count: countMap.get(Number(c.id)) || 0,
             }))
           );
-        } else {
-          // Fallback to getCities if needed
-          getCities()
-            .then((res) => {
-              if (res.data?.success && Array.isArray(res.data.cities)) {
-                setCities(res.data.cities);
-              }
-            })
-            .catch(() => { });
+          return;
+        }
+        if (Array.isArray(exploreItems) && exploreItems.length > 0) {
+          setCities(
+            exploreItems.map((c: { id: number; name: string; state?: string; property_count?: number }) => ({
+              id: c.id,
+              name: c.name,
+              state: c.state || '',
+              count: Number(c.property_count || 0),
+            }))
+          );
         }
       })
-      .catch(() => {
-        getCities()
-          .then((res) => {
-            if (res.data?.success && Array.isArray(res.data.cities)) {
-              setCities(res.data.cities);
-            }
-          })
-          .catch(() => { });
-      });
+      .catch(() => { });
 
     // 2. Blogs/Articles
     getBlogs()
@@ -251,6 +249,21 @@ export default function Home() {
         if (res.data?.success && Array.isArray(res.data.items)) {
           const items: Property[] = res.data.items;
 
+          const locMap = new Map<string, number>();
+          items.forEach((p) => {
+            const loc = (p.locality || '').split(',')[0].trim();
+            const project = (p.title || '').trim();
+            if (loc) locMap.set(loc, (locMap.get(loc) || 0) + 1);
+            if (project && project.toLowerCase() !== loc.toLowerCase()) {
+              locMap.set(project, (locMap.get(project) || 0) + 1);
+            }
+          });
+          setLocalitySuggestions(
+            Array.from(locMap.entries())
+              .sort((a, b) => b[1] - a[1])
+              .map(([name, count]) => ({ name, count }))
+          );
+
           // Helper to get subset by flag or fallback to items
           const filterByFlag = (flagName: keyof Property, fallbackCount = 6) => {
             const flagged = items.filter((p) => Boolean(p[flagName]));
@@ -290,6 +303,42 @@ export default function Home() {
         setLoadingHighGrowth(false);
       });
   }, [cityId, mainTypeSlug]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const params = cityId ? { city_id: cityId } : undefined;
+    getPropertyTypeCounts(params)
+      .then((res) => {
+        if (cancelled || !res.data?.success) return;
+        if (typeof res.data.listing_total === 'number') {
+          setAllCount(res.data.listing_total);
+        }
+        const next: Record<string, number> = {};
+        const items = Array.isArray(res.data.items) ? res.data.items : [];
+        items.forEach((row: { slug?: string; parent_id?: number | null; count?: number }) => {
+          const slug = String(row.slug || '');
+          const count = Number(row.count || 0);
+          if (!slug) return;
+          next[slug] = (next[slug] || 0) + count;
+        });
+        mainTypes.forEach((mt) => {
+          const subSum = (mt.sub_types || []).reduce(
+            (sum, st) => sum + (next[st.slug] || 0),
+            0
+          );
+          if (subSum > 0) {
+            next[mt.slug] = (next[mt.slug] || 0) + subSum;
+          }
+        });
+        setTypeCounts(next);
+      })
+      .catch(() => {
+        if (!cancelled) setTypeCounts({});
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [cityId, mainTypes]);
 
   // Fetch wishlist IDs if logged in
   useEffect(() => {
@@ -397,41 +446,6 @@ export default function Home() {
     };
   }, [cities, featured]);
 
-  // Real Browser voice search helper using Speech Recognition API
-  const handleVoiceSearch = () => {
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        const recognition = new SpeechRecognition();
-        recognition.lang = 'en-IN';
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
-
-        setVoiceStatus('listening');
-        recognition.start();
-
-        recognition.onresult = (event: any) => {
-          const speechToText = event.results[0][0].transcript;
-          setSearchQuery(speechToText);
-          setVoiceStatus('success');
-          setTimeout(() => setVoiceStatus('idle'), 1500);
-        };
-
-        recognition.onerror = (e: any) => {
-          console.warn('Speech recognition error', e.error);
-          setVoiceStatus('error');
-          setTimeout(() => setVoiceStatus('idle'), 1500);
-        };
-
-        recognition.onend = () => {
-          setVoiceStatus('idle');
-        };
-      } else {
-        alert('Voice recognition is not supported in this browser. Please type your query.');
-      }
-    }
-  };
-
   const handleWishlistToggle = async (e: React.MouseEvent, propertyId: number) => {
     e.preventDefault();
     e.stopPropagation();
@@ -474,10 +488,6 @@ export default function Home() {
       propertyType,
       cityId,
       q: searchQuery,
-      minPrice,
-      maxPrice,
-      bedrooms,
-      sort: sortBy,
     });
     router.push(`/search?${queryParams.toString()}`);
   };
@@ -512,7 +522,7 @@ export default function Home() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          router.push(`/search?lat=${latitude}&lng=${longitude}&radius_km=5${cityId ? `&city_id=${cityId}` : ''}`);
+          router.push(`/search?lat=${latitude}&lng=${longitude}&radius_km=5${cityId ? `&city_id=${cityId}` : ''}${searchQuery.trim() ? `&q=${encodeURIComponent(searchQuery.trim())}` : ''}`);
         },
         (error) => {
           console.warn('Geolocation error:', error);
@@ -552,25 +562,12 @@ export default function Home() {
           cities={cities}
           mainTypes={mainTypes}
           mainTypeSlug={mainTypeSlug}
-          subTypeSlug={subTypeSlug}
-          subTypes={subTypes}
           onMainTypeChange={setMainTypeSlug}
-          onSubTypeChange={setSubTypeSlug}
-          typesLoading={typesLoading}
+          typeCounts={typeCounts}
+          allCount={allCount}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
-          minPrice={minPrice}
-          setMinPrice={setMinPrice}
-          maxPrice={maxPrice}
-          setMaxPrice={setMaxPrice}
-          bedrooms={bedrooms}
-          setBedrooms={setBedrooms}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          showAdvanced={showAdvanced}
-          setShowAdvanced={setShowAdvanced}
-          voiceStatus={voiceStatus}
-          handleVoiceSearch={handleVoiceSearch}
+          localitySuggestions={localitySuggestions}
           handleLocationSearch={handleLocationSearch}
           handleSearchSubmit={handleSearchSubmit}
           user={user}

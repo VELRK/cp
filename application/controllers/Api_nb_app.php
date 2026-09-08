@@ -1775,15 +1775,13 @@ class Api_nb_app extends CI_Controller
         $city_id = $this->input->get('city_id');
         $city_filter = ($city_id !== null && $city_id !== '') ? (int) $city_id : null;
 
-        $sub_rows = array();
+        $type_rows = array();
         foreach ($this->Nb_property_type_model->all_active() as $r) {
-            if (!$this->Nb_property_type_model->is_main_type($r)) {
-                $sub_rows[] = $r;
-            }
+            $type_rows[] = $r;
         }
 
         $slugs = array();
-        foreach ($sub_rows as $r) {
+        foreach ($type_rows as $r) {
             $slugs[] = (string) $r->slug;
         }
 
@@ -1792,7 +1790,7 @@ class Api_nb_app extends CI_Controller
             : array();
 
         $items = array();
-        foreach ($sub_rows as $r) {
+        foreach ($type_rows as $r) {
             $slug = (string) $r->slug;
             $cnt = isset($counts[$slug]) ? (int) $counts[$slug] : 0;
             if ($cnt <= 0) {
@@ -1814,9 +1812,16 @@ class Api_nb_app extends CI_Controller
             return $b['count'] - $a['count'];
         });
 
+        $filters = array();
+        if ($city_filter) {
+            $filters['city_id'] = $city_filter;
+        }
+        $listing_total = (int) $this->Nb_property_model->count_search($filters);
+
         $this->_json(array(
             'success' => true,
             'total' => count($items),
+            'listing_total' => $listing_total,
             'items' => $items,
         ));
     }

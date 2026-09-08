@@ -118,7 +118,7 @@ const PropertyCategories: React.FC<PropertyCategoriesProps> = ({ cityId, cityNam
     // Fetch real property types from admin DB + real active properties
     Promise.all([
       getPropertyTypes().catch(() => ({ data: { success: false, items: [] } })),
-      searchProperties({ limit: 100 }).catch(() => ({ data: { success: false, items: [] } })),
+      searchProperties({ limit: 100, ...(cityId ? { city_id: cityId } : {}) }).catch(() => ({ data: { success: false, items: [] } })),
     ])
       .then(([typesRes, propsRes]) => {
         if (!isMounted) return;
@@ -151,19 +151,10 @@ const PropertyCategories: React.FC<PropertyCategoriesProps> = ({ cityId, cityNam
             return allSlugs.has(pType);
           });
 
-          // If city filter applies, check if there are listings in this city
-          const cityMatchingProps = cityId
-            ? matchingProps.filter((p) => String(p.city_id) === String(cityId))
-            : matchingProps;
-
-          // Real count (city-specific if available, otherwise total real count for this type)
-          const realCount = cityMatchingProps.length > 0
-            ? cityMatchingProps.length
-            : matchingProps.length;
+          const realCount = matchingProps.length;
 
           // Calculate real min price from actual listings
-          const propsWithPrice = (cityMatchingProps.length > 0 ? cityMatchingProps : matchingProps)
-            .filter((p) => p.price && Number(p.price) > 0);
+          const propsWithPrice = matchingProps.filter((p) => p.price && Number(p.price) > 0);
 
           let priceHint = '';
           if (propsWithPrice.length > 0) {
@@ -172,7 +163,7 @@ const PropertyCategories: React.FC<PropertyCategoriesProps> = ({ cityId, cityNam
           }
 
           // Real image: use real property image if available, else admin image_url, else curated config
-          const propWithImage = (cityMatchingProps.length > 0 ? cityMatchingProps : matchingProps)
+          const propWithImage = matchingProps
             .find((p) => p.thumbnail_url || (Array.isArray(p.image_urls) && p.image_urls[0]));
 
           const cfg = TYPE_CONFIG_MAP[typeSlug] || {
@@ -187,7 +178,7 @@ const PropertyCategories: React.FC<PropertyCategoriesProps> = ({ cityId, cityNam
           // Collect localities from real listings for subtitle
           const localities = Array.from(
             new Set(
-              (cityMatchingProps.length > 0 ? cityMatchingProps : matchingProps)
+              matchingProps
                 .map((p) => (p.locality || p.city_name || '').split(',')[0].trim())
                 .filter(Boolean)
             )
@@ -210,7 +201,7 @@ const PropertyCategories: React.FC<PropertyCategoriesProps> = ({ cityId, cityNam
           };
         });
 
-        setCategories(mappedCards);
+        setCategories(cityId ? mappedCards.filter((card) => card.count > 0) : mappedCards);
       })
       .catch((err) => {
         console.warn('Error loading real property types', err);

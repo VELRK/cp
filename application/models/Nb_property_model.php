@@ -478,6 +478,7 @@ class Nb_property_model extends CI_Model {
             $this->db->like('p.locality', $filters['locality_q']);
             $this->db->or_like('p.address', $filters['locality_q']);
             $this->db->or_like('p.title', $filters['locality_q']);
+            $this->db->or_like('p.slug', $filters['locality_q']);
             $this->db->group_end();
         }
     }

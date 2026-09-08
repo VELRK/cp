@@ -678,8 +678,8 @@ export default function PropertyDetailClient({ slug: slugProp }: PropertyDetailC
                         return (
                           <div key={idx} className="col-6 col-md-4 col-lg-3">
                             <div className="d-flex align-items-center p-2 rounded-3" style={{ backgroundColor: '#fff', border: '1px solid #f1f3f5', transition: 'all 0.2s ease' }}
-                                 onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = amenityInfo.bg; e.currentTarget.style.borderColor = amenityInfo.color; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                                 onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.borderColor = '#f1f3f5'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = amenityInfo.bg; e.currentTarget.style.borderColor = amenityInfo.color; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#fff'; e.currentTarget.style.borderColor = '#f1f3f5'; e.currentTarget.style.transform = 'translateY(0)'; }}
                             >
                               <div className="me-3 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '36px', height: '36px', backgroundColor: amenityInfo.bg, color: amenityInfo.color }}>
                                 {amenityInfo.icon}
@@ -1833,8 +1833,8 @@ const pageStyles = `
     padding: 1.5rem;
     border-top: 4px solid var(--nb-accent);
   }
-  .pd-enquiry-title { font-size: clamp(16px, 1.8vw, 18px); font-weight: 600; color: #fff; margin: 0 0 4px; line-height: 1.35; }
-  .pd-enquiry-sub   { font-size: clamp(13px, 1.1vw, 14px); color: rgba(255,255,255,.8); margin: 0; line-height: 1.45; font-weight: 400; }
+  .pd-enquiry-title { font-size: clamp(16px, 1.8vw, 18px); font-weight: 600; color: #fff !important; margin: 0 0 4px; line-height: 1.35; }
+  .pd-enquiry-sub   { font-size: clamp(13px, 1.1vw, 14px); color: rgba(255,255,255,.8) !important; margin: 0; line-height: 1.45; font-weight: 400; }
   .pd-enquiry-body  { padding: 1.5rem; }
   .pd-enquiry-trust {
     display: flex; align-items: center; gap: 6px;

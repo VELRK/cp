@@ -51,7 +51,7 @@ const PromoSection: React.FC<PromoSectionProps> = ({ user, setAuthModalOpen }) =
             Special Offer
           </div>
           <h2 className="fw-bold mb-3 section-heading" style={{ fontSize: 'var(--nb-text-section, 24px)', lineHeight: '1.3', color: '#0b1a30' }}>
-            Sell or rent faster!<br />
+            Sell Faster!<br />
             <span style={{ color: '#1b5e20', fontStyle: 'italic', fontSize: 'var(--nb-text-card-title, 18px)' }}>at the right price.</span>
           </h2>
           <p className="text-muted mb-4" style={{ fontSize: 'var(--nb-text-body, 14px)', lineHeight: '1.55' }}>

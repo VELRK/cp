@@ -126,7 +126,7 @@ const SidebarConsole: React.FC<SidebarConsoleProps> = ({
             <Sparkles size={18} className="text-success" />
           </div>
           <h3 className="h6 fw-bold mb-0" style={{ color: '#1b5e20', letterSpacing: '0.2px' }}>
-            Sell or rent faster!
+            Sell Faster!
           </h3>
         </div>
 

@@ -305,7 +305,7 @@ export default function PropertyDetailClient({ slug: slugProp }: PropertyDetailC
 
   const specItems = [
     { label: 'Property Type', value: property.property_type_label || property.property_type, icon: <Grid size={16} /> },
-    { label: 'Listing For', value: property.listing_type === 'rent' ? 'Rent' : 'Sale', icon: <Tag size={16} /> },
+    { label: 'Listing For', value: 'Sale', icon: <Tag size={16} /> },
     { label: 'Bedrooms', value: property.bedrooms ? `${property.bedrooms} BHK` : 'N/A', icon: <Bed size={16} /> },
     { label: 'Bathrooms', value: property.bathrooms ? `${property.bathrooms} Baths` : 'N/A', icon: <Bath size={16} /> },
     { label: 'Covered Area', value: property.area_sqft ? `${property.area_sqft} sq.ft.` : 'N/A', icon: <Compass size={16} /> },
@@ -505,8 +505,8 @@ export default function PropertyDetailClient({ slug: slugProp }: PropertyDetailC
 
                 <div className="pd-summary-details-row d-flex flex-wrap align-items-center justify-content-between gap-3">
                   <div className="d-flex flex-wrap gap-2 align-items-center">
-                    <span className={`pd-summary-tag ${property.listing_type === 'rent' ? 'rent' : 'sale'}`}>
-                      For {property.listing_type === 'rent' ? 'Rent' : 'Sale'}
+                    <span className={`pd-summary-tag sale`}>
+                      For Sale
                     </span>
                     <span className="pd-summary-tag type">
                       {property.property_type_label || property.property_type}

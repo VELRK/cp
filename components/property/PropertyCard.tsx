@@ -105,7 +105,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
     }
   };
 
-  const getListingTypeLabel = () => property.listing_type === 'rent' ? 'Rent' : 'Sale';
+  const getListingTypeLabel = () => 'Sale';
   const getPropertyTypeLabel = () => property.property_type_label || property.property_type;
   const formatPrice = (price: number) => property.price_formatted || `₹${Number(price || 0).toLocaleString('en-IN')}`;
 

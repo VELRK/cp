@@ -11,9 +11,7 @@ interface SellerDetailsProps {
 }
 
 export default function SellerDetailsClient({ id }: SellerDetailsProps) {
-  const [activeTab, setActiveTab] = useState<'buy' | 'rent'>('buy');
   const [buyProperties, setBuyProperties] = useState<Property[]>([]);
-  const [rentProperties, setRentProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Parse ID to mock seller info nicely
@@ -31,8 +29,7 @@ export default function SellerDetailsClient({ id }: SellerDetailsProps) {
         if (!isMounted) return;
         if (res.data?.success && Array.isArray(res.data.items)) {
           const all = res.data.items as Property[];
-          setBuyProperties(all.filter((_, i) => i % 2 === 0));
-          setRentProperties(all.filter((_, i) => i % 2 !== 0));
+          setBuyProperties(all);
         }
       })
       .catch((e) => console.warn(e))
@@ -43,7 +40,7 @@ export default function SellerDetailsClient({ id }: SellerDetailsProps) {
     return () => { isMounted = false; };
   }, [id]);
 
-  const activeProperties = activeTab === 'buy' ? buyProperties : rentProperties;
+  const activeProperties = buyProperties;
 
   return (
     <div className="bg-light pb-5" style={{ minHeight: '100vh', paddingTop: '4.5rem' }}>
@@ -143,20 +140,10 @@ export default function SellerDetailsClient({ id }: SellerDetailsProps) {
                 <ul className="nav nav-pills mb-4 border-bottom pb-3 gap-2">
                   <li className="nav-item">
                     <button
-                      className={`nav-link rounded-pill px-4 ${activeTab === 'buy' ? 'active text-white shadow-sm' : 'bg-light text-dark border'}`}
-                      style={activeTab === 'buy' ? { backgroundColor: 'var(--nb-primary)' } : {}}
-                      onClick={() => setActiveTab('buy')}
+                      className={`nav-link rounded-pill px-4 active text-white shadow-sm`}
+                      style={{ backgroundColor: 'var(--nb-primary)' }}
                     >
-                      Buy ({buyProperties.length})
-                    </button>
-                  </li>
-                  <li className="nav-item">
-                    <button
-                      className={`nav-link rounded-pill px-4 ${activeTab === 'rent' ? 'active text-white shadow-sm' : 'bg-light text-dark border'}`}
-                      style={activeTab === 'rent' ? { backgroundColor: 'var(--nb-primary)' } : {}}
-                      onClick={() => setActiveTab('rent')}
-                    >
-                      Rent ({rentProperties.length})
+                      Sale ({buyProperties.length})
                     </button>
                   </li>
                 </ul>

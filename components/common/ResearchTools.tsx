@@ -13,7 +13,11 @@ import {
   Calendar,
   DollarSign,
   ArrowRight,
-  Info
+  Info,
+  ShieldCheck,
+  TrendingUp,
+  X,
+  Sparkles
 } from 'lucide-react';
 
 interface BankOption {
@@ -222,163 +226,246 @@ export default function ResearchTools() {
 
   return (
     <div className="nb-research-section fade-in-up">
-      <div className="nb-research-header d-flex justify-content-between align-items-end">
+      <div className="nb-research-header d-flex flex-wrap justify-content-between align-items-center gap-2">
         <div>
-          <h2 className="h4 fw-bold text-dark m-0">User Property Research Tools</h2>
-          <p className="text-muted small m-0">Calculate your borrowing power and understand your financial options</p>
+          <div className="d-flex align-items-center gap-2 mb-1">
+            <span className="badge rounded-pill fw-semibold px-2 py-1" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', fontSize: '0.72rem', letterSpacing: '0.03em' }}>
+              FINANCIAL SUITE
+            </span>
+          </div>
+          <h2 className="fw-bold text-dark m-0" style={{ fontSize: '1.25rem', letterSpacing: '-0.01em' }}>
+            Property Research & Financial Calculators
+          </h2>
+          <p className="text-muted small m-0 mt-1" style={{ fontSize: '0.84rem' }}>
+            Plan your purchase, check borrowing limits, and compare bank interest rates
+          </p>
         </div>
-        <div className="d-flex gap-2">
-          {/* Scroll Arrows */}
-          <button className="btn btn-light rounded-circle shadow-sm border border-light p-2" onClick={() => scroll('left')} aria-label="Previous tools">
-            <ChevronLeft size={20} />
+        {activeTab && (
+          <button
+            type="button"
+            className="btn btn-sm btn-light border rounded-pill px-3 py-1 fw-semibold text-muted d-flex align-items-center gap-1 shadow-sm"
+            onClick={() => setActiveTab(null)}
+            style={{ fontSize: '0.8rem' }}
+          >
+            <X size={14} /> Close Calculator
           </button>
-          <button className="btn btn-light rounded-circle shadow-sm border border-light p-2" onClick={() => scroll('right')} aria-label="More tools">
-            <ChevronRight size={20} />
-          </button>
-        </div>
+        )}
       </div>
 
-      {/* Cards Slider */}
-      <div className="nb-research-carousel-wrapper">
-        <div className="nb-research-carousel" ref={carouselRef}>
-          {/* Card 1: EMI Calculator */}
-
-          {/* Card 1: EMI Calculator */}
+      {/* Cards Grid */}
+      <div className="row g-3 g-md-4 mt-1">
+        {/* Card 1: EMI Calculator */}
+        <div className="col-12 col-md-4">
           <div
-            className={`nb-research-card border-0 rounded-4 p-4 transition-all ${activeTab === 'emi' ? 'active shadow' : 'shadow-sm'}`}
-            style={{
-              cursor: 'pointer',
-              backgroundColor: activeTab === 'emi' ? '#ffffff' : '#f8fafc',
-              transform: activeTab === 'emi' ? 'translateY(-5px)' : 'none',
-              border: activeTab === 'emi' ? '2px solid #3b82f6' : '1px solid #e2e8f0',
-              flexShrink: 0
-            }}
+            className={`nb-research-card ${activeTab === 'emi' ? 'active' : ''}`}
             onClick={() => handleCardClick('emi')}
+            role="button"
+            tabIndex={0}
           >
-            <div className="d-flex flex-column h-100 justify-content-between position-relative z-1">
-              <div className="mb-4">
-                <h3 className="fw-bolder fs-5 text-dark mb-1">EMI Calculator</h3>
-                <p className="small text-secondary m-0" style={{ fontWeight: 500 }}>Find your monthly EMI</p>
+            {/* Top row: Icon + Pill */}
+            <div className="d-flex align-items-center justify-content-between mb-3">
+              <div 
+                className="d-flex align-items-center justify-content-center rounded-3"
+                style={{ width: '42px', height: '42px', backgroundColor: '#eff6ff', color: '#2563eb', border: '1px solid #dbeafe' }}
+              >
+                <Calculator size={22} />
               </div>
-              <div className="d-flex justify-content-between align-items-end">
-                <div className="position-relative" style={{ width: '80px', height: '80px' }}>
-                  <div style={{ position: 'absolute', inset: -15, background: 'radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%)', borderRadius: '50%' }} />
-                  <svg width="80" height="72" viewBox="0 0 100 90" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'relative', zIndex: 2, transform: 'translateY(8px)' }}>
-                    <path d="M55 45L78 28L101 45V78H55V45Z" fill="#3b82f6" fillOpacity="0.8" />
-                    <rect x="71" y="58" width="14" height="20" fill="#1e3a8a" />
-                    <rect x="15" y="10" width="34" height="68" rx="6" fill="#0f172a" />
-                    <rect x="18" y="15" width="28" height="52" fill="#60a5fa" />
-                    <rect x="23" y="22" width="18" height="6" rx="1" fill="#0f172a" />
-                    <rect x="23" y="32" width="18" height="3" rx="0.5" fill="#0f172a" />
-                    <rect x="23" y="38" width="18" height="3" rx="0.5" fill="#0f172a" />
-                    <rect x="23" y="44" width="10" height="3" rx="0.5" fill="#0f172a" />
-                    <circle cx="32" cy="72" r="2.5" fill="#FFFFFF" />
-                  </svg>
-                </div>
-                <div className={`rounded-circle p-2 d-flex align-items-center justify-content-center transition-all ${activeTab === 'emi' ? 'text-white shadow-sm' : 'bg-white text-secondary border'}`} style={{ width: '36px', height: '36px', backgroundColor: activeTab === 'emi' ? '#3b82f6' : '#fff' }}>
-                  <ArrowRight size={16} />
-                </div>
+              <span className="badge rounded-pill fw-semibold px-2 py-1" style={{ backgroundColor: '#eff6ff', color: '#1d4ed8', fontSize: '0.72rem' }}>
+                Instant EMI
+              </span>
+            </div>
+
+            {/* Title & Description */}
+            <div className="mb-3">
+              <h3 className="fw-bold fs-6 text-dark mb-1" style={{ letterSpacing: '-0.01em' }}>
+                EMI Calculator
+              </h3>
+              <p className="small text-muted m-0" style={{ lineHeight: '1.4', fontSize: '0.82rem' }}>
+                Calculate monthly loan installments with flexible bank interest & tenure options.
+              </p>
+            </div>
+
+            {/* Quick highlights */}
+            <div className="d-flex flex-column gap-1 mb-3 pt-2 border-top" style={{ fontSize: '0.78rem', color: '#475569' }}>
+              <div className="d-flex align-items-center gap-1">
+                <span style={{ color: '#2563eb', fontWeight: 'bold' }}>✓</span> Compare 8+ Partner Banks
+              </div>
+              <div className="d-flex align-items-center gap-1">
+                <span style={{ color: '#2563eb', fontWeight: 'bold' }}>✓</span> Principal & Interest Breakdown
+              </div>
+            </div>
+
+            {/* Card Action Link */}
+            <div className="d-flex align-items-center justify-content-between pt-2 border-top">
+              <span className="fw-semibold small" style={{ color: activeTab === 'emi' ? '#2563eb' : '#0b2c56', fontSize: '0.82rem' }}>
+                {activeTab === 'emi' ? 'Active Calculator' : 'Calculate EMI'}
+              </span>
+              <div 
+                className="rounded-circle d-flex align-items-center justify-content-center transition-all"
+                style={{ 
+                  width: '28px', 
+                  height: '28px', 
+                  backgroundColor: activeTab === 'emi' ? '#2563eb' : '#f1f5f9',
+                  color: activeTab === 'emi' ? '#ffffff' : '#64748b'
+                }}
+              >
+                <ArrowRight size={14} />
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Card 2: Eligibility Calculator */}
+        {/* Card 2: Eligibility Calculator */}
+        <div className="col-12 col-md-4">
           <div
-            className={`nb-research-card border-0 rounded-4 p-4 transition-all ${activeTab === 'eligibility' ? 'active shadow' : 'shadow-sm'}`}
-            style={{
-              cursor: 'pointer',
-              backgroundColor: activeTab === 'eligibility' ? '#ffffff' : '#f8fafc',
-              transform: activeTab === 'eligibility' ? 'translateY(-5px)' : 'none',
-              border: activeTab === 'eligibility' ? '2px solid #10b981' : '1px solid #e2e8f0',
-              flexShrink: 0
-            }}
+            className={`nb-research-card ${activeTab === 'eligibility' ? 'active' : ''}`}
             onClick={() => handleCardClick('eligibility')}
+            role="button"
+            tabIndex={0}
           >
-            <div className="d-flex flex-column h-100 justify-content-between position-relative z-1">
-              <div className="mb-4">
-                <h3 className="fw-bolder fs-5 text-dark mb-1">Eligibility Calculator</h3>
-                <p className="small text-secondary m-0" style={{ fontWeight: 500 }}>Find your home loan limit</p>
+            {/* Top row: Icon + Pill */}
+            <div className="d-flex align-items-center justify-content-between mb-3">
+              <div 
+                className="d-flex align-items-center justify-content-center rounded-3"
+                style={{ width: '42px', height: '42px', backgroundColor: '#ecfdf5', color: '#059669', border: '1px solid #a7f3d0' }}
+              >
+                <ShieldCheck size={22} />
               </div>
-              <div className="d-flex justify-content-between align-items-end">
-                <div className="position-relative" style={{ width: '80px', height: '80px' }}>
-                  <div style={{ position: 'absolute', inset: -15, background: 'radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 70%)', borderRadius: '50%' }} />
-                  <svg width="80" height="72" viewBox="0 0 100 90" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'relative', zIndex: 2, transform: 'translateY(8px)' }}>
-                    <path d="M55 48L75 32L95 48V78H55V48Z" fill="#10b981" fillOpacity="0.8" />
-                    <rect x="68" y="58" width="12" height="20" fill="#064e3b" />
-                    <rect x="18" y="12" width="32" height="62" rx="4" fill="#f1f5f9" stroke="#0f172a" strokeWidth="2" />
-                    <rect x="26" y="8" width="16" height="8" rx="2" fill="#0f172a" />
-                    <path d="M24 28L28 32L36 24" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M24 44L28 48L36 40" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M24 60L28 64L36 56" stroke="#059669" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-                <div className={`rounded-circle p-2 d-flex align-items-center justify-content-center transition-all ${activeTab === 'eligibility' ? 'text-white shadow-sm' : 'bg-white text-secondary border'}`} style={{ width: '36px', height: '36px', backgroundColor: activeTab === 'eligibility' ? '#10b981' : '#fff' }}>
-                  <ArrowRight size={16} />
-                </div>
+              <span className="badge rounded-pill fw-semibold px-2 py-1" style={{ backgroundColor: '#ecfdf5', color: '#047857', fontSize: '0.72rem' }}>
+                Loan Capacity
+              </span>
+            </div>
+
+            {/* Title & Description */}
+            <div className="mb-3">
+              <h3 className="fw-bold fs-6 text-dark mb-1" style={{ letterSpacing: '-0.01em' }}>
+                Eligibility Calculator
+              </h3>
+              <p className="small text-muted m-0" style={{ lineHeight: '1.4', fontSize: '0.82rem' }}>
+                Estimate maximum loan amount you qualify for based on income and existing EMIs.
+              </p>
+            </div>
+
+            {/* Quick highlights */}
+            <div className="d-flex flex-column gap-1 mb-3 pt-2 border-top" style={{ fontSize: '0.78rem', color: '#475569' }}>
+              <div className="d-flex align-items-center gap-1">
+                <span style={{ color: '#059669', fontWeight: 'bold' }}>✓</span> 50% FOIR Banking Metric
+              </div>
+              <div className="d-flex align-items-center gap-1">
+                <span style={{ color: '#059669', fontWeight: 'bold' }}>✓</span> Adjusted for Existing Loans
+              </div>
+            </div>
+
+            {/* Card Action Link */}
+            <div className="d-flex align-items-center justify-content-between pt-2 border-top">
+              <span className="fw-semibold small" style={{ color: activeTab === 'eligibility' ? '#059669' : '#0b2c56', fontSize: '0.82rem' }}>
+                {activeTab === 'eligibility' ? 'Active Calculator' : 'Check Eligibility'}
+              </span>
+              <div 
+                className="rounded-circle d-flex align-items-center justify-content-center transition-all"
+                style={{ 
+                  width: '28px', 
+                  height: '28px', 
+                  backgroundColor: activeTab === 'eligibility' ? '#059669' : '#f1f5f9',
+                  color: activeTab === 'eligibility' ? '#ffffff' : '#64748b'
+                }}
+              >
+                <ArrowRight size={14} />
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Card 3: Affordability Calculator */}
+        {/* Card 3: Affordability Calculator */}
+        <div className="col-12 col-md-4">
           <div
-            className={`nb-research-card border-0 rounded-4 p-4 transition-all ${activeTab === 'affordability' ? 'active shadow' : 'shadow-sm'}`}
-            style={{
-              cursor: 'pointer',
-              backgroundColor: activeTab === 'affordability' ? '#ffffff' : '#f8fafc',
-              transform: activeTab === 'affordability' ? 'translateY(-5px)' : 'none',
-              border: activeTab === 'affordability' ? '2px solid #8b5cf6' : '1px solid #e2e8f0',
-              flexShrink: 0
-            }}
+            className={`nb-research-card ${activeTab === 'affordability' ? 'active' : ''}`}
             onClick={() => handleCardClick('affordability')}
+            role="button"
+            tabIndex={0}
           >
-            <div className="d-flex flex-column h-100 justify-content-between position-relative z-1">
-              <div className="mb-4">
-                <h3 className="fw-bolder fs-5 text-dark mb-1">Affordability</h3>
-                <p className="small text-secondary m-0" style={{ fontWeight: 500 }}>Best budget for home search</p>
+            {/* Top row: Icon + Pill */}
+            <div className="d-flex align-items-center justify-content-between mb-3">
+              <div 
+                className="d-flex align-items-center justify-content-center rounded-3"
+                style={{ width: '42px', height: '42px', backgroundColor: '#f5f3ff', color: '#7c3aed', border: '1px solid #ddd6fe' }}
+              >
+                <TrendingUp size={22} />
               </div>
-              <div className="d-flex justify-content-between align-items-end">
-                <div className="position-relative" style={{ width: '80px', height: '80px' }}>
-                  <div style={{ position: 'absolute', inset: -15, background: 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%)', borderRadius: '50%' }} />
-                  <svg width="80" height="72" viewBox="0 0 100 90" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: 'relative', zIndex: 2, transform: 'translateY(8px)' }}>
-                    <circle cx="70" cy="36" r="20" fill="#ddd6fe" />
-                    <path d="M70 36L70 16A20 20 0 0 1 90 36Z" fill="#8b5cf6" />
-                    <rect x="15" y="32" width="55" height="42" rx="6" fill="#0f172a" />
-                    <rect x="42" y="44" width="28" height="18" rx="3" fill="#4c1d95" />
-                    <circle cx="49" cy="53" r="2.5" fill="#a78bfa" />
-                    <ellipse cx="28" cy="28" rx="8" ry="4" fill="#a78bfa" stroke="#0f172a" strokeWidth="1.5" />
-                    <ellipse cx="36" cy="22" rx="8" ry="4" fill="#a78bfa" stroke="#0f172a" strokeWidth="1.5" />
-                  </svg>
-                </div>
-                <div className={`rounded-circle p-2 d-flex align-items-center justify-content-center transition-all ${activeTab === 'affordability' ? 'text-white shadow-sm' : 'bg-white text-secondary border'}`} style={{ width: '36px', height: '36px', backgroundColor: activeTab === 'affordability' ? '#8b5cf6' : '#fff' }}>
-                  <ArrowRight size={16} />
-                </div>
+              <span className="badge rounded-pill fw-semibold px-2 py-1" style={{ backgroundColor: '#f5f3ff', color: '#6d28d9', fontSize: '0.72rem' }}>
+                Budget Planner
+              </span>
+            </div>
+
+            {/* Title & Description */}
+            <div className="mb-3">
+              <h3 className="fw-bold fs-6 text-dark mb-1" style={{ letterSpacing: '-0.01em' }}>
+                Affordability Calculator
+              </h3>
+              <p className="small text-muted m-0" style={{ lineHeight: '1.4', fontSize: '0.82rem' }}>
+                Discover your optimal property price bracket based on savings and down payment.
+              </p>
+            </div>
+
+            {/* Quick highlights */}
+            <div className="d-flex flex-column gap-1 mb-3 pt-2 border-top" style={{ fontSize: '0.78rem', color: '#475569' }}>
+              <div className="d-flex align-items-center gap-1">
+                <span style={{ color: '#7c3aed', fontWeight: 'bold' }}>✓</span> Down Payment Optimization
+              </div>
+              <div className="d-flex align-items-center gap-1">
+                <span style={{ color: '#7c3aed', fontWeight: 'bold' }}>✓</span> Realistic Monthly Savings
+              </div>
+            </div>
+
+            {/* Card Action Link */}
+            <div className="d-flex align-items-center justify-content-between pt-2 border-top">
+              <span className="fw-semibold small" style={{ color: activeTab === 'affordability' ? '#7c3aed' : '#0b2c56', fontSize: '0.82rem' }}>
+                {activeTab === 'affordability' ? 'Active Calculator' : 'Plan Budget'}
+              </span>
+              <div 
+                className="rounded-circle d-flex align-items-center justify-content-center transition-all"
+                style={{ 
+                  width: '28px', 
+                  height: '28px', 
+                  backgroundColor: activeTab === 'affordability' ? '#7c3aed' : '#f1f5f9',
+                  color: activeTab === 'affordability' ? '#ffffff' : '#64748b'
+                }}
+              >
+                <ArrowRight size={14} />
               </div>
             </div>
           </div>
-
         </div>
       </div>
 
       {/* Interactive Console */}
 
       {activeTab && (
-        <div className="nb-calc-console-container mt-5" ref={consoleRef}>
-          <div className="nb-calc-console bg-white rounded-5 p-4 p-md-5 shadow-lg border-0" style={{ position: 'relative', overflow: 'hidden' }}>
+        <div className="nb-calc-console-container mt-4" ref={consoleRef}>
+          <div className="nb-calc-console bg-white rounded-4 p-3 p-md-4 shadow-sm border" style={{ position: 'relative', overflow: 'hidden' }}>
             {/* Subtle background pattern */}
             <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0.03, pointerEvents: 'none', backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
             
             <div style={{ position: 'relative', zIndex: 1 }}>
-              {/* Breadcrumbs */}
-              <div className="nb-calc-breadcrumbs mb-4 d-flex align-items-center gap-2 small fw-semibold" style={{ color: '#64748b' }}>
-                <span className="cursor-pointer hover-text-primary transition-all" onClick={() => setActiveTab(null)}>Home</span>
-                <span className="opacity-50">/</span>
-                <span>Home Loans</span>
-                <span className="opacity-50">/</span>
-                <span className="text-capitalize text-dark">{activeTab} Calculator</span>
+              {/* Breadcrumbs & Close */}
+              <div className="nb-calc-breadcrumbs mb-3 d-flex align-items-center justify-content-between small fw-semibold" style={{ color: '#64748b' }}>
+                <div className="d-flex align-items-center gap-2">
+                  <span className="cursor-pointer text-primary" onClick={() => setActiveTab(null)}>Calculators</span>
+                  <span className="opacity-50">/</span>
+                  <span className="text-capitalize text-dark">{activeTab} Calculator</span>
+                </div>
+                <button 
+                  type="button" 
+                  className="btn btn-sm btn-link text-decoration-none text-muted p-0 d-flex align-items-center gap-1"
+                  onClick={() => setActiveTab(null)}
+                  style={{ fontSize: '0.8rem' }}
+                >
+                  <X size={14} /> Close
+                </button>
               </div>
 
               {/* Nav Tabs Inside Console for easy switching */}
-              <div className="d-flex flex-wrap gap-2 mb-5 p-2 rounded-4 justify-content-center" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
+              <div className="d-flex flex-wrap gap-2 mb-4 p-1 rounded-pill justify-content-center" style={{ backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0', maxWidth: '380px', margin: '0 auto' }}>
                 {[
                   { id: 'emi', label: 'EMI' },
                   { id: 'eligibility', label: 'Eligibility' },

@@ -180,11 +180,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
         .pc-badge {
           position: absolute;
           top: 14px; left: 14px;
-          font-size: 11px; font-weight: 700;
-          letter-spacing: .8px; text-transform: uppercase;
-          padding: 5px 12px;
+          font-size: clamp(11px, 0.9vw, 12px); font-weight: 600;
+          letter-spacing: .5px; text-transform: uppercase;
+          padding: 4px 10px;
           border-radius: 6px;
-          line-height: 1.4;
+          line-height: 1.35;
           box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
         .pc-badge--rent  { background: var(--nb-primary-soft, #eef3fb); color: var(--nb-primary, #0b2c56); }
@@ -193,11 +193,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
         .pc-featured {
           position: absolute;
           top: 14px; right: 52px;
-          font-size: 10px; font-weight: 700;
-          letter-spacing: .8px; text-transform: uppercase;
+          font-size: clamp(11px, 0.9vw, 12px); font-weight: 600;
+          letter-spacing: .5px; text-transform: uppercase;
           background: linear-gradient(135deg, var(--nb-accent, #f2b203), var(--nb-accent-dark, #d59d02));
           color: var(--nb-primary-dark, #071f3f);
-          padding: 5px 12px;
+          padding: 4px 10px;
           border-radius: 6px;
           box-shadow: 0 4px 10px rgba(242, 178, 3, 0.25);
         }
@@ -205,11 +205,11 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
         .pc-price {
           position: absolute;
           bottom: 14px; left: 14px;
-          font-size: 20px; font-weight: 800;
+          font-size: clamp(18px, 2vw, 20px); font-weight: 700;
           color: #ffffff;
-          letter-spacing: -.4px;
+          letter-spacing: -.3px;
           text-shadow: 0 2px 8px rgba(11, 44, 86, 0.5);
-          line-height: 1;
+          line-height: 1.1;
         }
 
         /* ── WISHLIST BUTTON ── */
@@ -241,17 +241,17 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
 
         /* ── BODY ── */
         .pc-body {
-          padding: 20px;
+          padding: 18px;
           display: flex; flex-direction: column;
           flex: 1;
           gap: 0;
         }
 
         .pc-title {
-          font-size: 16px; font-weight: 750;
+          font-size: clamp(16px, 1.8vw, 18px); font-weight: 600;
           color: var(--nb-primary, #0b2c56);
           margin: 0 0 6px;
-          line-height: 1.4;
+          line-height: 1.35;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
           transition: color 0.25s ease;
         }
@@ -264,8 +264,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
 
         .pc-loc {
           display: flex; align-items: center; gap: 5px;
-          font-size: 13px; color: var(--nb-muted, #64748b);
-          margin: 0 0 14px;
+          font-size: clamp(13px, 1.1vw, 14px); color: var(--nb-muted, #64748b);
+          font-weight: 400;
+          margin: 0 0 12px;
+          line-height: 1.45;
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .pc-loc svg { flex-shrink: 0; color: #94a3b8; }
@@ -274,16 +276,16 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
         .pc-divider {
           height: 1px;
           background: linear-gradient(to right, var(--nb-card-border, #e2e8f0), transparent);
-          margin: 0 0 14px;
+          margin: 0 0 12px;
         }
 
         .pc-meta {
           display: flex; gap: 0;
-          margin: 0 0 16px;
+          margin: 0 0 14px;
         }
         .pc-meta-item {
           display: flex; align-items: center; gap: 6px;
-          font-size: 13px; color: var(--nb-text, #1e293b); font-weight: 500;
+          font-size: clamp(13px, 1.1vw, 14px); color: var(--nb-text, #1e293b); font-weight: 400;
           padding: 4px 8px 4px 0;
           flex: 1;
           border-right: 1px solid var(--nb-card-border, #e2e8f0);
@@ -297,18 +299,19 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
         }
 
         .pc-type-pill {
-          font-size: 11px; font-weight: 700;
+          font-size: clamp(11px, 0.9vw, 12px); font-weight: 600;
           color: var(--nb-primary, #0b2c56);
           background: var(--nb-primary-soft, #eef3fb);
           border-radius: 20px;
-          padding: 4px 12px;
-          letter-spacing: .4px;
+          padding: 4px 10px;
+          letter-spacing: .3px;
           text-transform: uppercase;
         }
 
         .pc-cta {
           display: inline-flex; align-items: center; gap: 6px;
-          font-size: 13px; font-weight: 700;
+          font-size: 14px; font-weight: 600;
+          line-height: 1.35;
           color: var(--nb-primary, #0b2c56);
           text-decoration: none;
           padding: 6px 14px;

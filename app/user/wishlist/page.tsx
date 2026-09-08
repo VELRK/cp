@@ -16,7 +16,7 @@ interface WishlistItem {
 }
 
 export default function WishlistPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, setAuthModalOpen } = useAuth();
   const router = useRouter();
 
   // Data states
@@ -26,9 +26,10 @@ export default function WishlistPage() {
   // Authenticate user
   useEffect(() => {
     if (!authLoading && !user) {
-      router.push('/login');
+      router.replace('/');
+      setAuthModalOpen('login');
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, setAuthModalOpen]);
 
   // Fetch wishlist
   useEffect(() => {

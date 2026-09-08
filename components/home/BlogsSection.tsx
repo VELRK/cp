@@ -69,10 +69,10 @@ const BlogsSection: React.FC<BlogsSectionProps> = ({
               Insights & Market Guides
             </span>
           </div>
-          <h2 className="fw-bold m-0 text-dark mb-1" style={{ fontSize: '1.75rem', letterSpacing: '-0.02em' }}>
+          <h2 className="fw-bold m-0 text-dark mb-1 section-heading" style={{ fontSize: 'var(--nb-text-section, 24px)', letterSpacing: '-0.01em' }}>
             From Our Blog
           </h2>
-          <p className="text-secondary m-0" style={{ fontSize: '0.95rem' }}>
+          <p className="text-secondary m-0" style={{ fontSize: 'var(--nb-text-subtitle, 16px)', lineHeight: '1.45' }}>
             Expert insights, verified property documentation tips, and local market trends.
           </p>
         </div>
@@ -80,7 +80,7 @@ const BlogsSection: React.FC<BlogsSectionProps> = ({
         <Link
           href="/blog"
           className="btn rounded-pill px-4 py-2 fw-semibold d-inline-flex align-items-center gap-2 shadow-sm text-white"
-          style={{ backgroundColor: 'var(--nb-primary)', borderColor: 'var(--nb-primary)', fontSize: '0.9rem', transition: 'all 0.2s ease' }}
+          style={{ backgroundColor: 'var(--nb-primary)', borderColor: 'var(--nb-primary)', fontSize: '14px', transition: 'all 0.2s ease' }}
         >
           <span>View All Articles</span>
           <ArrowRight size={16} />
@@ -107,7 +107,7 @@ const BlogsSection: React.FC<BlogsSectionProps> = ({
                   : 'btn-light bg-light text-secondary border-0'
               }`}
               style={{
-                fontSize: '0.85rem',
+                fontSize: '14px',
                 ...(isActive ? { backgroundColor: 'var(--nb-primary)', borderColor: 'var(--nb-primary)' } : {})
               }}
               onClick={() => setActiveBlogCategory(tab.key as any)}
@@ -242,7 +242,7 @@ const BlogsSection: React.FC<BlogsSectionProps> = ({
                     {/* Card Body */}
                     <div className="p-4 d-flex flex-column flex-grow-1">
                       {/* Meta info */}
-                      <div className="d-flex align-items-center justify-content-between text-secondary mb-3 gap-2" style={{ fontSize: '0.8rem' }}>
+                      <div className="d-flex align-items-center justify-content-between text-secondary mb-3 gap-2" style={{ fontSize: 'var(--nb-text-small, 12px)' }}>
                         <span className="d-inline-flex align-items-center gap-1.5 fw-medium text-truncate" title={author}>
                           <User size={14} style={{ color: 'var(--nb-primary)' }} className="flex-shrink-0" />
                           <span className="text-truncate">{author}</span>
@@ -257,10 +257,10 @@ const BlogsSection: React.FC<BlogsSectionProps> = ({
 
                       {/* Title */}
                       <h3
-                        className="fw-bold mb-3 text-dark"
+                        className="fw-bold mb-2 text-dark card-title"
                         style={{
-                          fontSize: '1.05rem',
-                          lineHeight: '1.4',
+                          fontSize: 'var(--nb-text-card-title, 18px)',
+                          lineHeight: '1.35',
                           display: '-webkit-box',
                           WebkitLineClamp: 2,
                           WebkitBoxOrient: 'vertical',
@@ -276,8 +276,8 @@ const BlogsSection: React.FC<BlogsSectionProps> = ({
                         <p
                           className="text-secondary mb-4 flex-grow-1"
                           style={{
-                            fontSize: '0.85rem',
-                            lineHeight: '1.5',
+                            fontSize: 'var(--nb-text-body, 14px)',
+                            lineHeight: '1.55',
                             display: '-webkit-box',
                             WebkitLineClamp: 2,
                             WebkitBoxOrient: 'vertical',

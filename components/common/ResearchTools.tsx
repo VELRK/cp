@@ -408,7 +408,7 @@ export default function ResearchTools() {
               {activeTab === 'emi' && (
                 <div className="row g-5 align-items-center">
                   <div className="col-lg-7">
-                    <h3 className="mb-4 fw-bolder" style={{ color: '#0f172a', fontSize: '1.75rem' }}>Home Loan EMI Calculator</h3>
+                    <h3 className="mb-4 fw-bolder section-heading" style={{ color: '#0f172a', fontSize: 'var(--nb-text-section, 24px)', lineHeight: '1.3' }}>Home Loan EMI Calculator</h3>
 
                     {/* Select Bank Dropdown */}
                     <div className="mb-4">
@@ -581,7 +581,7 @@ export default function ResearchTools() {
               {activeTab === 'eligibility' && (
                 <div className="row g-5 align-items-center">
                   <div className="col-lg-7">
-                    <h3 className="mb-4 fw-bolder" style={{ color: '#0f172a', fontSize: '1.75rem' }}>Eligibility Calculator</h3>
+                    <h3 className="mb-4 fw-bolder section-heading" style={{ color: '#0f172a', fontSize: 'var(--nb-text-section, 24px)', lineHeight: '1.3' }}>Eligibility Calculator</h3>
 
                     <div className="mb-4 p-3 rounded-4" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
                       <div className="d-flex justify-content-between align-items-center mb-3">
@@ -722,7 +722,7 @@ export default function ResearchTools() {
               {activeTab === 'affordability' && (
                 <div className="row g-5 align-items-center">
                   <div className="col-lg-7">
-                    <h3 className="mb-4 fw-bolder" style={{ color: '#0f172a', fontSize: '1.75rem' }}>Affordability Calculator</h3>
+                    <h3 className="mb-4 fw-bolder section-heading" style={{ color: '#0f172a', fontSize: 'var(--nb-text-section, 24px)', lineHeight: '1.3' }}>Affordability Calculator</h3>
 
                     <div className="mb-4 p-3 rounded-4" style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0' }}>
                       <div className="d-flex justify-content-between align-items-center mb-3">

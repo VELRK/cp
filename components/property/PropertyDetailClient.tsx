@@ -1275,18 +1275,22 @@ const pageStyles = `
     border-radius: 6px;
   }
   .pd-summary-title {
-    font-size: 24px;
-    font-weight: 850;
+    font-size: clamp(26px, 3.2vw, 36px);
+    font-weight: 700;
     color: var(--nb-secondary);
-    letter-spacing: -0.5px;
+    letter-spacing: -0.02em;
     line-height: 1.25;
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
   .pd-summary-location {
-    font-size: 14px;
+    font-size: clamp(14px, 1.4vw, 16px);
+    font-weight: 400;
     color: var(--nb-muted);
     display: flex;
     align-items: center;
     gap: 4px;
+    line-height: 1.45;
   }
   .text-gold {
     color: var(--nb-accent) !important;
@@ -1589,13 +1593,15 @@ const pageStyles = `
 
   .pd-section-title {
     display: flex; align-items: center; gap: 8px;
-    font-size: 1.15rem; font-weight: 750; color: var(--nb-secondary);
+    font-size: clamp(20px, 2.2vw, 24px); font-weight: 600; color: var(--nb-secondary);
     margin: 0 0 1.5rem; padding-bottom: 0.75rem;
     border-bottom: 2px solid var(--nb-primary-soft);
+    line-height: 1.3;
+    letter-spacing: -0.01em;
   }
   .pd-section-title svg { color: var(--nb-primary); }
 
-  .pd-description { font-size: 14.5px; color: var(--nb-text); line-height: 1.8; white-space: pre-line; margin: 0; }
+  .pd-description { font-size: clamp(13px, 1.1vw, 14px); color: var(--nb-text); line-height: 1.6; white-space: pre-line; margin: 0; font-weight: 400; }
 
   /* Description Card Readmore */
   .pd-description-container {
@@ -1605,8 +1611,8 @@ const pageStyles = `
     background: none;
     border: none;
     color: var(--nb-primary);
-    font-weight: 700;
-    font-size: 13.5px;
+    font-weight: 600;
+    font-size: 14px;
     cursor: pointer;
     padding: 4px 0;
     transition: gap 0.2s;
@@ -1827,23 +1833,23 @@ const pageStyles = `
     padding: 1.5rem;
     border-top: 4px solid var(--nb-accent);
   }
-  .pd-enquiry-title { font-size: 17px; font-weight: 800; color: #fff; margin: 0 0 4px; }
-  .pd-enquiry-sub   { font-size: 12.5px; color: rgba(255,255,255,.8); margin: 0; line-height: 1.4; }
+  .pd-enquiry-title { font-size: clamp(16px, 1.8vw, 18px); font-weight: 600; color: #fff; margin: 0 0 4px; line-height: 1.35; }
+  .pd-enquiry-sub   { font-size: clamp(13px, 1.1vw, 14px); color: rgba(255,255,255,.8); margin: 0; line-height: 1.45; font-weight: 400; }
   .pd-enquiry-body  { padding: 1.5rem; }
   .pd-enquiry-trust {
     display: flex; align-items: center; gap: 6px;
     padding: 0.85rem 1.5rem; background: var(--nb-light-bg);
     border-top: 1px solid var(--nb-card-border);
-    font-size: 11.5px; color: var(--nb-muted);
+    font-size: clamp(11px, 0.9vw, 12px); color: var(--nb-muted);
   }
   .pd-enquiry-trust svg { color: #2e7d32; }
 
   /* Form */
   .pd-form-group { margin-bottom: 1rem; }
-  .pd-form-label { display: block; font-size: 11px; font-weight: 700; color: var(--nb-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .5px; }
+  .pd-form-label { display: block; font-size: clamp(11px, 0.9vw, 12px); font-weight: 600; color: var(--nb-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .5px; }
   .pd-form-input {
     display: block; width: 100%; padding: 10px 14px;
-    font-size: 13.5px; color: var(--nb-text); font-family: inherit;
+    font-size: clamp(13px, 1.1vw, 14px); color: var(--nb-text); font-family: inherit; font-weight: 400;
     background: var(--nb-light-bg); border: 1.5px solid var(--nb-card-border); border-radius: 9px;
     outline: none; transition: all .18s;
   }
@@ -1856,7 +1862,7 @@ const pageStyles = `
 
   /* Alerts */
   .pd-alert {
-    font-size: 13px; padding: 12px 14px; border-radius: 9px; line-height: 1.45;
+    font-size: clamp(12px, 1vw, 13px); padding: 12px 14px; border-radius: 9px; line-height: 1.45;
   }
   .pd-alert--success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
   .pd-alert--error   { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
@@ -1866,7 +1872,7 @@ const pageStyles = `
   /* Primary button */
   .pd-btn-primary {
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    font-size: 14.5px; font-weight: 700; padding: 12px 22px;
+    font-size: 14px; font-weight: 600; padding: 12px 22px; line-height: 1.35;
     background: linear-gradient(135deg, var(--nb-accent), var(--nb-accent-dark));
     color: var(--nb-primary-dark); border: none; border-radius: 10px; cursor: pointer;
     box-shadow: 0 4px 14px rgba(242, 178, 3, 0.3);

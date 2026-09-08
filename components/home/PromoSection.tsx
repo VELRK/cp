@@ -46,15 +46,15 @@ const PromoSection: React.FC<PromoSectionProps> = ({ user, setAuthModalOpen }) =
 
         {/* Right Side - Content */}
         <div className="col-md-5 offset-md-1">
-          <div className="d-inline-flex align-items-center bg-success bg-opacity-10 text-success px-3 py-1.5 rounded-pill mb-3" style={{ fontSize: '0.85rem', fontWeight: '600' }}>
+          <div className="d-inline-flex align-items-center bg-success bg-opacity-10 text-success px-3 py-1.5 rounded-pill mb-3" style={{ fontSize: 'var(--nb-text-small, 12px)', fontWeight: '600' }}>
             <Sparkles size={16} className="me-2" />
             Special Offer
           </div>
-          <h2 className="fw-bold mb-3 text-dark" style={{ fontSize: '2rem', lineHeight: '1.2', color: '#0b1a30' }}>
+          <h2 className="fw-bold mb-3 section-heading" style={{ fontSize: 'var(--nb-text-section, 24px)', lineHeight: '1.3', color: '#0b1a30' }}>
             Sell or rent faster!<br />
-            <span style={{ color: '#1b5e20', fontStyle: 'italic', fontSize: '1.5rem' }}>at the right price.</span>
+            <span style={{ color: '#1b5e20', fontStyle: 'italic', fontSize: 'var(--nb-text-card-title, 18px)' }}>at the right price.</span>
           </h2>
-          <p className="text-muted mb-4" style={{ fontSize: '1.1rem', lineHeight: '1.6' }}>
+          <p className="text-muted mb-4" style={{ fontSize: 'var(--nb-text-body, 14px)', lineHeight: '1.55' }}>
             List your property now and connect directly with genuine tenants or buyers without any brokerage fees.
           </p>
 

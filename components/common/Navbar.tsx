@@ -60,7 +60,18 @@ const Navbar: React.FC = () => {
               <Link href="/blog" className="nav-link nav-link-premium text-nowrap">Blog's</Link>
             </li>
             <li className="nav-item">
-              <Link href="/user/wishlist" className="nav-link nav-link-premium text-nowrap">My Wishlist</Link>
+              <Link
+                href="/user/wishlist"
+                className="nav-link nav-link-premium text-nowrap"
+                onClick={(e) => {
+                  if (!user) {
+                    e.preventDefault();
+                    setAuthModalOpen('login');
+                  }
+                }}
+              >
+                My Wishlist
+              </Link>
             </li>
 
             {user && (
@@ -319,10 +330,14 @@ const Navbar: React.FC = () => {
                   </Link>
                 </li>
                 <li>
-                  <Link href="/user/wishlist" className="dropdown-item py-2">
+                  <button
+                    type="button"
+                    className="dropdown-item py-2 d-flex align-items-center gap-2 border-0 bg-transparent w-100 text-start"
+                    onClick={() => setAuthModalOpen('login')}
+                  >
                     <Bookmark size={16} className="text-muted" />
                     <span>My Wishlist</span>
-                  </Link>
+                  </button>
                 </li>
                 <li>
                   <Link href="/owner/listings" className="dropdown-item py-2">

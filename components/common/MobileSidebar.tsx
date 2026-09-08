@@ -318,7 +318,17 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
             <Link href="/blog" className="menu-link-direct" onClick={handleLinkClick}>
               <span>Blog</span>
             </Link>
-            <Link href="/user/wishlist" className="menu-link-direct" onClick={handleLinkClick}>
+            <Link
+              href="/user/wishlist"
+              className="menu-link-direct"
+              onClick={(e) => {
+                handleLinkClick();
+                if (!user) {
+                  e.preventDefault();
+                  setAuthModalOpen('login');
+                }
+              }}
+            >
               <span>My Wishlist</span>
             </Link>
             <Link href="/about" className="menu-link-direct" onClick={handleLinkClick}>

@@ -14,7 +14,7 @@ interface City {
 }
 
 export default function RegisterPage() {
-  const { user, registerUser } = useAuth();
+  const { user, registerUser, setAuthModalOpen } = useAuth();
   const router = useRouter();
 
   const [cities, setCities] = useState<City[]>([]);
@@ -81,8 +81,9 @@ export default function RegisterPage() {
       if (result.success) {
         setSuccessMsg('Registration successful! You can now sign in with OTP on your phone.');
         setTimeout(() => {
-          router.push('/login');
-        }, 3000);
+          router.push('/');
+          setAuthModalOpen('login');
+        }, 2000);
       } else {
         setErrorMsg(result.message || 'Registration failed.');
       }
@@ -240,9 +241,16 @@ export default function RegisterPage() {
 
               <p className="small text-muted text-center mt-3 mb-0">
                 Already have an account?{' '}
-                <Link href="/login" className="fw-semibold text-decoration-none text-primary">
+                <button
+                  type="button"
+                  className="btn btn-link p-0 fw-semibold text-decoration-none text-primary"
+                  onClick={() => {
+                    router.push('/');
+                    setAuthModalOpen('login');
+                  }}
+                >
                   Sign In with OTP
-                </Link>
+                </button>
               </p>
             </form>
           </div>

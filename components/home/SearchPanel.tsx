@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Search, Navigation } from 'lucide-react';
 import type { PropertyTypeItem } from '@/lib/propertyTypes';
+import { useAuth } from '@/hooks/useAuth';
 
 export interface City {
   id: number;
@@ -62,35 +63,47 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
       .slice(0, 8);
   }, [localitySuggestions, searchQuery]);
 
+  const handlePostPropertyClick = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault();
+      setAuthModalOpen('login');
+      return;
+    }
+  };
+
   return (
     <div className="nb-search-card-premium fade-in-up">
+      {/* Tab Header Row — main property types filtered to real data */}
       <div className="nb-search-tabs-premium-row">
-        <ul className="nb-search-tabs-premium-list">
-          <li>
+        <ul className="nb-search-tabs-premium-list" role="tablist">
+          <li className="nb-search-tab-premium-item">
             <button
               type="button"
               className={`nb-search-tab-premium-btn ${!mainTypeSlug ? 'active' : ''}`}
               onClick={() => onMainTypeChange('')}
             >
-              All Properties
-              {allCount !== null && allCount >= 0 ? (
-                <span className="ms-1 opacity-75">({formatCount(allCount)})</span>
+              <span>All Types</span>
+              {allCount !== null ? (
+                <span className="badge bg-light text-dark rounded-pill ms-1.5 px-2 py-0.5 fw-semibold" style={{ fontSize: '0.7rem' }}>
+                  {formatCount(allCount)}
+                </span>
               ) : null}
             </button>
           </li>
-
           {mainTypes.map((mt) => {
-            const count = typeCounts[mt.slug];
+            const count = typeCounts[mt.slug] ?? 0;
             return (
-              <li key={mt.id || mt.slug}>
+              <li key={mt.slug} className="nb-search-tab-premium-item">
                 <button
                   type="button"
                   className={`nb-search-tab-premium-btn ${mainTypeSlug === mt.slug ? 'active' : ''}`}
                   onClick={() => onMainTypeChange(mt.slug)}
                 >
-                  {mt.name}
-                  {typeof count === 'number' ? (
-                    <span className="ms-1 opacity-75">({formatCount(count)})</span>
+                  <span>{mt.name}</span>
+                  {count > 0 ? (
+                    <span className="badge bg-light text-dark rounded-pill ms-1.5 px-2 py-0.5 fw-semibold" style={{ fontSize: '0.7rem' }}>
+                      {formatCount(count)}
+                    </span>
                   ) : null}
                 </button>
               </li>
@@ -98,20 +111,21 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
           })}
         </ul>
         <Link
-          href={user ? '/owner/property/add' : '#'}
-          onClick={(e) => {
-            if (!user) {
-              e.preventDefault();
-              setAuthModalOpen('login');
-            }
-          }}
+          href="/owner/property/add"
+          onClick={handlePostPropertyClick}
           className="nb-post-property-free-link my-2 text-decoration-none"
         >
           Post Property <span className="badge bg-success text-white py-1 px-1.5 ms-1">FREE</span>
         </Link>
       </div>
 
-      <form onSubmit={handleSearchSubmit} className="nb-search-inputs-premium-row">
+      <form
+        onSubmit={(e) => {
+          setShowSuggestions(false);
+          handleSearchSubmit(e);
+        }}
+        className="nb-search-inputs-premium-row"
+      >
         <div className="nb-search-inputs-main-group">
           <div className="nb-search-select-premium-wrap">
             <select
@@ -132,52 +146,85 @@ const SearchPanel: React.FC<SearchPanelProps> = ({
             </select>
           </div>
 
-          <div className="nb-search-input-premium-wrap position-relative">
+          <div className="nb-search-input-premium-wrap position-relative flex-grow-1">
             <Search size={16} className="nb-search-input-premium-icon" />
             <input
               type="text"
               className="form-control"
-              placeholder="Locality / Area / Project..."
+              placeholder="Search by area, landmark or project..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
                 setShowSuggestions(true);
               }}
               onFocus={() => setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 180)}
+              onBlur={() => {
+                setTimeout(() => setShowSuggestions(false), 200);
+              }}
+              aria-label="Search keywords"
               autoComplete="off"
             />
             <div className="nb-search-input-actions">
               <button
                 type="button"
                 className="nb-search-action-btn"
-                title="Current Location"
+                title="Locate Me (uses your GPS to find properties nearby)"
                 onClick={handleLocationSearch}
               >
                 <Navigation size={16} />
               </button>
             </div>
+
             {showSuggestions && filteredSuggestions.length > 0 && (
-              <ul className="nb-search-suggest-list list-unstyled mb-0">
-                {filteredSuggestions.map((loc) => (
-                  <li key={loc.name}>
+              <div
+                className="nb-search-suggest-list"
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 8px)',
+                  left: 0,
+                  right: 0,
+                  zIndex: 1050,
+                  maxHeight: '280px',
+                  overflowY: 'auto',
+                  background: '#ffffff',
+                  border: '1px solid rgba(11, 44, 86, 0.12)',
+                  borderRadius: '12px',
+                  boxShadow: '0 12px 36px rgba(11, 44, 86, 0.18)',
+                  padding: 0,
+                }}
+              >
+                <div
+                  className="px-3 py-2 bg-light text-muted small fw-bold border-bottom d-flex align-items-center justify-content-between"
+                  style={{ borderTopLeftRadius: '12px', borderTopRightRadius: '12px' }}
+                >
+                  <span>Popular Localities</span>
+                  <span className="badge bg-secondary-subtle text-secondary" style={{ fontSize: '0.65rem' }}>
+                    {filteredSuggestions.length} found
+                  </span>
+                </div>
+                <div className="p-1">
+                  {filteredSuggestions.map((loc) => (
                     <button
+                      key={loc.name}
                       type="button"
                       className="nb-search-suggest-item"
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => {
+                      onMouseDown={(e) => {
+                        e.preventDefault();
                         setSearchQuery(loc.name);
                         setShowSuggestions(false);
                       }}
                     >
-                      <span>{loc.name}</span>
-                      {loc.count > 0 ? (
-                        <span className="text-muted small">{loc.count}</span>
-                      ) : null}
+                      <span className="d-flex align-items-center gap-2">
+                        <Search size={14} className="text-muted" />
+                        <span>{loc.name}</span>
+                      </span>
+                      <span className="badge bg-light text-muted border rounded-pill" style={{ fontSize: '0.7rem' }}>
+                        {loc.count} {loc.count === 1 ? 'property' : 'properties'}
+                      </span>
                     </button>
-                  </li>
-                ))}
-              </ul>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         </div>

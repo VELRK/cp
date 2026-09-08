@@ -23,7 +23,10 @@ import {
   Lock,
   Check,
   TrendingUp,
-  X
+  FileCheck2,
+  ChevronRight,
+  Shield,
+  HelpCircle,
 } from 'lucide-react';
 
 interface City {
@@ -35,13 +38,21 @@ interface City {
 interface AgentKycOnboardingProps {
   onSuccess: () => void;
   onCancel?: () => void;
+  initialStep?: 'kyc_form';
 }
 
-export default function AgentKycOnboarding({ onSuccess, onCancel }: AgentKycOnboardingProps) {
+export default function AgentKycOnboarding({
+  onSuccess,
+  onCancel,
+  initialStep = 'kyc_form',
+}: AgentKycOnboardingProps) {
   const { user, refreshUser } = useAuth();
 
-  // Step 1: 'confirm' (Confirmation screen) | Step 2: 'kyc_form' (KYC Form) | Step 3: 'success'
-  const [step, setStep] = useState<'confirm' | 'kyc_form' | 'success'>('confirm');
+  // Step 1: 'kyc_form' (KYC Form) | Step 2: 'success'
+  const [step, setStep] = useState<'kyc_form' | 'success'>(initialStep);
+
+  // Sub-steps for kyc_form: 1 = Agency Info, 2 = Aadhaar & Docs, 3 = Review & Declaration
+  const [formSubStep, setFormSubStep] = useState<1 | 2 | 3>(1);
 
   const [cities, setCities] = useState<City[]>([]);
   const [name, setName] = useState('');
@@ -120,8 +131,43 @@ export default function AgentKycOnboarding({ onSuccess, onCancel }: AgentKycOnbo
     return parts.join(' ');
   };
 
-  const handleSubmitKyc = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const validateSubStep1 = (): boolean => {
+    setErrorMsg(null);
+    if (!name.trim()) {
+      setErrorMsg('Please enter your full name.');
+      return false;
+    }
+    if (!phone.trim()) {
+      setErrorMsg('Please enter your contact phone number.');
+      return false;
+    }
+    if (!businessName.trim() || businessName.trim().length < 2) {
+      setErrorMsg('Please enter your Business or Agency name (at least 2 characters).');
+      return false;
+    }
+    if (!cityId) {
+      setErrorMsg('Please select your primary operating city.');
+      return false;
+    }
+    return true;
+  };
+
+  const validateSubStep2 = (): boolean => {
+    setErrorMsg(null);
+    const cleanAadhar = aadharNo.replace(/\D/g, '');
+    if (cleanAadhar.length !== 12) {
+      setErrorMsg('Please enter a valid 12-digit Aadhaar number.');
+      return false;
+    }
+    if (!user?.aadhar_file && !aadharFile) {
+      setErrorMsg('Please upload your Aadhaar document or government ID proof for agent verification.');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmitKyc = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setErrorMsg(null);
 
     if (!user) {
@@ -129,31 +175,22 @@ export default function AgentKycOnboarding({ onSuccess, onCancel }: AgentKycOnbo
       return;
     }
 
-    const cleanAadhar = aadharNo.replace(/\D/g, '');
-    if (cleanAadhar.length !== 12) {
-      setErrorMsg('Please enter a valid 12-digit Aadhaar number.');
+    if (!validateSubStep1()) {
+      setFormSubStep(1);
       return;
     }
 
-    if (!businessName.trim() || businessName.trim().length < 2) {
-      setErrorMsg('Please enter your Business or Agency name (at least 2 characters).');
-      return;
-    }
-
-    if (!cityId) {
-      setErrorMsg('Please select your primary operating city.');
-      return;
-    }
-
-    if (!user.aadhar_file && !aadharFile) {
-      setErrorMsg('Please upload your Aadhaar document or government ID proof for agent KYC verification.');
+    if (!validateSubStep2()) {
+      setFormSubStep(2);
       return;
     }
 
     if (!acceptTerms) {
-      setErrorMsg('Please confirm the declaration to proceed.');
+      setErrorMsg('Please confirm the compliance declaration to proceed.');
       return;
     }
+
+    const cleanAadhar = aadharNo.replace(/\D/g, '');
 
     setSubmitting(true);
     try {
@@ -164,7 +201,7 @@ export default function AgentKycOnboarding({ onSuccess, onCancel }: AgentKycOnbo
       formData.append('phone', phone.trim());
       formData.append('city_id', cityId);
       formData.append('user_type', 'agent');
-      formData.append('role', 'owner'); // Ensure owner permissions for adding property
+      formData.append('role', 'owner'); // Ensure owner permissions for adding properties
       formData.append('business_name', businessName.trim());
       formData.append('aadhar_no', cleanAadhar);
       formData.append('kyc_submit', '1');
@@ -187,14 +224,14 @@ export default function AgentKycOnboarding({ onSuccess, onCancel }: AgentKycOnbo
       if (res.data?.success) {
         setStep('success');
         confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
+          particleCount: 120,
+          spread: 80,
+          origin: { y: 0.55 },
         });
         await refreshUser();
         setTimeout(() => {
           onSuccess();
-        }, 2200);
+        }, 2000);
       } else {
         setErrorMsg(res.data?.message || 'Failed to update agent profile. Please verify details.');
       }
@@ -208,144 +245,38 @@ export default function AgentKycOnboarding({ onSuccess, onCancel }: AgentKycOnbo
     }
   };
 
-  // STEP 1: Confirmation Screen
-  if (step === 'confirm') {
-    return (
-      <div className="card border-0 shadow-lg rounded-4 overflow-hidden animate-fade-in my-3">
-        <div
-          className="p-4 p-md-5 text-white position-relative"
-          style={{
-            background: 'linear-gradient(135deg, #071f3f 0%, #0b2c56 100%)',
-          }}
-        >
-          <div className="d-flex align-items-center gap-2 mb-3">
-            <span
-              className="badge rounded-pill px-3 py-1.5 fw-bold d-inline-flex align-items-center gap-1.5"
-              style={{
-                background: 'rgba(212, 175, 55, 0.2)',
-                border: '1px solid rgba(212, 175, 55, 0.5)',
-                color: '#ffd700',
-                fontSize: '0.78rem',
-              }}
-            >
-              <ShieldCheck size={14} />
-              <span>AGENT VERIFICATION REQUIRED</span>
-            </span>
-          </div>
+  const selectedCityName =
+    cities.find((c) => String(c.id) === String(cityId))?.name || 'Selected City';
 
-          <h2 className="h3 fw-bold text-white mb-2">
-            Do you want to become an Agent to post properties?
-          </h2>
-          <p className="text-white-50 small mb-0" style={{ maxWidth: '650px', lineHeight: '1.6' }}>
-            To list and manage property listings on Coimbatore Properties, users need to register as an Agent and complete basic KYC verification.
-          </p>
-        </div>
+  const maskedAadhaar = aadharNo
+    ? `XXXX XXXX ${aadharNo.replace(/\D/g, '').slice(-4) || 'XXXX'}`
+    : 'XXXX XXXX XXXX';
 
-        <div className="p-4 p-md-5 bg-white">
-          <div className="row g-3 mb-4">
-            <div className="col-md-4">
-              <div className="p-3 rounded-3 bg-light border h-100">
-                <div className="d-flex align-items-center gap-2 mb-2 text-primary fw-bold">
-                  <div className="p-2 rounded-circle bg-primary-subtle text-primary">
-                    <Building2 size={18} />
-                  </div>
-                  <span>100% Free Listings</span>
-                </div>
-                <p className="text-muted small mb-0">
-                  Post residential, commercial, and plot properties without brokerage fees.
-                </p>
-              </div>
-            </div>
 
-            <div className="col-md-4">
-              <div className="p-3 rounded-3 bg-light border h-100">
-                <div className="d-flex align-items-center gap-2 mb-2 text-warning fw-bold">
-                  <div className="p-2 rounded-circle bg-warning-subtle text-dark">
-                    <ShieldCheck size={18} />
-                  </div>
-                  <span>Verified Partner Status</span>
-                </div>
-                <p className="text-muted small mb-0">
-                  Build credibility with verified agent badge and reach authentic buyers & tenants.
-                </p>
-              </div>
-            </div>
 
-            <div className="col-md-4">
-              <div className="p-3 rounded-3 bg-light border h-100">
-                <div className="d-flex align-items-center gap-2 mb-2 text-success fw-bold">
-                  <div className="p-2 rounded-circle bg-success-subtle text-success">
-                    <TrendingUp size={18} />
-                  </div>
-                  <span>Direct Client Leads</span>
-                </div>
-                <p className="text-muted small mb-0">
-                  Receive instant WhatsApp inquiries and direct calls from interested clients.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-3.5 rounded-3 mb-4 d-flex align-items-center gap-3" style={{ background: '#f8f9fc', border: '1px dashed #cbd5e1' }}>
-            <div className="p-2 rounded-circle bg-white shadow-sm text-primary flex-shrink-0">
-              <FileText size={20} />
-            </div>
-            <div>
-              <div className="fw-bold text-dark small">Quick 1-Minute KYC Requirement</div>
-              <div className="text-muted small" style={{ fontSize: '0.8rem' }}>
-                You will only need your Business / Agency Name, Operating City, and 12-digit Aadhaar Number with document proof.
-              </div>
-            </div>
-          </div>
-
-          <div className="d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3 pt-2">
-            {onCancel && (
-              <button
-                type="button"
-                className="btn btn-outline-secondary rounded-pill px-4 py-2.5 w-100 w-sm-auto text-decoration-none"
-                onClick={onCancel}
-              >
-                Cancel & Return
-              </button>
-            )}
-            <button
-              type="button"
-              className="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-inline-flex align-items-center justify-content-center gap-2 ms-auto w-100 w-sm-auto"
-              style={{
-                background: 'linear-gradient(135deg, #0b2c56 0%, #174276 100%)',
-                border: 'none',
-                minWidth: '240px',
-              }}
-              onClick={() => setStep('kyc_form')}
-            >
-              <span>Yes, Become an Agent & Fill KYC</span>
-              <ArrowRight size={16} />
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // STEP 3: Success Screen
+  // ==========================================
+  // STAGE 3: SUCCESS & UNLOCK CELEBRATION
+  // ==========================================
   if (step === 'success') {
     return (
       <div className="card border-0 shadow-lg rounded-4 overflow-hidden animate-fade-in my-3 text-center p-5">
         <div className="py-4">
           <div
-            className="rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-sm"
+            className="rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-lg"
             style={{
-              width: '80px',
-              height: '80px',
+              width: '86px',
+              height: '86px',
               background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
               color: '#ffffff',
             }}
           >
-            <CheckCircle2 size={44} />
+            <CheckCircle2 size={48} />
           </div>
-          <h2 className="h4 fw-bold text-dark mb-2">Agent Profile & KYC Submitted!</h2>
-          <p className="text-muted small mb-4" style={{ maxWidth: '500px', margin: '0 auto' }}>
-            Congratulations! Your profile has been upgraded to an Agent account and KYC has been submitted. Loading the Post Property form now...
+          <h2 className="h3 fw-bold text-dark mb-2">Agent Conversion & KYC Submitted!</h2>
+          <p className="text-muted small mb-4" style={{ maxWidth: '540px', margin: '0 auto', lineHeight: '1.6' }}>
+            Congratulations! Your account has been converted to an{' '}
+            <strong className="text-primary">Agent Account</strong> and your KYC documents have been submitted for verification.
+            Redirecting to verification status...
           </p>
           <div className="spinner-border text-primary spinner-border-sm" role="status">
             <span className="visually-hidden">Loading...</span>
@@ -355,10 +286,12 @@ export default function AgentKycOnboarding({ onSuccess, onCancel }: AgentKycOnbo
     );
   }
 
-  // STEP 2: KYC & Agent Profile Form
+  // ==========================================
+  // STAGE 2: KYC VERIFICATION STEPS (GUIDED WIZARD)
+  // ==========================================
   return (
     <div className="card border-0 shadow-lg rounded-4 overflow-hidden animate-fade-in my-3">
-      {/* Form Header */}
+      {/* Header */}
       <div
         className="p-4 text-white d-flex align-items-center justify-content-between flex-wrap gap-2"
         style={{
@@ -366,193 +299,335 @@ export default function AgentKycOnboarding({ onSuccess, onCancel }: AgentKycOnbo
         }}
       >
         <div>
-          <button
-            type="button"
-            className="btn btn-link text-white-50 p-0 text-decoration-none small d-inline-flex align-items-center gap-1 mb-1"
-            onClick={() => setStep('confirm')}
-          >
-            <ArrowLeft size={14} />
-            <span>Back to Confirmation</span>
-          </button>
+          {formSubStep > 1 ? (
+            <button
+              type="button"
+              className="btn btn-link text-white-50 p-0 text-decoration-none small d-inline-flex align-items-center gap-1 mb-1 hover-white"
+              onClick={() => setFormSubStep((s) => (s - 1) as any)}
+            >
+              <ArrowLeft size={14} />
+              <span>Back to Previous Step</span>
+            </button>
+          ) : onCancel ? (
+            <button
+              type="button"
+              className="btn btn-link text-white-50 p-0 text-decoration-none small d-inline-flex align-items-center gap-1 mb-1 hover-white"
+              onClick={onCancel}
+            >
+              <ArrowLeft size={14} />
+              <span>Cancel & Return</span>
+            </button>
+          ) : null}
           <h2 className="h4 fw-bold text-white mb-0 d-flex align-items-center gap-2">
             <ShieldCheck size={22} className="text-warning" />
-            <span>Agent Profile & KYC Form</span>
+            <span>Agent KYC Verification</span>
           </h2>
+          <div className="text-white-50 small mt-0.5" style={{ fontSize: '0.8rem' }}>
+            Complete your quick KYC details to convert your account to Agent and post properties.
+          </div>
         </div>
-        <span
-          className="badge rounded-pill px-3 py-1.5 fw-bold"
-          style={{ background: 'rgba(212, 175, 55, 0.25)', color: '#ffd700', border: '1px solid rgba(212, 175, 55, 0.4)' }}
-        >
-          POST PROPERTY ELIGIBILITY
-        </span>
+
+        <div className="d-flex align-items-center gap-2">
+          <span
+            className="badge rounded-pill px-3 py-1.5 fw-bold"
+            style={{
+              background: 'rgba(212, 175, 55, 0.25)',
+              color: '#ffd700',
+              border: '1px solid rgba(212, 175, 55, 0.4)',
+            }}
+          >
+            STEP {formSubStep} OF 3
+          </span>
+        </div>
       </div>
 
+      {/* Progress Timeline Stepper */}
+      <div className="bg-light px-4 py-3 border-bottom">
+        <div className="row g-2 text-center align-items-center">
+          {/* Step 1 indicator */}
+          <div className="col-4">
+            <div
+              className="d-flex align-items-center justify-content-center gap-2 p-2 rounded-3"
+              style={{
+                background: formSubStep === 1 ? '#0b2c56' : '#ecfdf5',
+                color: formSubStep === 1 ? '#ffffff' : '#059669',
+                fontWeight: 600,
+                fontSize: '0.82rem',
+                border: formSubStep === 1 ? 'none' : '1px solid #a7f3d0',
+                transition: 'all 0.25s ease',
+              }}
+            >
+              {formSubStep > 1 ? <CheckCircle2 size={16} /> : <Building2 size={16} />}
+              <span className="d-none d-sm-inline">1. Agency Details</span>
+              <span className="d-sm-none">1. Agency</span>
+            </div>
+          </div>
+
+          {/* Step 2 indicator */}
+          <div className="col-4">
+            <div
+              className="d-flex align-items-center justify-content-center gap-2 p-2 rounded-3"
+              style={{
+                background:
+                  formSubStep === 2 ? '#0b2c56' : formSubStep > 2 ? '#ecfdf5' : '#ffffff',
+                color:
+                  formSubStep === 2 ? '#ffffff' : formSubStep > 2 ? '#059669' : '#64748b',
+                fontWeight: 600,
+                fontSize: '0.82rem',
+                border: formSubStep === 2 ? 'none' : '1px solid #e2e8f0',
+                transition: 'all 0.25s ease',
+              }}
+            >
+              {formSubStep > 2 ? <CheckCircle2 size={16} /> : <Lock size={16} />}
+              <span className="d-none d-sm-inline">2. Aadhaar & Docs</span>
+              <span className="d-sm-none">2. KYC</span>
+            </div>
+          </div>
+
+          {/* Step 3 indicator */}
+          <div className="col-4">
+            <div
+              className="d-flex align-items-center justify-content-center gap-2 p-2 rounded-3"
+              style={{
+                background: formSubStep === 3 ? '#0b2c56' : '#ffffff',
+                color: formSubStep === 3 ? '#ffffff' : '#64748b',
+                fontWeight: 600,
+                fontSize: '0.82rem',
+                border: formSubStep === 3 ? 'none' : '1px solid #e2e8f0',
+                transition: 'all 0.25s ease',
+              }}
+            >
+              <FileCheck2 size={16} />
+              <span className="d-none d-sm-inline">3. Declaration & Unlock</span>
+              <span className="d-sm-none">3. Unlock</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Form Content */}
       <div className="p-4 p-md-5 bg-white">
         {errorMsg && (
           <div className="alert alert-danger d-flex align-items-center gap-2 small py-2.5 mb-4 rounded-3 border-danger-subtle">
-            <AlertCircle size={18} className="flex-shrink-0" />
+            <AlertCircle size={18} className="flex-shrink-0 text-danger" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         <form onSubmit={handleSubmitKyc}>
-          {/* Personal Info Grid */}
-          <div className="mb-4">
-            <h6 className="fw-bold text-dark border-bottom pb-2 mb-3 d-flex align-items-center gap-2">
-              <User size={16} className="text-primary" />
-              <span>1. Contact Information</span>
-            </h6>
-            <div className="row g-3">
-              <div className="col-md-4">
-                <label className="form-label small fw-semibold text-muted">Full Name</label>
-                <div className="input-group input-group-sm">
-                  <span className="input-group-text bg-light"><User size={14} /></span>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Your Name"
-                    required
-                  />
+          {/* SUB-STEP 1: AGENCY & CONTACT INFO */}
+          {formSubStep === 1 && (
+            <div className="animate-fade-in">
+              <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                  <Building2 size={18} className="text-primary" />
+                  <span>Step 1: Agency & Operating Information</span>
+                </h5>
+                <span className="text-muted small">Fields marked with * are required</span>
+              </div>
+
+              {/* Personal Contact row */}
+              <div className="row g-3 mb-4">
+                <div className="col-md-4">
+                  <label className="form-label small fw-semibold text-muted">Full Name *</label>
+                  <div className="input-group input-group-sm">
+                    <span className="input-group-text bg-light">
+                      <User size={14} />
+                    </span>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Your Full Name"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="col-md-4">
+                  <label className="form-label small fw-semibold text-muted">Mobile Phone *</label>
+                  <div className="input-group input-group-sm">
+                    <span className="input-group-text bg-light">
+                      <Phone size={14} />
+                    </span>
+                    <input
+                      type="tel"
+                      className="form-control"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="10-digit Phone"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="col-md-4">
+                  <label className="form-label small fw-semibold text-muted">Email Address</label>
+                  <div className="input-group input-group-sm">
+                    <span className="input-group-text bg-light">
+                      <Mail size={14} />
+                    </span>
+                    <input
+                      type="email"
+                      className="form-control"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="name@example.com"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="col-md-4">
-                <label className="form-label small fw-semibold text-muted">Mobile Phone</label>
-                <div className="input-group input-group-sm">
-                  <span className="input-group-text bg-light"><Phone size={14} /></span>
-                  <input
-                    type="tel"
-                    className="form-control"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Phone Number"
-                    required
-                  />
+              {/* Agency Credentials */}
+              <div className="row g-3 mb-4">
+                <div className="col-md-6">
+                  <label className="form-label small fw-semibold text-dark">
+                    Agency / Business Name <span className="text-danger">*</span>
+                  </label>
+                  <div className="input-group">
+                    <span className="input-group-text bg-light">
+                      <Briefcase size={15} />
+                    </span>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="e.g., Sri Krishna Real Estate & Consultancy"
+                      value={businessName}
+                      onChange={(e) => setBusinessName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="form-text small" style={{ fontSize: '0.74rem' }}>
+                    This name will be displayed as the authorized agent on all your property listings.
+                  </div>
                 </div>
-              </div>
 
-              <div className="col-md-4">
-                <label className="form-label small fw-semibold text-muted">Email Address</label>
-                <div className="input-group input-group-sm">
-                  <span className="input-group-text bg-light"><Mail size={14} /></span>
-                  <input
-                    type="email"
-                    className="form-control"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@example.com"
-                    required
-                  />
+                <div className="col-md-6">
+                  <label className="form-label small fw-semibold text-dark">
+                    Primary Operating City <span className="text-danger">*</span>
+                  </label>
+                  <div className="input-group">
+                    <span className="input-group-text bg-light">
+                      <MapPin size={15} />
+                    </span>
+                    <select
+                      className="form-select"
+                      value={cityId}
+                      onChange={(e) => setCityId(e.target.value)}
+                      required
+                    >
+                      <option value="">Select City</option>
+                      {cities.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name} {c.state ? `(${c.state})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Agency & KYC Grid */}
-          <div className="mb-4">
-            <h6 className="fw-bold text-dark border-bottom pb-2 mb-3 d-flex align-items-center gap-2">
-              <Building2 size={16} className="text-primary" />
-              <span>2. Agency & KYC Verification</span>
-            </h6>
-
-            <div className="row g-3">
-              <div className="col-md-6">
-                <label className="form-label small fw-semibold text-dark">
-                  Agency / Business Name <span className="text-danger">*</span>
-                </label>
-                <div className="input-group input-group-sm">
-                  <span className="input-group-text bg-light"><Briefcase size={14} /></span>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="e.g., Sri Krishna Properties & Consultancy"
-                    value={businessName}
-                    onChange={(e) => setBusinessName(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label small fw-semibold text-dark">
-                  Operating City <span className="text-danger">*</span>
-                </label>
-                <div className="input-group input-group-sm">
-                  <span className="input-group-text bg-light"><MapPin size={14} /></span>
+                <div className="col-md-6">
+                  <label className="form-label small fw-semibold text-dark">
+                    Property Specialization
+                  </label>
                   <select
                     className="form-select"
-                    value={cityId}
-                    onChange={(e) => setCityId(e.target.value)}
-                    required
+                    value={specialization}
+                    onChange={(e) => setSpecialization(e.target.value)}
                   >
-                    <option value="">Select City</option>
-                    {cities.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} {c.state ? `(${c.state})` : ''}
-                      </option>
-                    ))}
+                    <option value="Residential & Commercial">Residential & Commercial</option>
+                    <option value="Residential Apartments & Villas">Residential Apartments & Villas</option>
+                    <option value="Commercial & Retail Spaces">Commercial & Retail Spaces</option>
+                    <option value="Plots, Land & Agricultural">Plots, Land & Agricultural</option>
+                    <option value="Rental & Lease Management">Rental & Lease Management</option>
                   </select>
                 </div>
-              </div>
 
-              <div className="col-md-6">
-                <label className="form-label small fw-semibold text-dark">
-                  Specialization
-                </label>
-                <select
-                  className="form-select form-select-sm"
-                  value={specialization}
-                  onChange={(e) => setSpecialization(e.target.value)}
-                >
-                  <option value="Residential & Commercial">Residential & Commercial</option>
-                  <option value="Residential Apartments & Villas">Residential Apartments & Villas</option>
-                  <option value="Commercial & Retail Spaces">Commercial & Retail Spaces</option>
-                  <option value="Plots, Land & Agricultural">Plots, Land & Agricultural</option>
-                  <option value="Rental & Lease Management">Rental & Lease Management</option>
-                </select>
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label small fw-semibold text-dark">
-                  Website / Portfolio (Optional)
-                </label>
-                <input
-                  type="url"
-                  className="form-control form-control-sm"
-                  placeholder="https://myagency.com"
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                />
-              </div>
-
-              <div className="col-md-6">
-                <label className="form-label small fw-semibold text-dark">
-                  12-Digit Aadhaar Number <span className="text-danger">*</span>
-                </label>
-                <div className="input-group input-group-sm">
-                  <span className="input-group-text bg-light"><Lock size={14} /></span>
+                <div className="col-md-6">
+                  <label className="form-label small fw-semibold text-dark">
+                    Agency Website / Portfolio (Optional)
+                  </label>
                   <input
-                    type="text"
-                    className="form-control fw-medium"
-                    placeholder="XXXX XXXX XXXX"
-                    maxLength={14}
-                    value={formatAadharDisplay(aadharNo)}
-                    onChange={(e) => setAadharNo(e.target.value)}
-                    required
+                    type="url"
+                    className="form-control"
+                    placeholder="https://myagency.com"
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
                   />
                 </div>
-                <div className="form-text small" style={{ fontSize: '0.72rem' }}>
-                  Used for partner identity verification. Kept strictly confidential.
-                </div>
               </div>
 
-              <div className="col-md-6">
-                <label className="form-label small fw-semibold text-dark">
-                  Aadhaar Document / ID Proof <span className="text-danger">*</span>
-                </label>
-                <div className="input-group input-group-sm">
+              {/* Sub-step 1 Footer */}
+              <div className="d-flex align-items-center justify-content-between pt-3 border-top">
+                {onCancel ? (
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary rounded-pill px-4 py-2"
+                    onClick={onCancel}
+                  >
+                    Cancel
+                  </button>
+                ) : (
+                  <div />
+                )}
+                <button
+                  type="button"
+                  className="btn btn-primary rounded-pill px-4 py-2.5 fw-bold d-inline-flex align-items-center gap-2 text-white shadow-sm"
+                  style={{ background: 'linear-gradient(135deg, #0b2c56 0%, #153e75 100%)', border: 'none' }}
+                  onClick={() => {
+                    if (validateSubStep1()) {
+                      setFormSubStep(2);
+                    }
+                  }}
+                >
+                  <span>Continue to Step 2: Aadhaar & KYC Docs</span>
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* SUB-STEP 2: AADHAAR & DOCUMENT PROOF */}
+          {formSubStep === 2 && (
+            <div className="animate-fade-in">
+              <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                  <Lock size={18} className="text-primary" />
+                  <span>Step 2: Aadhaar Identity & Document Proof</span>
+                </h5>
+                <span className="text-muted small">Encrypted & Confidential</span>
+              </div>
+
+              <div className="row g-4 mb-4">
+                <div className="col-md-6">
+                  <label className="form-label small fw-semibold text-dark">
+                    12-Digit Aadhaar Number <span className="text-danger">*</span>
+                  </label>
+                  <div className="input-group">
+                    <span className="input-group-text bg-light">
+                      <Lock size={15} />
+                    </span>
+                    <input
+                      type="text"
+                      className="form-control fw-bold font-monospace"
+                      placeholder="XXXX XXXX XXXX"
+                      maxLength={14}
+                      value={formatAadharDisplay(aadharNo)}
+                      onChange={(e) => setAadharNo(e.target.value)}
+                      required
+                      style={{ letterSpacing: '1px', fontSize: '1rem' }}
+                    />
+                  </div>
+                  <div className="form-text small" style={{ fontSize: '0.74rem' }}>
+                    Enter the 12-digit number from your Aadhaar Card. Used exclusively for agent identity verification.
+                  </div>
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label small fw-semibold text-dark">
+                    Aadhaar Document / ID Proof File <span className="text-danger">*</span>
+                  </label>
                   <input
                     type="file"
                     className="form-control"
@@ -560,91 +635,169 @@ export default function AgentKycOnboarding({ onSuccess, onCancel }: AgentKycOnbo
                     onChange={handleAadharFileChange}
                     id="agentAadharProof"
                   />
+                  {aadharFileName && (
+                    <div className="text-success small mt-1.5 d-flex align-items-center gap-1.5 fw-semibold" style={{ fontSize: '0.78rem' }}>
+                      <Check size={14} />
+                      <span>Document attached: {aadharFileName}</span>
+                    </div>
+                  )}
+                  {user?.aadhar_file && !aadharFileName && (
+                    <div className="text-muted small mt-1.5" style={{ fontSize: '0.75rem' }}>
+                      Existing document on file. Choose file only if you want to replace it.
+                    </div>
+                  )}
+                  <div className="form-text small" style={{ fontSize: '0.72rem' }}>
+                    Accepted formats: PDF, JPG, PNG, WEBP (Max 10 MB).
+                  </div>
                 </div>
-                {aadharFileName && (
-                  <div className="text-success small mt-1 d-flex align-items-center gap-1" style={{ fontSize: '0.75rem' }}>
-                    <Check size={13} />
-                    <span>Selected: {aadharFileName}</span>
+
+                <div className="col-md-12">
+                  <label className="form-label small fw-semibold text-dark">
+                    Agency Logo or Profile Photo (Optional)
+                  </label>
+                  <div className="d-flex align-items-center gap-3">
+                    {profilePreview && (
+                      <img
+                        src={profilePreview}
+                        alt="Logo preview"
+                        className="rounded-circle border shadow-sm"
+                        style={{ width: '52px', height: '52px', objectFit: 'cover' }}
+                      />
+                    )}
+                    <input
+                      type="file"
+                      className="form-control"
+                      accept="image/*"
+                      onChange={handleProfilePicChange}
+                    />
                   </div>
-                )}
-                {user?.aadhar_file && !aadharFileName && (
-                  <div className="text-muted small mt-1" style={{ fontSize: '0.75rem' }}>
-                    Existing document on file. Choose file to replace.
+                  <div className="form-text small" style={{ fontSize: '0.74rem' }}>
+                    Showcases your business brand or personal consultant picture on listings.
                   </div>
-                )}
+                </div>
               </div>
 
-              <div className="col-md-12">
-                <label className="form-label small fw-semibold text-dark">
-                  Agency Logo / Profile Photo (Optional)
-                </label>
-                <div className="d-flex align-items-center gap-3">
-                  {profilePreview && (
-                    <img
-                      src={profilePreview}
-                      alt="Preview"
-                      className="rounded-circle border"
-                      style={{ width: '48px', height: '48px', objectFit: 'cover' }}
-                    />
-                  )}
-                  <input
-                    type="file"
-                    className="form-control form-control-sm"
-                    accept="image/*"
-                    onChange={handleProfilePicChange}
-                  />
-                </div>
+              {/* Sub-step 2 Footer */}
+              <div className="d-flex align-items-center justify-content-between pt-3 border-top">
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary rounded-pill px-4 py-2"
+                  onClick={() => setFormSubStep(1)}
+                >
+                  Back: Agency Details
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary rounded-pill px-4 py-2.5 fw-bold d-inline-flex align-items-center gap-2 text-white shadow-sm"
+                  style={{ background: 'linear-gradient(135deg, #0b2c56 0%, #153e75 100%)', border: 'none' }}
+                  onClick={() => {
+                    if (validateSubStep2()) {
+                      setFormSubStep(3);
+                    }
+                  }}
+                >
+                  <span>Review & Complete Verification</span>
+                  <ArrowRight size={16} />
+                </button>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Declaration Checkbox */}
-          <div className="form-check p-3 rounded-3 bg-light border mb-4">
-            <input
-              className="form-check-input ms-0 me-2"
-              type="checkbox"
-              id="confirmAgentDeclaration"
-              checked={acceptTerms}
-              onChange={(e) => setAcceptTerms(e.target.checked)}
-              required
-            />
-            <label className="form-check-label small text-dark" htmlFor="confirmAgentDeclaration">
-              <strong>I confirm</strong> that the information and identity proof provided above are accurate and genuine. I agree to operate professionally in accordance with Coimbatore Properties agent guidelines.
-            </label>
-          </div>
+          {/* SUB-STEP 3: REVIEW, DECLARATION & SUBMISSION */}
+          {formSubStep === 3 && (
+            <div className="animate-fade-in">
+              <div className="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                  <FileCheck2 size={18} className="text-primary" />
+                  <span>Step 3: Review Details & Compliance Declaration</span>
+                </h5>
+                <span className="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2.5 py-1 small">
+                  Final Step
+                </span>
+              </div>
 
-          {/* Action Buttons */}
-          <div className="d-flex align-items-center justify-content-between gap-3 pt-2 border-top">
-            <button
-              type="button"
-              className="btn btn-outline-secondary rounded-pill px-4 py-2 small"
-              onClick={() => setStep('confirm')}
-              disabled={submitting}
-            >
-              Back
-            </button>
-            <button
-              type="submit"
-              className="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-inline-flex align-items-center gap-2"
-              style={{
-                background: 'linear-gradient(135deg, #0b2c56 0%, #174276 100%)',
-                border: 'none',
-              }}
-              disabled={submitting}
-            >
-              {submitting ? (
-                <>
-                  <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
-                  <span>Submitting KYC...</span>
-                </>
-              ) : (
-                <>
-                  <span>Submit KYC & Continue to Post Property</span>
-                  <ArrowRight size={16} />
-                </>
-              )}
-            </button>
-          </div>
+              {/* Review summary cards */}
+              <div className="p-3.5 rounded-3 bg-light border mb-4">
+                <div className="small fw-bold text-uppercase text-muted mb-2.5" style={{ letterSpacing: '0.5px' }}>
+                  Verification Application Summary
+                </div>
+                <div className="row g-3">
+                  <div className="col-sm-6">
+                    <div className="text-muted small">Agency / Business Name</div>
+                    <div className="fw-bold text-dark" style={{ fontSize: '0.95rem' }}>{businessName}</div>
+                  </div>
+                  <div className="col-sm-6">
+                    <div className="text-muted small">Operating City</div>
+                    <div className="fw-bold text-dark" style={{ fontSize: '0.95rem' }}>{selectedCityName}</div>
+                  </div>
+                  <div className="col-sm-6">
+                    <div className="text-muted small">Contact Person & Phone</div>
+                    <div className="fw-bold text-dark" style={{ fontSize: '0.95rem' }}>{name} ({phone})</div>
+                  </div>
+                  <div className="col-sm-6">
+                    <div className="text-muted small">Aadhaar Card on File</div>
+                    <div className="fw-bold text-dark font-monospace" style={{ fontSize: '0.95rem' }}>{maskedAadhaar}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Declaration Checkbox */}
+              <div
+                className="form-check p-3 rounded-3 border mb-4"
+                style={{ background: '#f8fafc', borderColor: '#cbd5e1' }}
+              >
+                <input
+                  className="form-check-input ms-0 me-2.5"
+                  type="checkbox"
+                  id="confirmAgentDeclarationFinal"
+                  checked={acceptTerms}
+                  onChange={(e) => setAcceptTerms(e.target.checked)}
+                  required
+                  style={{ width: '18px', height: '18px' }}
+                />
+                <label className="form-check-label small text-dark" htmlFor="confirmAgentDeclarationFinal" style={{ lineHeight: '1.5' }}>
+                  <strong>I solemnly declare</strong> that the information, business details, and identity documents provided above are genuine and accurate.
+                  I agree to convert my account to an accredited Agent partner and abide by Coimbatore Properties agent guidelines.
+                </label>
+              </div>
+
+              {/* Sub-step 3 Footer */}
+              <div className="d-flex align-items-center justify-content-between pt-3 border-top">
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary rounded-pill px-4 py-2"
+                  onClick={() => setFormSubStep(2)}
+                  disabled={submitting}
+                >
+                  Back: Documents
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSubmitKyc()}
+                  className="btn btn-primary rounded-pill px-4 py-2.5 fw-bold shadow-sm d-inline-flex align-items-center gap-2 text-white"
+                  style={{
+                    background: 'linear-gradient(135deg, #0b2c56 0%, #153e75 100%)',
+                    border: 'none',
+                    minWidth: '260px',
+                  }}
+                  disabled={submitting || !acceptTerms}
+                >
+                  {submitting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
+                      <span>Verifying & Converting Account...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Submit KYC & Convert to Agent</span>
+                      <ArrowRight size={16} />
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
         </form>
       </div>
     </div>

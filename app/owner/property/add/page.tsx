@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import PropertyForm from '@/components/property/PropertyForm';
@@ -21,12 +21,14 @@ import {
   FileText,
   HelpCircle,
   AlertTriangle,
+  Sparkles,
 } from 'lucide-react';
 
-export default function AddPropertyPage() {
+function AddPropertyContent() {
   const { user, loading: authLoading, refreshUser } = useAuth();
   const router = useRouter();
-  const [hasCompletedKyc, setHasCompletedKyc] = useState(false);
+
+  const [justSubmittedKyc, setJustSubmittedKyc] = useState(false);
   const [isReapplying, setIsReapplying] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -52,27 +54,26 @@ export default function AddPropertyPage() {
 
   const isAgent =
     user.role === 'agent' ||
-    user.user_type === 'agent' ||
-    Boolean(user.business_name) ||
-    Boolean(user.aadhar_no);
+    user.user_type === 'agent';
 
+  // KYC is rejected only if explicitly rejected by admin with a reason
   const isKycRejected =
     user.kyc_status === 'rejected' ||
     (Boolean(user.kyc_rejection_reason) && user.kyc_status !== 'approved');
 
+  // KYC is approved ONLY if admin approved the KYC (or user is admin)
   const isKycApproved =
     !isKycRejected &&
-    (user.kyc_status === 'approved' ||
-      user.kyc_approved === true ||
-      (!isAgent && user.role === 'owner'));
+    (user.role === 'admin' ||
+      (user.kyc_status === 'approved' && (user.role === 'agent' || user.user_type === 'agent' || user.role === 'owner')));
 
+  // KYC is pending if submitted and waiting for admin review (not allowed to post property yet)
   const isKycPending =
     !isKycApproved &&
     !isKycRejected &&
-    (hasCompletedKyc ||
-      user.kyc_status === 'pending' ||
-      user.status === 'pending' ||
-      Boolean(user.aadhar_no && (user.aadhar_file || user.business_name)));
+    (user.kyc_status === 'pending' ||
+      justSubmittedKyc ||
+      (isAgent && Boolean(user.aadhar_no) && user.kyc_status !== 'approved'));
 
   const handleCheckStatus = async () => {
     try {
@@ -101,7 +102,7 @@ export default function AddPropertyPage() {
               <span className="fw-medium">Back to Home</span>
             </Link>
 
-            {isKycApproved && (user.role === 'owner' || user.role === 'agent') && (
+            {(isKycApproved || isAgent) && (
               <Link
                 href="/owner/listings"
                 className="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 text-decoration-none fw-medium"
@@ -111,11 +112,12 @@ export default function AddPropertyPage() {
             )}
           </div>
 
-          {/* CASE 1: ONBOARDING / RE-APPLYING FORM */}
+          {/* CASE 1: ONBOARDING KYC FORM */}
           {(!isKycApproved && !isKycPending && !isKycRejected) || isReapplying ? (
             <AgentKycOnboarding
+              initialStep="kyc_form"
               onSuccess={() => {
-                setHasCompletedKyc(true);
+                setJustSubmittedKyc(true);
                 setIsReapplying(false);
                 refreshUser();
               }}
@@ -128,8 +130,8 @@ export default function AddPropertyPage() {
               }}
             />
           ) : isKycRejected ? (
-            /* CASE 2: LUXURY REJECTED STATE WITH PROMINENT REASON & ACTION */
-            <div className="card border-0 shadow-lg rounded-4 overflow-hidden my-3">
+            /* CASE 2: REJECTED STATE WITH PROMINENT REASON & ACTION */
+            <div className="card border-0 shadow-lg rounded-4 overflow-hidden my-3 animate-fade-in">
               {/* Card Header */}
               <div
                 className="p-4 p-md-5 position-relative border-bottom"
@@ -232,52 +234,8 @@ export default function AddPropertyPage() {
                   >
                     <span className="fw-bold text-primary">💡 How to fix:</span>
                     <span>
-                      Tap <strong>Update Details & Apply Again</strong> below to update your website URL (or leave it empty if inactive), check your phone number, and re-submit.
+                      Tap <strong>Update Details & Apply Again</strong> below to update your documents or business information and re-submit.
                     </span>
-                  </div>
-                </div>
-
-                {/* Stepper Timeline */}
-                <div className="mb-4 pb-3 border-bottom">
-                  <div className="small fw-bold text-uppercase text-muted mb-3" style={{ letterSpacing: '0.6px' }}>
-                    Verification Status
-                  </div>
-                  <div className="row g-2 text-center">
-                    <div className="col-3">
-                      <div className="p-2.5 rounded-3 bg-success-subtle text-success border border-success-subtle mb-1.5">
-                        <CheckCircle2 size={18} className="mx-auto" />
-                      </div>
-                      <div className="small fw-bold text-dark">Account</div>
-                      <div className="text-muted" style={{ fontSize: '0.72rem' }}>Active</div>
-                    </div>
-                    <div className="col-3">
-                      <div className="p-2.5 rounded-3 bg-success-subtle text-success border border-success-subtle mb-1.5">
-                        <CheckCircle2 size={18} className="mx-auto" />
-                      </div>
-                      <div className="small fw-bold text-dark">KYC Form</div>
-                      <div className="text-muted" style={{ fontSize: '0.72rem' }}>Submitted</div>
-                    </div>
-                    <div className="col-3">
-                      <div
-                        className="p-2.5 rounded-3 mb-1.5"
-                        style={{
-                          background: '#ffe4e6',
-                          color: '#e11d48',
-                          border: '1.5px solid #fecdd3',
-                        }}
-                      >
-                        <AlertTriangle size={18} className="mx-auto" />
-                      </div>
-                      <div className="small fw-bold text-danger">Review Result</div>
-                      <div className="text-danger fw-bold" style={{ fontSize: '0.72rem' }}>Action Needed</div>
-                    </div>
-                    <div className="col-3">
-                      <div className="p-2.5 rounded-3 bg-light text-muted border mb-1.5">
-                        <Lock size={18} className="mx-auto text-muted" />
-                      </div>
-                      <div className="small fw-bold text-muted">Certified</div>
-                      <div className="text-muted" style={{ fontSize: '0.72rem' }}>Locked</div>
-                    </div>
                   </div>
                 </div>
 
@@ -337,14 +295,14 @@ export default function AddPropertyPage() {
 
                   <div className="small text-muted d-flex align-items-center gap-1.5">
                     <HelpCircle size={15} />
-                    <span>Need help? Contact support@superfinelabels.in</span>
+                    <span>Need help? Contact support@coimbatoreproperties.com</span>
                   </div>
                 </div>
               </div>
             </div>
           ) : isKycPending ? (
-            /* CASE 3: KYC IN PROGRESS / PENDING REVIEW (STRICTLY BLOCK PROPERTY FORM) */
-            <div className="card border-0 shadow-lg rounded-4 overflow-hidden my-3">
+            /* CASE 3: KYC IN PROGRESS / PENDING REVIEW */
+            <div className="card border-0 shadow-lg rounded-4 overflow-hidden my-3 animate-fade-in">
               {/* Header Banner */}
               <div
                 className="p-4 p-md-5 position-relative border-bottom"
@@ -393,8 +351,8 @@ export default function AddPropertyPage() {
                       KYC Verification In Progress
                     </h1>
                     <p className="text-muted small mb-0" style={{ maxWidth: '640px', lineHeight: '1.6' }}>
-                      Your Aadhaar identity and agency credentials have been submitted and are currently undergoing
-                      official compliance verification. Property posting will unlock automatically once approved.
+                      Your agent identity credentials and Aadhaar proof have been submitted and are under compliance verification.
+                      Property posting will unlock automatically once approved by our compliance team.
                     </p>
                   </div>
                 </div>
@@ -402,51 +360,6 @@ export default function AddPropertyPage() {
 
               {/* Body */}
               <div className="p-4 p-md-5 bg-white">
-                {/* Stepper Timeline */}
-                <div className="mb-4 pb-3 border-bottom">
-                  <div className="small fw-bold text-uppercase text-muted mb-3" style={{ letterSpacing: '0.6px' }}>
-                    Verification Process
-                  </div>
-                  <div className="row g-2 text-center">
-                    <div className="col-3">
-                      <div className="p-2.5 rounded-3 bg-success-subtle text-success border border-success-subtle mb-1.5">
-                        <CheckCircle2 size={18} className="mx-auto" />
-                      </div>
-                      <div className="small fw-bold text-dark">Registered</div>
-                      <div className="text-muted" style={{ fontSize: '0.72rem' }}>Completed</div>
-                    </div>
-                    <div className="col-3">
-                      <div className="p-2.5 rounded-3 bg-success-subtle text-success border border-success-subtle mb-1.5">
-                        <CheckCircle2 size={18} className="mx-auto" />
-                      </div>
-                      <div className="small fw-bold text-dark">KYC Details</div>
-                      <div className="text-muted" style={{ fontSize: '0.72rem' }}>Submitted</div>
-                    </div>
-                    <div className="col-3">
-                      <div
-                        className="p-2.5 rounded-3 mb-1.5"
-                        style={{
-                          background: '#fef3c7',
-                          color: '#b45309',
-                          border: '1.5px solid #fde68a',
-                        }}
-                      >
-                        <Clock size={18} className="mx-auto text-warning" />
-                      </div>
-                      <div className="small fw-bold text-primary">Compliance Review</div>
-                      <div className="text-warning fw-bold" style={{ fontSize: '0.72rem' }}>In Progress</div>
-                    </div>
-                    <div className="col-3">
-                      <div className="p-2.5 rounded-3 bg-light text-muted border mb-1.5">
-                        <Lock size={18} className="mx-auto text-muted" />
-                      </div>
-                      <div className="small fw-bold text-muted">Certified Agent</div>
-                      <div className="text-muted" style={{ fontSize: '0.72rem' }}>Pending</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Details Snapshot */}
                 <div className="row g-3 mb-4">
                   <div className="col-md-6">
                     <div className="p-3 rounded-3 bg-light border h-100">
@@ -463,39 +376,20 @@ export default function AddPropertyPage() {
                         <FileText size={16} className="text-secondary" />
                         <span className="small text-muted">Aadhaar Card on File</span>
                       </div>
-                      <div className="fw-bold text-dark">{maskedAadhaar}</div>
+                      <div className="fw-bold text-dark font-monospace">{maskedAadhaar}</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Callout Notice */}
-                <div
-                  className="alert border-0 rounded-3 d-flex align-items-start gap-3 mb-4 p-3.5"
-                  style={{
-                    background: '#fffbeb',
-                    border: '1px solid #fde68a',
-                  }}
-                >
-                  <Clock size={20} className="text-warning flex-shrink-0 mt-0.5" />
-                  <div className="small">
-                    <div className="fw-bold text-dark mb-1">Your application is currently being verified.</div>
-                    <div className="text-muted" style={{ lineHeight: '1.5' }}>
-                      Our compliance desk verifies submitted credentials to maintain genuine real estate listings across Coimbatore.
-                      Once approved, property listing unlocks automatically with full agent privileges.
-                    </div>
-                  </div>
-                </div>
-
-                {/* Actions */}
                 <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 pt-2">
                   <div className="d-flex flex-wrap gap-2.5">
                     <button
                       type="button"
                       onClick={handleCheckStatus}
                       disabled={isRefreshing}
-                      className="btn rounded-pill px-4 py-2.5 fw-bold d-inline-flex align-items-center gap-2 text-white shadow-sm"
+                      className="btn btn-primary rounded-pill px-4 py-2.5 fw-semibold d-inline-flex align-items-center gap-2 text-white shadow-sm"
                       style={{
-                        background: 'linear-gradient(135deg, #0b2c56 0%, #071f3f 100%)',
+                        background: 'linear-gradient(135deg, #0b2c56 0%, #174276 100%)',
                       }}
                     >
                       <RefreshCw size={16} className={isRefreshing ? 'animate-spin' : ''} />
@@ -516,13 +410,14 @@ export default function AddPropertyPage() {
               </div>
             </div>
           ) : (
-            /* CASE 4: KYC APPROVED — SHOW STANDARD PROPERTY FORM */
-            <>
+            /* CASE 4: KYC COMPLETED & APPROVED — SHOW STANDARD PROPERTY FORM */
+            <div className="animate-fade-in">
+
               <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
                 <div>
                   <h1 className="h3 fw-bold text-dark mb-1">List New Property</h1>
                   <p className="text-muted small mb-0">
-                    Add your property details — cities and property types load from the admin panel.
+                    Add your property details — cities and property types load dynamically.
                   </p>
                 </div>
                 <div className="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill d-inline-flex align-items-center gap-1.5 small fw-bold">
@@ -532,10 +427,26 @@ export default function AddPropertyPage() {
               </div>
 
               <PropertyForm ownerMode />
-            </>
+            </div>
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AddPropertyPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="text-center py-5 my-5">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      }
+    >
+      <AddPropertyContent />
+    </Suspense>
   );
 }

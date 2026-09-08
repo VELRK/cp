@@ -364,65 +364,83 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [heroSlides]);
 
-  // Enable mouse drag-to-scroll and vertical mouse-wheel to horizontal scroll
+  // Smooth horizontal drag-to-scroll (without hijacking vertical mouse wheel)
   useEffect(() => {
+    const cleanups: (() => void)[] = [];
     const sliders = document.querySelectorAll('.nb-horizontal-scroll');
 
     sliders.forEach((slider: Element) => {
       const el = slider as HTMLElement;
+      if (el.dataset.dragInit === 'true') return;
+      el.dataset.dragInit = 'true';
+
       let isDown = false;
-      let startX: number;
-      let scrollLeft: number;
+      let startX = 0;
+      let scrollLeft = 0;
+      let isDragging = false;
 
       const onMouseDown = (e: MouseEvent) => {
+        // Only trigger on left-click and not on buttons or form controls
+        if (e.button !== 0) return;
+        const target = e.target as HTMLElement;
+        if (target.closest('button, select, input, textarea')) return;
+
         isDown = true;
-        el.classList.add('active');
-        startX = e.pageX - el.offsetLeft;
+        isDragging = false;
+        startX = e.pageX;
         scrollLeft = el.scrollLeft;
-      };
+        el.style.cursor = 'grab';
 
-      const onMouseLeave = () => {
-        isDown = false;
-        el.classList.remove('active');
-      };
-
-      const onMouseUp = () => {
-        isDown = false;
-        el.classList.remove('active');
+        window.addEventListener('mousemove', onMouseMove, { passive: false });
+        window.addEventListener('mouseup', onMouseUp, { once: true });
       };
 
       const onMouseMove = (e: MouseEvent) => {
         if (!isDown) return;
-        e.preventDefault();
-        const x = e.pageX - el.offsetLeft;
-        const walk = (x - startX) * 2; // Scroll speed multiplier
-        el.scrollLeft = scrollLeft - walk;
+        const deltaX = e.pageX - startX;
+
+        // Apply a 6px deadzone before considering it a horizontal drag
+        if (!isDragging && Math.abs(deltaX) > 6) {
+          isDragging = true;
+          el.style.cursor = 'grabbing';
+          el.style.userSelect = 'none';
+        }
+
+        if (isDragging) {
+          e.preventDefault();
+          el.scrollLeft = scrollLeft - deltaX;
+        }
       };
 
-      const onWheel = (e: WheelEvent) => {
-        if (e.deltaY !== 0 && Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
-          const maxScrollLeft = el.scrollWidth - el.clientWidth;
-          // Only scroll horizontally if we aren't at the very edge of the scroll
-          if ((e.deltaY < 0 && el.scrollLeft > 0) || (e.deltaY > 0 && el.scrollLeft < maxScrollLeft)) {
-            e.preventDefault();
-            el.scrollLeft += e.deltaY;
-          }
+      const onMouseUp = () => {
+        if (!isDown) return;
+        isDown = false;
+        el.style.cursor = '';
+        el.style.userSelect = '';
+        window.removeEventListener('mousemove', onMouseMove);
+
+        if (isDragging) {
+          // Suppress immediate link click trigger if user dragged
+          const preventClick = (clickEvent: MouseEvent) => {
+            clickEvent.preventDefault();
+            clickEvent.stopPropagation();
+          };
+          window.addEventListener('click', preventClick, { capture: true, once: true });
+          setTimeout(() => {
+            window.removeEventListener('click', preventClick, { capture: true });
+            isDragging = false;
+          }, 60);
         }
       };
 
       el.addEventListener('mousedown', onMouseDown);
-      el.addEventListener('mouseleave', onMouseLeave);
-      el.addEventListener('mouseup', onMouseUp);
-      el.addEventListener('mousemove', onMouseMove);
-      el.addEventListener('wheel', onWheel, { passive: false });
 
-      return () => {
+      cleanups.push(() => {
         el.removeEventListener('mousedown', onMouseDown);
-        el.removeEventListener('mouseleave', onMouseLeave);
-        el.removeEventListener('mouseup', onMouseUp);
-        el.removeEventListener('mousemove', onMouseMove);
-        el.removeEventListener('wheel', onWheel);
-      };
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+        delete el.dataset.dragInit;
+      });
     });
 
     // Global click handler for arrow buttons
@@ -435,16 +453,17 @@ export default function Home() {
       if (!scrollContainer) return;
 
       const direction = btn.classList.contains('nb-scroll-arrow-left') ? -1 : 1;
-      const scrollAmount = Math.max(scrollContainer.clientWidth * 0.8, 300);
+      const scrollAmount = Math.max(scrollContainer.clientWidth * 0.75, 280);
       scrollContainer.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
     };
 
     document.addEventListener('click', handleScrollArrow);
 
     return () => {
+      cleanups.forEach((cleanup) => cleanup());
       document.removeEventListener('click', handleScrollArrow);
     };
-  }, [cities, featured]);
+  }, [cities, featured, recommended, newlyLaunched, verified, bestRated, highGrowth]);
 
   const handleWishlistToggle = async (e: React.MouseEvent, propertyId: number) => {
     e.preventDefault();

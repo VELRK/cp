@@ -23,6 +23,13 @@ const SidebarConsole: React.FC<SidebarConsoleProps> = ({
   cityName
 }) => {
   const router = useRouter();
+  const handlePostPropertyClick = () => {
+    if (!user) {
+      setAuthModalOpen('login');
+      return;
+    }
+    router.push('/owner/property/add');
+  };
 
   return (
     <div className="d-flex flex-column gap-4 sticky-top" style={{ top: '5.5rem', zIndex: 5 }}>
@@ -138,6 +145,7 @@ const SidebarConsole: React.FC<SidebarConsoleProps> = ({
           <button
             type="button"
             className="btn rounded-pill px-4 py-2 fw-semibold w-100 shadow-sm d-flex justify-content-center align-items-center gap-2"
+            onClick={handlePostPropertyClick}
             style={{
               backgroundColor: '#1b5e20',
               color: 'white',

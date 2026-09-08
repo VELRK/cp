@@ -273,8 +273,15 @@ $modal_cities = isset($modal_cities) && is_array($modal_cities) ? $modal_cities 
       });
     }
 
-    function dashboardUrlForRole(role) {
-      if (role === 'owner') {
+    function dashboardUrlForRole(role, token) {
+      if (role === 'admin') {
+        var panel = '<?php echo site_url('panel'); ?>';
+        if (token) {
+          return '<?php echo site_url('panel/auth'); ?>?token=' + encodeURIComponent(token);
+        }
+        return panel;
+      }
+      if (role === 'owner' || role === 'agent') {
         return '<?php echo site_url('owner/dashboard'); ?>';
       }
       if (role === 'tenant' || role === 'customer') {
@@ -289,8 +296,9 @@ $modal_cities = isset($modal_cities) && is_array($modal_cities) ? $modal_cities 
       }
       showLoginAlert((res && res.message) ? res.message : 'Signed in successfully.', true);
       var role = (res && res.user && res.user.role) ? res.user.role : 'tenant';
+      var token = (res && res.token) ? res.token : '';
       setTimeout(function () {
-        window.location.href = dashboardUrlForRole(role);
+        window.location.href = dashboardUrlForRole(role, token);
       }, 500);
     }
 

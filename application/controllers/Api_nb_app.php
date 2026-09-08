@@ -20,6 +20,7 @@ class Api_nb_app extends CI_Controller
         $this->load->model(array('Nb_user_model', 'Nb_property_model', 'Nb_city_model', 'Nb_delete_request_model', 'User_model', 'Banner_model', 'Nb_property_type_model', 'Site_visit_model'));
         $this->output->set_content_type('application/json');
         nb_ensure_agent_kyc_columns();
+        nb_ensure_kyc_history_table();
         $this->_cors();
     }
 
@@ -750,14 +751,7 @@ class Api_nb_app extends CI_Controller
         $token = bin2hex(random_bytes(32));
         $this->Nb_user_model->set_api_token((int) $user->id, $token);
         $this->session->set_userdata('nb_user_id', (int) $user->id);
-        $this->session->set_userdata('nb_user', array(
-            'id' => (int) $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'phone' => isset($user->phone) ? (string) $user->phone : '',
-            'role' => $user->role,
-            'status' => $user->status,
-        ));
+        $this->session->set_userdata('nb_user', nb_session_user_array($user));
         nb_set_api_token_cookie($token);
         return $token;
     }
@@ -1193,8 +1187,14 @@ class Api_nb_app extends CI_Controller
         }
 
         if ($method === 'get') {
+            $this->load->model('Nb_kyc_history_model');
+            nb_ensure_kyc_history_table();
             return $this->_json(array_merge(
-                array('success' => true, 'user' => $this->_user_public($user)),
+                array(
+                    'success' => true,
+                    'user' => $this->_user_public($user),
+                    'history' => $this->Nb_kyc_history_model->for_user((int) $user->id),
+                ),
                 $this->_agent_kyc_status_payload($user)
             ));
         }
@@ -1205,6 +1205,58 @@ class Api_nb_app extends CI_Controller
 
         $input['kyc_submit'] = true;
         return $this->_update_profile_for_user($user, $input, true);
+    }
+
+    /**
+     * GET — KYC action history (submit, approve, reject, comments).
+     * Agent: own history. Admin: pass user_id (or userId) for any agent.
+     * Auth: Bearer / X-Api-Token.
+     */
+    public function kyc_history($user_id = null)
+    {
+        if (strtolower((string) $this->input->method()) !== 'get') {
+            return $this->_json(array('success' => false, 'message' => 'GET only'), 405);
+        }
+        $input = $this->input->get() ?: array();
+        $auth = $this->_auth_user_from_request($input);
+        if (!$auth) {
+            return $this->_json(array('success' => false, 'message' => 'Login required'), 401);
+        }
+
+        $target_id = (int) $auth->id;
+        $req_id = (int) $user_id;
+        if ($req_id < 1) {
+            $req_id = (int) ($this->input->get('user_id') ?: $this->input->get('userId') ?: 0);
+        }
+        if ($req_id > 0 && $req_id !== (int) $auth->id) {
+            if ((string) $auth->role !== 'admin') {
+                return $this->_json(array(
+                    'success' => false,
+                    'message' => 'Admin access required to view another user\'s KYC history.',
+                ), 403);
+            }
+            $target_id = $req_id;
+        }
+
+        $target = $this->Nb_user_model->get_by_id($target_id);
+        if (!$target) {
+            return $this->_json(array('success' => false, 'message' => 'User not found'), 404);
+        }
+        if (!nb_user_is_agent($target) && (string) $auth->role !== 'admin') {
+            return $this->_json(array('success' => false, 'message' => 'KYC history is for agent accounts'), 403);
+        }
+
+        $this->load->model('Nb_kyc_history_model');
+        nb_ensure_kyc_history_table();
+        $history = $this->Nb_kyc_history_model->for_user($target_id);
+        return $this->_json(array(
+            'success' => true,
+            'user_id' => $target_id,
+            'kyc_status' => nb_agent_kyc_status($target),
+            'kyc_approved' => nb_agent_kyc_approved($target),
+            'kyc_rejection_reason' => nb_agent_kyc_rejection_reason($target),
+            'history' => $history,
+        ));
     }
 
     /** POST — update profile for customer or agent (same endpoint for both). */
@@ -1453,6 +1505,8 @@ class Api_nb_app extends CI_Controller
         $kyc_submit = $this->_parse_accept_terms(array(
             'accept_terms' => $input['kyc_submit'] ?? $input['submit_kyc'] ?? false,
         ));
+        $kyc_action = '';
+        $kyc_from_status = '';
         $will_be_agent = nb_user_is_agent($user) || (isset($update['user_type']) && $update['user_type'] === 'agent');
         if ($kyc_submit && $will_be_agent) {
             $merged = $this->_user_row_with_updates($user, $update);
@@ -1466,10 +1520,12 @@ class Api_nb_app extends CI_Controller
                 ), 400);
             }
             if ($this->db->field_exists('kyc_status', 'nb_users')) {
+                $kyc_from_status = nb_agent_kyc_status($user);
                 $update['kyc_status'] = 'pending';
                 $update['kyc_rejection_reason'] = null;
                 $update['kyc_submitted_at'] = date('Y-m-d H:i:s');
                 $update['kyc_reviewed_at'] = null;
+                $kyc_action = ($kyc_from_status === 'rejected' || $kyc_from_status === 'pending') ? 'resubmitted' : 'submitted';
             }
             if ($this->db->field_exists('is_verified', 'nb_users')) {
                 $update['is_verified'] = 0;
@@ -1478,6 +1534,12 @@ class Api_nb_app extends CI_Controller
 
         $update['updated_at'] = date('Y-m-d H:i:s');
         $this->Nb_user_model->update($id, $update);
+
+        if ($kyc_action !== '') {
+            nb_kyc_history_log($id, $kyc_action, $kyc_from_status, 'pending', '', $user, array(
+                'source' => $kyc_only ? 'agent_kyc' : 'update_profile',
+            ));
+        }
 
         $updated = $this->Nb_user_model->get_by_id($id);
         $payload = array(

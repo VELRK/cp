@@ -263,14 +263,7 @@ class Nb_auth extends MY_Controller {
     private function _set_nb_session($user)
     {
         $this->session->set_userdata('nb_user_id', (int) $user->id);
-        $this->session->set_userdata('nb_user', array(
-            'id'     => (int) $user->id,
-            'name'   => $user->name,
-            'email'  => $user->email,
-            'phone'  => isset($user->phone) ? (string) $user->phone : '',
-            'role'   => $user->role,
-            'status' => $user->status,
-        ));
+        $this->session->set_userdata('nb_user', nb_session_user_array($user));
     }
 
     private function _redirect_by_role()
@@ -284,13 +277,14 @@ class Nb_auth extends MY_Controller {
         if (!$u) {
             return base_url() . '?modal=login';
         }
-        if ($u['role'] === 'admin') {
+        $access = $this->nb_access_role($u);
+        if ($access === 'admin') {
             return 'panel';
-        } elseif ($u['role'] === 'owner') {
-            return 'owner/dashboard';
-        } else {
-            return 'tenant/dashboard';
         }
+        if ($access === 'owner') {
+            return 'owner/dashboard';
+        }
+        return 'tenant/dashboard';
     }
 
     private function _check_login_rate()

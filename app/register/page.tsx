@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getCities } from '@/lib/frontendApi';
+import { getDashboardPathForRole } from '@/lib/dashboardPaths';
 import { ShieldAlert, CheckCircle, CheckCircle2, User, Phone } from 'lucide-react';
 
 interface City {
@@ -30,12 +31,12 @@ export default function RegisterPage() {
 
   useEffect(() => {
     if (user) {
-      if (user.role === 'owner') {
+      if (user.role === 'owner' || user.role === 'agent') {
         router.push('/owner/dashboard');
-      } else if (user.role === 'tenant') {
+      } else if (user.role === 'tenant' || user.role === 'customer') {
         router.push('/tenant/dashboard');
-      } else if (user.role === 'agent') {
-        router.push('/agent/dashboard');
+      } else if (user.role === 'admin') {
+        router.push(getDashboardPathForRole('admin'));
       } else {
         router.push('/');
       }

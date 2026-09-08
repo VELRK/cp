@@ -19,9 +19,6 @@ class Nb_api_token {
      */
     public function try_attach_session()
     {
-        if ($this->CI->session->userdata('nb_user_id')) {
-            return;
-        }
         $token = $this->read_token_from_request();
         if ($token === '') {
             return;
@@ -34,15 +31,10 @@ class Nb_api_token {
         if (!$user) {
             return;
         }
+        // Prefer the current API token over a stale PHP session from a previous login.
+        $this->CI->load->helper('nb');
         $this->CI->session->set_userdata('nb_user_id', (int) $user->id);
-        $this->CI->session->set_userdata('nb_user', array(
-            'id'     => (int) $user->id,
-            'name'   => $user->name,
-            'email'  => $user->email,
-            'phone'  => isset($user->phone) ? (string) $user->phone : '',
-            'role'   => $user->role,
-            'status' => $user->status,
-        ));
+        $this->CI->session->set_userdata('nb_user', nb_session_user_array($user));
     }
 
     /** @return string */

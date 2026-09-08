@@ -221,6 +221,56 @@ $kyc_missing_labels = array(
     </dl>
   </div>
 </div>
+
+<?php if ($is_agent) : ?>
+<?php $kyc_history = isset($kyc_history) && is_array($kyc_history) ? $kyc_history : array(); ?>
+<div class="nb-admin-panel mt-4">
+  <div class="nb-admin-panel-header">
+    <h2 class="nb-admin-panel-title mb-0">KYC history</h2>
+  </div>
+  <div class="nb-admin-panel-body p-0">
+    <?php if (empty($kyc_history)) : ?>
+    <p class="text-muted small mb-0 p-4">No KYC actions recorded yet. Submits, approvals, rejections, and comment edits will appear here.</p>
+    <?php else : ?>
+    <div class="table-responsive">
+      <table class="table nb-admin-table mb-0">
+        <thead>
+          <tr>
+            <th>When</th>
+            <th>Action</th>
+            <th>Stage</th>
+            <th>By</th>
+            <th>Comment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($kyc_history as $h) : ?>
+          <?php
+            $h_action = isset($h['action']) ? (string) $h['action'] : '';
+            $h_label = isset($h['action_label']) ? $h['action_label'] : $h_action;
+            $h_from = isset($h['from_status']) && $h['from_status'] !== '' && $h['from_status'] !== null ? $h['from_status'] : '—';
+            $h_to = isset($h['to_status']) ? $h['to_status'] : '—';
+            $h_when = isset($h['created_at_display']) && $h['created_at_display'] ? $h['created_at_display'] : (isset($h['created_at']) ? $h['created_at'] : '');
+            $h_actor = isset($h['actor_name']) && $h['actor_name'] !== '' && $h['actor_name'] !== null ? $h['actor_name'] : '—';
+            $h_actor_role = isset($h['actor_role']) && $h['actor_role'] !== '' && $h['actor_role'] !== null ? $h['actor_role'] : '';
+            $h_comment = isset($h['comment']) && $h['comment'] !== '' && $h['comment'] !== null ? $h['comment'] : '';
+            $h_badge = $kyc_badge($h_action === 'comment_updated' ? 'rejected' : $h_to);
+          ?>
+          <tr>
+            <td class="small text-nowrap"><?php echo html_escape($h_when); ?> <span class="text-muted">(IST)</span></td>
+            <td><span class="nb-admin-badge <?php echo $h_badge; ?>"><?php echo html_escape($h_label); ?></span></td>
+            <td class="small"><?php echo html_escape(ucfirst((string) $h_from)); ?> → <?php echo html_escape(ucfirst((string) $h_to)); ?></td>
+            <td class="small"><?php echo html_escape($h_actor); ?><?php if ($h_actor_role !== '') : ?> <span class="text-muted">(<?php echo html_escape($h_actor_role); ?>)</span><?php endif; ?></td>
+            <td class="small"><?php echo $h_comment !== '' ? nl2br(html_escape($h_comment)) : '<span class="text-muted">—</span>'; ?></td>
+          </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+    <?php endif; ?>
+  </div>
+</div>
+<?php endif; ?>
 <?php if ($is_agent) : ?>
 <script>
 (function () {

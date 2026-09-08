@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { getAdminPanelUrl, getHomeUrl } from '@/lib/frontendApi';
 import { toFrontendAssetUrl } from '@/lib/cityImages';
+import { isOwnerLike } from '@/lib/dashboardPaths';
 import { 
   X, 
   User, 
@@ -204,7 +205,7 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
                   <PlusCircle size={16} />
                   <span>Post Property</span>
                 </Link>
-                {user && (
+                {user && isOwnerLike(user.role) && user.status === 'approved' && (
                   <>
                     {(user.role === 'owner' || user.role === 'agent') && user.status === 'approved' && (
                       <Link href="/owner/dashboard" className="menu-item" onClick={handleLinkClick}>

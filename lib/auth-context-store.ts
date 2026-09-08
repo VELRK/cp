@@ -9,6 +9,7 @@ export interface AuthUser {
   user_type?: 'agent' | 'customer';
   status: 'pending' | 'approved' | 'rejected';
   city_id: number;
+  user_type?: string;
   profile_pic?: string;
   business_name?: string;
   website?: string;

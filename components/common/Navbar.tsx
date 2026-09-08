@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { getAdminPanelUrl, getHomeUrl } from '@/lib/frontendApi';
 import { toFrontendAssetUrl } from '@/lib/cityImages';
+import { isOwnerLike } from '@/lib/dashboardPaths';
 import MobileSidebar from './MobileSidebar';
 import {
   Home,
@@ -192,7 +193,7 @@ const Navbar: React.FC = () => {
                 ) : null}
 
                 {/* Owner / Agent / Property Actions */}
-                {user && (
+                {isOwnerLike(user.role) && user.status === 'approved' && (
                   <>
                     <li><h6 className="dropdown-header">{user.role === 'agent' ? 'Agent Actions' : 'Property Management'}</h6></li>
                     {(user.role === 'owner' || user.role === 'agent') && user.status === 'approved' && (

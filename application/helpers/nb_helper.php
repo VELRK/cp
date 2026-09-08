@@ -842,6 +842,123 @@ function nb_agent_kyc_rejection_reason($user)
     return trim((string) (isset($row['kyc_rejection_reason']) ? $row['kyc_rejection_reason'] : ''));
 }
 
+/**
+ * Session payload for nb_user. Includes user_type so agents can access the owner panel.
+ *
+ * @param object|array $user
+ * @return array
+ */
+function nb_session_user_array($user)
+{
+    $row = is_array($user) ? $user : (array) $user;
+    return array(
+        'id'        => (int) (isset($row['id']) ? $row['id'] : 0),
+        'name'      => isset($row['name']) ? $row['name'] : '',
+        'email'     => isset($row['email']) ? $row['email'] : '',
+        'phone'     => isset($row['phone']) ? (string) $row['phone'] : '',
+        'role'      => isset($row['role']) ? $row['role'] : 'tenant',
+        'user_type' => isset($row['user_type']) ? $row['user_type'] : '',
+        'status'    => isset($row['status']) ? $row['status'] : '',
+    );
+}
+
+/** True when the user may use owner/agent listing pages. */
+function nb_user_is_owner_like($user)
+{
+    if (!$user) {
+        return false;
+    }
+    if (nb_user_is_agent($user)) {
+        return true;
+    }
+    $row = is_array($user) ? $user : (array) $user;
+    $role = isset($row['role']) ? strtolower(trim((string) $row['role'])) : '';
+    return $role === 'owner' || $role === 'agent';
+}
+
+/**
+ * Access role for panel gates: admin | owner | tenant.
+ *
+ * @param object|array|null $user
+ * @return string
+ */
+function nb_access_role($user)
+{
+    if (!$user) {
+        return '';
+    }
+    $row = is_array($user) ? $user : (array) $user;
+    $role = isset($row['role']) ? strtolower(trim((string) $row['role'])) : '';
+    if ($role === 'admin') {
+        return 'admin';
+    }
+    if (nb_user_is_owner_like($user)) {
+        return 'owner';
+    }
+    return 'tenant';
+}
+
+function nb_ensure_kyc_history_table()
+{
+    $CI =& get_instance();
+    if (!isset($CI->db) || !$CI->db) {
+        return;
+    }
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+    if ($CI->db->table_exists('nb_kyc_history')) {
+        return;
+    }
+    $CI->db->query(
+        "CREATE TABLE `nb_kyc_history` (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `user_id` INT(11) NOT NULL,
+            `actor_id` INT(11) NULL DEFAULT NULL,
+            `actor_name` VARCHAR(150) NULL DEFAULT NULL,
+            `actor_role` VARCHAR(32) NULL DEFAULT NULL,
+            `action` VARCHAR(40) NOT NULL,
+            `from_status` VARCHAR(20) NULL DEFAULT NULL,
+            `to_status` VARCHAR(20) NOT NULL,
+            `comment` TEXT NULL DEFAULT NULL,
+            `meta` TEXT NULL DEFAULT NULL,
+            `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            KEY `idx_nb_kyc_history_user` (`user_id`, `id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
+    );
+}
+
+/**
+ * Append a KYC audit row (submit, approve, reject, comment).
+ *
+ * @param int $user_id Agent being reviewed
+ * @param string $action submitted|resubmitted|approved|rejected|comment_updated
+ * @param string $from_status
+ * @param string $to_status
+ * @param string $comment
+ * @param object|array|null $actor
+ * @param array|null $meta
+ * @return int insert id
+ */
+function nb_kyc_history_log($user_id, $action, $from_status, $to_status, $comment = '', $actor = null, $meta = null)
+{
+    $CI =& get_instance();
+    nb_ensure_kyc_history_table();
+    $CI->load->model('Nb_kyc_history_model');
+    return $CI->Nb_kyc_history_model->insert_event(
+        (int) $user_id,
+        $action,
+        $from_status,
+        $to_status,
+        $comment,
+        $actor,
+        $meta
+    );
+}
+
 /** Email suitable for outbound mail; skips phone placeholder addresses. */
 function nb_user_deliverable_email($user)
 {

@@ -48,8 +48,14 @@ class Api_web extends CI_Controller
         if (!$user) {
             return null;
         }
-        if ($required_role !== null && (string) $user->role !== (string) $required_role) {
-            return null;
+        if ($required_role !== null) {
+            if ($required_role === 'owner') {
+                if (!nb_user_is_owner_like($user)) {
+                    return null;
+                }
+            } elseif ((string) $user->role !== (string) $required_role) {
+                return null;
+            }
         }
         return $user;
     }

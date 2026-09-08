@@ -44,7 +44,12 @@ class Broker_admin extends MY_Controller {
         nb_set_api_token_cookie($token);
 
         if ((string) $user->role !== 'admin') {
-            show_error('Admin access only. Your account role is: ' . html_escape((string) $user->role), 403);
+            $this->load->helper('nb');
+            if (nb_user_is_owner_like($user)) {
+                redirect('owner/dashboard');
+                return;
+            }
+            redirect('tenant/dashboard');
             return;
         }
 
@@ -240,6 +245,11 @@ class Broker_admin extends MY_Controller {
         $data['city_name'] = $city_name;
         $data['property_count'] = count($this->Nb_property_model->for_owner_all($id));
         $data['admin_nav'] = 'users';
+        $this->load->model('Nb_kyc_history_model');
+        nb_ensure_kyc_history_table();
+        $data['kyc_history'] = nb_user_is_agent($row)
+            ? $this->Nb_kyc_history_model->for_user($id)
+            : array();
         $this->load->view('nobroker/admin/header', $data);
         $this->load->view('nobroker/admin/user_view', $data);
         $this->load->view('nobroker/admin/footer', $data);
@@ -1754,6 +1764,7 @@ class Broker_admin extends MY_Controller {
         if (!nb_user_is_agent($user)) {
             return $this->_panel_json(array('success' => false, 'message' => 'Agent account required'), 400);
         }
+        $from_status = nb_agent_kyc_status($user);
         $update = array('updated_at' => date('Y-m-d H:i:s'));
         if ($this->db->field_exists('kyc_status', 'nb_users')) {
             $update['kyc_status'] = 'approved';
@@ -1764,6 +1775,10 @@ class Broker_admin extends MY_Controller {
             $update['is_verified'] = 1;
         }
         $this->Nb_user_model->update($uid, $update);
+        $admin = $this->nb_user();
+        nb_kyc_history_log($uid, 'approved', $from_status, 'approved', '', $admin, array(
+            'source' => 'panel',
+        ));
         return $this->_panel_json(array('success' => true, 'message' => 'Agent KYC approved.'));
     }
 
@@ -1803,6 +1818,7 @@ class Broker_admin extends MY_Controller {
                 'message' => 'KYC is already rejected. Use Edit rejection comment to update the reason without sending email again.',
             ), 400);
         }
+        $from_status = nb_agent_kyc_status($user);
         $update = array('updated_at' => date('Y-m-d H:i:s'));
         if ($this->db->field_exists('kyc_status', 'nb_users')) {
             $update['kyc_status'] = 'rejected';
@@ -1815,6 +1831,11 @@ class Broker_admin extends MY_Controller {
         $this->Nb_user_model->update($uid, $update);
         $user = $this->Nb_user_model->get_by_id($uid);
         $emailed = nb_send_agent_kyc_rejection_email($user, $reason);
+        $admin = $this->nb_user();
+        nb_kyc_history_log($uid, 'rejected', $from_status, 'rejected', $reason, $admin, array(
+            'source' => 'panel',
+            'email_sent' => $emailed ? 1 : 0,
+        ));
         return $this->_panel_json(array(
             'success' => true,
             'message' => $emailed
@@ -1860,11 +1881,16 @@ class Broker_admin extends MY_Controller {
                 'message' => 'Edit rejection comment is only available for rejected KYC.',
             ), 400);
         }
+        $from_status = nb_agent_kyc_status($user);
         $update = array('updated_at' => date('Y-m-d H:i:s'));
         if ($this->db->field_exists('kyc_rejection_reason', 'nb_users')) {
             $update['kyc_rejection_reason'] = $reason;
         }
         $this->Nb_user_model->update($uid, $update);
+        $admin = $this->nb_user();
+        nb_kyc_history_log($uid, 'comment_updated', $from_status, 'rejected', $reason, $admin, array(
+            'source' => 'panel',
+        ));
         return $this->_panel_json(array(
             'success' => true,
             'message' => 'Rejection comment updated. No email was sent.',

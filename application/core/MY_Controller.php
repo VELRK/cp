@@ -21,15 +21,9 @@ class MY_Controller extends CI_Controller
 
     protected function set_nb_session_from_user($user)
     {
+        $this->load->helper('nb');
         $this->session->set_userdata('nb_user_id', (int) $user->id);
-        $this->session->set_userdata('nb_user', array(
-            'id'     => (int) $user->id,
-            'name'   => $user->name,
-            'email'  => $user->email,
-            'phone'  => isset($user->phone) ? (string) $user->phone : '',
-            'role'   => $user->role,
-            'status' => $user->status,
-        ));
+        $this->session->set_userdata('nb_user', nb_session_user_array($user));
     }
 
     protected function require_login()
@@ -55,14 +49,40 @@ class MY_Controller extends CI_Controller
         }
     }
 
+    /**
+     * Panel role used for access checks: admin | owner | tenant.
+     * Agents (user_type=agent or API role agent) share the owner panel.
+     */
+    protected function nb_access_role($u = null)
+    {
+        if ($u === null) {
+            $u = $this->nb_user();
+        }
+        $this->load->helper('nb');
+        return nb_access_role($u);
+    }
+
     protected function require_role($roles)
     {
         $this->require_login();
         $roles = (array) $roles;
         $u = $this->nb_user();
-        if (!$u || !in_array($u['role'], $roles, true)) {
-            show_error('You do not have permission to access this page.', 403);
+        $access = $this->nb_access_role($u);
+        $raw = ($u && isset($u['role'])) ? strtolower(trim((string) $u['role'])) : '';
+        $ok = in_array($access, $roles, true) || in_array($raw, $roles, true);
+        if ($ok) {
+            return;
         }
+        // Wrong-role links after frontend login should land on the user's own dashboard, not a 403.
+        if ($access === 'admin') {
+            redirect('panel');
+            return;
+        }
+        if ($access === 'owner') {
+            redirect('owner/dashboard');
+            return;
+        }
+        redirect('tenant/dashboard');
     }
 
     protected function require_approved()

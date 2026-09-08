@@ -67,7 +67,14 @@ $nb_json_ld = isset($nb_json_ld) ? $nb_json_ld : '';
       <div class="collapse navbar-collapse" id="nbNav">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item"><a class="nav-link nb-nav-link" href="<?php echo site_url('search'); ?>">Search</a></li>
-          <?php if ($nb && $nb['role'] === 'owner' && $nb['status'] === 'approved'): ?>
+          <?php
+          $nb_is_owner = $nb && (
+            (isset($nb['role']) && in_array($nb['role'], array('owner', 'agent'), true))
+            || (isset($nb['user_type']) && strtolower((string) $nb['user_type']) === 'agent')
+          );
+          $nb_is_tenant = $nb && isset($nb['role']) && in_array($nb['role'], array('tenant', 'customer'), true) && !$nb_is_owner;
+          ?>
+          <?php if ($nb && $nb_is_owner && $nb['status'] === 'approved'): ?>
             <li class="nav-item"><a class="nav-link nb-nav-link"
                 href="<?php echo site_url('owner/dashboard'); ?>">Owner</a></li>
             <li class="nav-item"><a class="nav-link nb-nav-link"
@@ -77,13 +84,13 @@ $nb_json_ld = isset($nb_json_ld) ? $nb_json_ld : '';
             <li class="nav-item"><a class="nav-link nb-nav-link" href="<?php echo site_url('tenant/enquiries'); ?>">Sent
                 enquiries</a></li>
           <?php endif; ?>
-          <?php if ($nb && $nb['role'] === 'tenant' && $nb['status'] === 'approved'): ?>
+          <?php if ($nb && $nb_is_tenant && $nb['status'] === 'approved'): ?>
             <li class="nav-item"><a class="nav-link nb-nav-link"
                 href="<?php echo site_url('tenant/dashboard'); ?>">Tenant</a></li>
             <li class="nav-item"><a class="nav-link nb-nav-link" href="<?php echo site_url('user/wishlist'); ?>">My
                 Wishlist</a></li>
           <?php endif; ?>
-          <?php if ($nb && $nb['status'] === 'approved' && in_array($nb['role'], array('owner', 'tenant', 'admin'), true)): ?>
+          <?php if ($nb && $nb['status'] === 'approved' && in_array($nb['role'], array('owner', 'tenant', 'admin', 'agent', 'customer'), true)): ?>
             <li class="nav-item"><a class="nav-link nb-nav-link" href="<?php echo site_url('user/live-updates'); ?>">Live
                 Updates</a></li>
             <li class="nav-item"><a class="nav-link nb-nav-link"

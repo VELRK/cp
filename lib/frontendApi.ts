@@ -23,6 +23,8 @@ export const API_PATHS = {
   logout: '/api/nb/logout',
   me: '/api/nb/me',
   updateProfile: '/api/nb/update-profile',
+  agentKyc: '/api/nb/agent-kyc',
+  kycHistory: '/api/nb/kyc-history',
   // Cities & search (PHP)
   cities: '/api/nb/cities',
   exploreCities: '/api/nb/explore-cities',
@@ -122,6 +124,11 @@ export const updateProfile = async (formData: FormData, config?: AxiosRequestCon
   invalidateApiCache(API_PATHS.me);
   return api.post(API_PATHS.updateProfile, formData, config);
 };
+
+export const getAgentKyc = () => api.get(API_PATHS.agentKyc);
+
+export const getKycHistory = (userId?: number) =>
+  api.get(API_PATHS.kycHistory, userId ? { params: { user_id: userId } } : undefined);
 
 // ——— Cities, search, banners (High-Performance Cached Endpoints) ———
 

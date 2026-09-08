@@ -148,7 +148,7 @@ export default function UserProfilePage() {
     ? 'Accredited Agent'
     : user.role === 'owner'
     ? 'Property Owner'
-    : user.role === 'tenant'
+    : user.role === 'tenant' || user.role === 'customer'
     ? 'Tenant'
     : user.role;
 

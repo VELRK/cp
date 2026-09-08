@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { getCities } from '@/lib/frontendApi';
-import { getDashboardPathForRole } from '@/lib/dashboardPaths';
+import { navigateToDashboardForRole } from '@/lib/dashboardPaths';
 import { toFrontendAssetUrl } from '@/lib/cityImages';
 import { X, Lock, Mail, User, Phone, CheckCircle, ShieldAlert, ArrowLeft, MessageCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -114,7 +114,7 @@ const AuthModals: React.FC = () => {
         spread: 70,
         origin: { y: 0.6 }
       });
-      router.push(getDashboardPathForRole(result.user?.role));
+      navigateToDashboardForRole(result.user?.role, router);
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || 'Login failed. Please try again.');
     } finally {
@@ -179,7 +179,7 @@ const AuthModals: React.FC = () => {
         spread: 70,
         origin: { y: 0.6 }
       });
-      router.push(getDashboardPathForRole(result.user?.role));
+      navigateToDashboardForRole(result.user?.role, router);
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || 'Verification failed. Please try again.');
     } finally {

@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
-import { getDashboardPathForRole } from '@/lib/dashboardPaths';
+import { navigateToDashboardForRole } from '@/lib/dashboardPaths';
 
 export default function LoginPage() {
   const { user, setAuthModalOpen } = useAuth();
@@ -11,7 +11,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (user) {
-      router.replace(getDashboardPathForRole(user.role));
+      navigateToDashboardForRole(user.role, router, 'replace');
     } else {
       router.replace('/');
       setAuthModalOpen('login');

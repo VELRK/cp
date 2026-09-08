@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getCities } from '@/lib/frontendApi';
-import { getDashboardPathForRole } from '@/lib/dashboardPaths';
+import { navigateToDashboardForRole } from '@/lib/dashboardPaths';
 import { ShieldAlert, CheckCircle, CheckCircle2, User, Phone } from 'lucide-react';
 
 interface City {
@@ -36,7 +36,7 @@ export default function RegisterPage() {
       } else if (user.role === 'tenant' || user.role === 'customer') {
         router.push('/tenant/dashboard');
       } else if (user.role === 'admin') {
-        router.push(getDashboardPathForRole('admin'));
+        navigateToDashboardForRole('admin', router);
       } else {
         router.push('/');
       }

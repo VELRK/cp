@@ -20,7 +20,9 @@ defined('BASEPATH') OR exit('No direct script access allowed');
         
         <div class="error-message">
             <strong>Message:</strong> <?php echo $message; ?><br>
+            <?php if (isset($type)): ?>
             <strong>Type:</strong> <?php echo $type; ?><br>
+            <?php endif ?>
             <?php if (isset($filepath)): ?>
             <strong>Filename:</strong> <?php echo $filepath; ?><br>
             <?php endif ?>

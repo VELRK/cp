@@ -142,20 +142,8 @@ function packageRelease() {
   if (fs.existsSync(outDir)) {
     copyRecursive(outDir, releaseDir);
     log('Merged static Next export (out/) into release/');
-    // Owner panel is PHP-only — drop static shells so Apache never serves Next.js for these URLs.
-    for (const rel of [
-      'owner/dashboard',
-      'owner/listings',
-      'owner/enquiries',
-      'owner/site-visits',
-      'owner/property',
-    ]) {
-      const stale = path.join(releaseDir, rel);
-      if (fs.existsSync(stale)) {
-        fs.rmSync(stale, { recursive: true, force: true });
-        log(`Removed static ${rel}/ (PHP owner panel)`);
-      }
-    }
+    // Keep Next.js owner pages (dashboard, listings, enquiries, property add/edit).
+    // PHP still handles owner/auth, site-visits, and property/save via .htaccess.
   }
 
   fs.mkdirSync(path.join(releaseDir, 'assets', 'uploads', 'feedbacks'), { recursive: true });

@@ -545,8 +545,7 @@ function SearchContent() {
   const resolvedFilters = resolveSearchFilterParams(searchParams);
   const activeListingType = resolvedFilters.listing_type || listingType;
 
-  const listingTypeLabel =
-    activeListingType === 'rent' ? 'Rent' : activeListingType === 'sale' ? 'Sale' : 'Sale & Rent';
+  const listingTypeLabel = 'Sale';
 
   const formatPrice = (property: Property) => formatListingPrice(property);
 
@@ -610,7 +609,7 @@ function SearchContent() {
           value={listingType}
           onChange={(e) => setListingType(e.target.value)}
         >
-          <option value="">Buy or Rent (All)</option>
+          <option value="">Buy (All)</option>
           {realFacets.listingTypes.map((l) => (
             <option key={l.type} value={l.type}>{l.label} ({l.count})</option>
           ))}
@@ -757,7 +756,7 @@ function SearchContent() {
                 )}
                 {activeListingType && (
                   <span className="badge bg-light border text-dark py-1.5 px-2 rounded-1 d-flex align-items-center gap-1">
-                    <span>{activeListingType === 'rent' ? 'For Rent' : 'For Sale'}</span>
+                    <span>For Sale</span>
                     <X size={12} className="cursor-pointer text-muted" onClick={() => removeFilter('listing_type')} />
                   </span>
                 )}
@@ -997,7 +996,7 @@ function SearchContent() {
 
                               <div className="nb-search-list-card__shade" />
                               <span className="nb-search-list-card__img-tag text-uppercase">
-                                {p.listing_type === 'rent' ? 'For Rent' : 'For Sale'}
+                                For Sale
                               </span>
                               {Number(p.is_verified_property) === 1 && (
                                 <span className="nb-search-list-card__rera">VERIFIED</span>

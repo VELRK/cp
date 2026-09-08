@@ -101,7 +101,7 @@ export default function RegisterPage() {
         <div className="col-lg-5 d-none d-lg-block">
           <div className="nb-post-landing-left h-100 rounded-3 d-flex flex-column justify-content-center w-100">
             <h1 className="nb-post-landing-title">
-              Sell or Rent Property<br />
+              Sell Property<br />
               <span>online faster</span> with CP
             </h1>
             <ul className="nb-post-landing-list">

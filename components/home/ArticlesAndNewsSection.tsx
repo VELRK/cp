@@ -192,7 +192,7 @@ export default function ArticlesAndNewsSection() {
 
             {/* Ad Widget 1 */}
             <div className="mb-4 bg-warning bg-opacity-25 p-4 text-center border">
-              <h5 className="fw-bold mb-3" style={{ color: '#5b4a00' }}>Sell / Rent Property<br/>for Free</h5>
+              <h5 className="fw-bold mb-3" style={{ color: '#5b4a00' }}>Sell Property<br/>for Free</h5>
               <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=200&q=80" alt="City" className="w-100" style={{ mixBlendMode: 'multiply' }} />
             </div>
 
@@ -204,16 +204,6 @@ export default function ArticlesAndNewsSection() {
               <div className="small text-white-50 mb-3" style={{ fontSize: '10px', letterSpacing: '1px' }}>DEVELOPERS | PROJECTS | NEWS & VIEWS</div>
               <p className="small fst-italic text-white-50 mb-4" style={{ fontSize: '11px' }}>*A paid campaign for select builders</p>
               <button className="btn btn-warning btn-sm rounded-0 fw-bold px-4">EXPLORE NOW</button>
-            </div>
-
-            {/* Ad Widget 3 (Rent Agreement) */}
-            <div className="mb-4 bg-white p-4 text-center border shadow-sm">
-              <div className="mb-3">
-                <FileText size={48} className="text-primary opacity-75" />
-              </div>
-              <h6 className="fw-bold text-dark mb-2">Now you can create your Rent Agreement Online</h6>
-              <p className="small text-muted mb-3" style={{ fontSize: '11px' }}>100% Reliable | Delivered to your doorstep</p>
-              <button className="btn btn-primary btn-sm rounded-1 fw-bold px-4">Know More</button>
             </div>
 
           </div>

@@ -86,7 +86,7 @@ const FeaturedProperties: React.FC<FeaturedPropertiesProps> = ({
                       </div>
 
                       <span className={`nb-classic-card-badge nb-classic-card-badge--${p.listing_type}`}>
-                        For {p.listing_type === 'rent' ? 'Rent' : 'Sale'}
+                        For Sale
                       </span>
 
                       {p.is_featured === 1 && (

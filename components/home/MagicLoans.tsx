@@ -17,14 +17,14 @@ const MagicLoans: React.FC = () => {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-1 d-inline-block">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg> 
+              </svg>
               Rates starting from <span className="highlight">7.1%</span>
             </span>
             <span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-1 d-inline-block">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg> 
+              </svg>
               <span className="highlight">0%*</span> Processing Fee
             </span>
           </div>
@@ -59,14 +59,14 @@ const MagicLoans: React.FC = () => {
             </div>
           </div>
 
-          <div className="nb-magic-loans-actions">
+          {/* <div className="nb-magic-loans-actions">
             <button className="nb-magic-loans-btn-outline" onClick={() => window.open('/loans', '_self')}>
               Explore Bank Offers <ArrowRight size={16} className="ms-1" />
             </button>
             <button className="nb-magic-loans-btn-filled" onClick={() => window.open('/loans/eligibility', '_self')}>
               Check Your Eligibility
             </button>
-          </div>
+          </div> */}
         </div>
 
         <div className="nb-magic-loans-image-wrapper">

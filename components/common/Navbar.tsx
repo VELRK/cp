@@ -46,7 +46,7 @@ const Navbar: React.FC = () => {
               Coimbatore<span style={{ color: 'var(--nb-accent-dark)' }}>Properties</span>
             </span>
             <span className="text-muted fw-semibold text-uppercase" style={{ fontSize: '0.62rem', letterSpacing: '0.1em' }}>
-              Buy • Rent • Sell
+              Buy • Sell
             </span>
           </div>
         </a>

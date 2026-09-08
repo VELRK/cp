@@ -69,7 +69,7 @@ export default function PrivacyPolicyPage() {
                 </ul>
 
                 <h4 className="fw-bold text-dark mt-4 mb-3">3. Sharing Your Information</h4>
-                <p className="text-secondary" style={{ lineHeight: '1.8' }}>We do not sell or rent your personal information to third parties. However, we may share your information with:</p>
+                <p className="text-secondary" style={{ lineHeight: '1.8' }}>We do not sell your personal information to third parties. However, we may share your information with:</p>
                 <ul className="text-secondary mb-4" style={{ lineHeight: '1.8' }}>
                   <li><strong>Service Providers:</strong> Third-party companies who assist in the operation of our app, such as hosting services, payment processors, and analytics providers.</li>
                   <li><strong>Legal Compliance:</strong> We may disclose your information if required to do so by law or in response to a legal request (e.g., a subpoena or court order).</li>

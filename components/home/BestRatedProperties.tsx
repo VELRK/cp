@@ -150,7 +150,7 @@ const BestRatedProperties: React.FC<BestRatedPropertiesProps> = ({
                         className={`nb-classic-card-badge nb-classic-card-badge--${p.listing_type}`}
                         style={{ top: '38px' }}
                       >
-                        For {p.listing_type === 'rent' ? 'Rent' : 'Sale'}
+                        For Sale
                       </span>
 
                       <button

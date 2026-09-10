@@ -6,10 +6,9 @@ export interface AuthUser {
   email: string;
   phone: string;
   role: 'tenant' | 'customer' | 'owner' | 'admin' | 'agent';
-  user_type?: 'agent' | 'customer';
+  user_type?: 'agent' | 'customer' | string;
   status: 'pending' | 'approved' | 'rejected';
   city_id: number;
-  user_type?: string;
   profile_pic?: string;
   business_name?: string;
   website?: string;

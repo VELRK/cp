@@ -569,6 +569,14 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
       setAuthModalOpen('login');
       return;
     }
+    const isApproved =
+      user.role === 'admin' ||
+      user.kyc_status === 'approved' ||
+      Boolean(isEdit);
+    if (!isApproved) {
+      setErrorMsg('Your Agent KYC must be approved by admin before you can post properties.');
+      return;
+    }
     if (step !== maxWizardSteps) {
       setErrorMsg(`Please complete step ${step} and continue to step ${maxWizardSteps} before submitting.`);
       return;

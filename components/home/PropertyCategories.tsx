@@ -273,7 +273,7 @@ const PropertyCategories: React.FC<PropertyCategoriesProps> = ({ cityId, cityNam
         <div
           ref={scrollContainerRef}
           className="nb-horizontal-scroll nb-classic-cat-scroll"
-          style={{ paddingBottom: '1rem', scrollSnapType: 'x mandatory' }}
+          style={{ paddingBottom: '1rem' }}
         >
           {categories.map((cat, i) => (
             <Link
@@ -282,7 +282,6 @@ const PropertyCategories: React.FC<PropertyCategoriesProps> = ({ cityId, cityNam
               className={`nb-classic-cat-card ${cat.bgClass} text-decoration-none`}
               style={{
                 flexShrink: 0,
-                scrollSnapAlign: 'start',
                 animationDelay: `${i * 60}ms`,
               }}
             >

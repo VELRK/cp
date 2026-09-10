@@ -29,6 +29,16 @@ const Navbar: React.FC = () => {
   const { user, loading, logout, setAuthModalOpen } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  const handlePostPropertyClick = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault();
+      setAuthModalOpen('login');
+      return;
+    }
+    // Signed-in users (customer or agent) navigate directly to /owner/property/add
+    // Customers will directly see the KYC form there to fill and submit
+  };
+
   return (
     <nav className="navbar navbar-expand-lg fixed-top navbar-light navbar-classic-fresh" id="nbNavbar">
       <div className="container-fluid px-xl-5 px-lg-4 px-3 d-flex align-items-center justify-content-between">
@@ -97,7 +107,8 @@ const Navbar: React.FC = () => {
 
           {/* Post Property button (Always shown for all roles including tenant) */}
           <Link
-            href={user ? "/owner/property/add" : "/register"}
+            href="/owner/property/add"
+            onClick={handlePostPropertyClick}
             className="btn btn-sm post-property-btn-navbar rounded-pill px-3 py-1.5 fw-semibold d-none d-md-flex align-items-center gap-1.5 shadow-sm text-decoration-none"
           >
             <span>Post Property</span>
@@ -173,7 +184,11 @@ const Navbar: React.FC = () => {
                 </li>
 
                 <li>
-                  <Link href="/owner/property/add" className="dropdown-item d-flex justify-content-between align-items-center py-2 fw-semibold post-property-free-btn-dropdown">
+                  <Link
+                    href="/owner/property/add"
+                    onClick={handlePostPropertyClick}
+                    className="dropdown-item d-flex justify-content-between align-items-center py-2 fw-semibold post-property-free-btn-dropdown"
+                  >
                     <div className="d-flex align-items-center gap-2">
                       <PlusCircle size={16} />
                       <span>Post Property</span>
@@ -349,7 +364,11 @@ const Navbar: React.FC = () => {
                 <li><hr className="dropdown-divider" /></li>
 
                 <li>
-                  <Link href="/owner/property/add" className="dropdown-item d-flex justify-content-between align-items-center py-2 fw-semibold post-property-free-btn-dropdown">
+                  <Link
+                    href="/owner/property/add"
+                    onClick={handlePostPropertyClick}
+                    className="dropdown-item d-flex justify-content-between align-items-center py-2 fw-semibold post-property-free-btn-dropdown"
+                  >
                     <div className="d-flex align-items-center gap-2">
                       <PlusCircle size={16} />
                       <span>Post Property</span>

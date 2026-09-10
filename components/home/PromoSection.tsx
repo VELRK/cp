@@ -4,13 +4,19 @@ import React from 'react';
 import Link from 'next/link';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import { toFrontendAssetUrl } from '@/lib/cityImages';
-
 interface PromoSectionProps {
   user: any;
   setAuthModalOpen: (val: 'login' | 'register' | null) => void;
 }
 
 const PromoSection: React.FC<PromoSectionProps> = ({ user, setAuthModalOpen }) => {
+  const handlePostPropertyClick = (e: React.MouseEvent) => {
+    if (!user) {
+      e.preventDefault();
+      setAuthModalOpen('login');
+      return;
+    }
+  };
   return (
     <div className="mb-5 fade-in-up mt-5">
       <div className="row align-items-center">
@@ -60,13 +66,8 @@ const PromoSection: React.FC<PromoSectionProps> = ({ user, setAuthModalOpen }) =
 
           <div className="d-flex flex-column align-items-start gap-3 mt-2">
             <Link
-              href={user ? '/owner/property/add' : '#'}
-              onClick={(e) => {
-                if (!user) {
-                  e.preventDefault();
-                  setAuthModalOpen('login');
-                }
-              }}
+              href="/owner/property/add"
+              onClick={handlePostPropertyClick}
               className="btn btn-primary px-4 py-2 fw-bold shadow promo-btn-animated"
               style={{ borderRadius: '8px', backgroundColor: '#0b2c56', border: 'none', fontSize: '1rem' }}
             >

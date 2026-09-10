@@ -47,6 +47,15 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
     onClose();
   };
 
+  const handlePostPropertyClick = (e: React.MouseEvent) => {
+    onClose();
+    if (!user) {
+      e.preventDefault();
+      setAuthModalOpen('login');
+      return;
+    }
+  };
+
   const handleLoginClick = () => {
     onClose();
     setAuthModalOpen('login');
@@ -201,7 +210,7 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
                 {ownersOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
               </button>
               <div className={`menu-group-items ${ownersOpen ? 'expanded' : ''}`}>
-                <Link href="/owner/property/add" className="menu-item" onClick={handleLinkClick}>
+                <Link href="/owner/property/add" className="menu-item" onClick={handlePostPropertyClick}>
                   <PlusCircle size={16} />
                   <span>Post Property</span>
                 </Link>

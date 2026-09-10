@@ -216,14 +216,14 @@ export default function ArticlesAndNewsSection() {
           <h2 className="text-center fw-extrabold text-dark mb-5">Real Estate News</h2>
           
           <div className="position-relative">
-            <div className="d-flex overflow-auto gap-4 pb-4 px-2" style={{ scrollSnapType: 'x mandatory' }}>
+            <div className="d-flex overflow-auto gap-4 pb-4 px-2">
               {[
                 { title: 'TN lifts 5-year ban on Hill Area projects: What it means for investors', date: 'Apr 08, 2026', views: '5044' },
                 { title: 'TN cabinet approves new Affordable Housing Policy 2026', date: 'Mar 12, 2026', views: '2751' },
                 { title: 'Registry approved for 9,000 flats in Coimbatore IT Corridor', date: 'Jan 06, 2026', views: '6622' },
                 { title: 'What is title-based property registry in Tamil Nadu?', date: 'Dec 17, 2025', views: '6525' }
               ].map((news, i) => (
-                <div key={i} className="flex-shrink-0" style={{ width: '280px', scrollSnapAlign: 'start' }}>
+                <div key={i} className="flex-shrink-0" style={{ width: '280px' }}>
                   <Link href={`/news/news-${i}`} className="text-decoration-none text-dark">
                     <h6 className="fw-bold mb-3" style={{ fontSize: '0.95rem', lineHeight: '1.4' }}>{news.title}</h6>
                     <div className="text-muted d-flex justify-content-between align-items-center" style={{ fontSize: '11px' }}>

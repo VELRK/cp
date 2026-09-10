@@ -250,10 +250,7 @@ class Nb_auth extends MY_Controller {
         $token = $this->nb_api_token->read_token_from_request();
         if ($token !== '') {
             $this->load->model('Nb_user_model');
-            $user = $this->Nb_user_model->get_by_api_token($token);
-            if ($user) {
-                $this->Nb_user_model->clear_api_token((int) $user->id);
-            }
+            $this->Nb_user_model->revoke_session_token($token);
         }
         nb_clear_api_token_cookie();
         $this->session->unset_userdata(array('nb_user_id', 'nb_user'));

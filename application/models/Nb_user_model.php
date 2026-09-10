@@ -73,7 +73,26 @@ class Nb_user_model extends CI_Model {
     public function get_by_api_token($token)
     {
         $token = trim((string) $token);
-        if ($token === '' || !$this->db->field_exists('api_token', $this->table)) {
+        if ($token === '') {
+            return null;
+        }
+        nb_ensure_user_tokens_table();
+        if ($this->db->table_exists('nb_user_tokens')) {
+            $tok = $this->db->get_where('nb_user_tokens', array('token' => $token))->row();
+            if ($tok) {
+                if (!empty($tok->expires_at)) {
+                    $t = strtotime($tok->expires_at);
+                    if ($t !== false && $t < time()) {
+                        $this->db->where('id', (int) $tok->id)->delete('nb_user_tokens');
+                    } else {
+                        return $this->get_by_id((int) $tok->user_id);
+                    }
+                } else {
+                    return $this->get_by_id((int) $tok->user_id);
+                }
+            }
+        }
+        if (!$this->db->field_exists('api_token', $this->table)) {
             return null;
         }
         $row = $this->db->get_where($this->table, array('api_token' => $token))->row();
@@ -88,6 +107,71 @@ class Nb_user_model extends CI_Model {
             }
         }
         return $row;
+    }
+
+    /**
+     * Issue a new session token without invalidating other devices.
+     *
+     * @return string
+     */
+    public function issue_session_token($user_id, $expires_at = null)
+    {
+        $user_id = (int) $user_id;
+        $token = bin2hex(random_bytes(32));
+        nb_ensure_user_tokens_table();
+        if ($this->db->table_exists('nb_user_tokens')) {
+            $this->db->insert('nb_user_tokens', array(
+                'user_id' => $user_id,
+                'token' => $token,
+                'created_at' => date('Y-m-d H:i:s'),
+                'expires_at' => $expires_at,
+            ));
+        }
+        $this->set_api_token($user_id, $token, $expires_at);
+        return $token;
+    }
+
+    /**
+     * Revoke one device token. Other web/app sessions stay signed in.
+     */
+    public function revoke_session_token($token)
+    {
+        $token = trim((string) $token);
+        if ($token === '') {
+            return false;
+        }
+        nb_ensure_user_tokens_table();
+        $user_id = 0;
+        if ($this->db->table_exists('nb_user_tokens')) {
+            $row = $this->db->get_where('nb_user_tokens', array('token' => $token))->row();
+            if ($row) {
+                $user_id = (int) $row->user_id;
+                $this->db->where('token', $token)->delete('nb_user_tokens');
+            }
+        }
+        if ($user_id < 1 && $this->db->field_exists('api_token', $this->table)) {
+            $user = $this->db->get_where($this->table, array('api_token' => $token))->row();
+            if ($user) {
+                $user_id = (int) $user->id;
+            }
+        }
+        if ($user_id < 1) {
+            return false;
+        }
+        $latest = null;
+        if ($this->db->table_exists('nb_user_tokens')) {
+            $latest = $this->db->where('user_id', $user_id)
+                ->order_by('id', 'DESC')
+                ->limit(1)
+                ->get('nb_user_tokens')
+                ->row();
+        }
+        if ($latest) {
+            $this->set_api_token($user_id, $latest->token, $latest->expires_at);
+        } else {
+            $this->clear_api_token($user_id);
+        }
+        return true;
     }
 
     /**
@@ -108,6 +192,11 @@ class Nb_user_model extends CI_Model {
 
     public function clear_api_token($user_id)
     {
+        $user_id = (int) $user_id;
+        nb_ensure_user_tokens_table();
+        if ($this->db->table_exists('nb_user_tokens')) {
+            $this->db->where('user_id', $user_id)->delete('nb_user_tokens');
+        }
         if (!$this->db->field_exists('api_token', $this->table)) {
             return false;
         }
@@ -115,7 +204,7 @@ class Nb_user_model extends CI_Model {
         if ($this->db->field_exists('api_token_expires_at', $this->table)) {
             $data['api_token_expires_at'] = null;
         }
-        $this->db->where('id', (int) $user_id);
+        $this->db->where('id', $user_id);
         return $this->db->update($this->table, $data);
     }
 

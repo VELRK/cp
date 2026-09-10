@@ -41,6 +41,7 @@
             <td class="text-end text-nowrap">
               <a class="btn btn-sm btn-outline-secondary rounded-pill px-3 me-1" href="<?php echo site_url('panel/property/view/' . (int) $p->id); ?>">View</a>
               <button type="button" class="btn btn-sm btn-success rounded-pill px-3 nb-pub-approve" data-id="<?php echo (int) $p->id; ?>">Publish</button>
+              <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 nb-pub-reject" data-id="<?php echo (int) $p->id; ?>">Reject</button>
               <a class="btn btn-sm btn-outline-dark rounded-pill px-3" href="<?php echo site_url('panel/property/edit/' . (int) $p->id); ?>">Edit</a>
               <?php echo form_open(site_url('panel/property/delete/' . (int) $p->id), array('class' => 'd-inline', 'onsubmit' => "return confirm('Delete this property permanently?');")); ?>
               <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">Delete</button>
@@ -77,6 +78,42 @@
             row.remove();
           }
           hint.textContent = 'Listing #' + id + ' is now live.';
+          setTimeout(function () { hint.textContent = ''; }, 4000);
+        })
+        .catch(function () {
+          hint.textContent = 'Network error.';
+          btn.disabled = false;
+        });
+    });
+  });
+  document.querySelectorAll('.nb-pub-reject').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = btn.getAttribute('data-id');
+      var reason = window.prompt('Rejection reason (sent to the owner by email):');
+      if (reason === null) { return; }
+      reason = (reason || '').trim();
+      if (reason.length < 5) {
+        alert('Please enter a rejection reason (at least 5 characters).');
+        return;
+      }
+      btn.disabled = true;
+      hint.textContent = 'Rejecting…';
+      var body = new URLSearchParams();
+      body.set('property_id', id);
+      body.set('reason', reason);
+      fetch('<?php echo site_url('panel/reject-property'); ?>', { method: 'POST', body: body, credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (j) {
+          if (!j || !j.success) {
+            hint.textContent = (j && j.message) ? j.message : 'Could not reject. Try again.';
+            btn.disabled = false;
+            return;
+          }
+          var row = document.getElementById('nb-pend-row-' + id);
+          if (row) {
+            row.remove();
+          }
+          hint.textContent = j.message || ('Listing #' + id + ' was rejected.');
           setTimeout(function () { hint.textContent = ''; }, 4000);
         })
         .catch(function () {

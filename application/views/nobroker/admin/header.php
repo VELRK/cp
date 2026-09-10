@@ -122,6 +122,15 @@ $pt = isset($page_title) ? $page_title : 'Admin';
           href="<?php echo site_url('panel/delete-requests'); ?>">
           <i class="bi bi-person-x"></i> Delete Requests
         </a>
+        <div class="nb-admin-nav-label mt-3">System</div>
+        <a class="nb-admin-nav-link<?php echo $nav === 'settings' ? ' active' : ''; ?>"
+          href="<?php echo site_url('panel/settings'); ?>">
+          <i class="bi bi-gear"></i> Settings
+        </a>
+        <a class="nb-admin-nav-link<?php echo $nav === 'email_templates' ? ' active' : ''; ?>"
+          href="<?php echo site_url('panel/settings/templates'); ?>">
+          <i class="bi bi-envelope-paper"></i> Email templates
+        </a>
       </nav>
       <div class="nb-admin-sidebar-foot">
         <a class="nb-admin-nav-link" href="<?php echo site_url(''); ?>">
@@ -216,6 +225,14 @@ $pt = isset($page_title) ? $page_title : 'Admin';
           <a class="nb-admin-nav-link<?php echo $nav === 'delete_requests' ? ' active' : ''; ?>"
             href="<?php echo site_url('panel/delete-requests'); ?>" data-bs-dismiss="offcanvas">
             <i class="bi bi-person-x"></i> Delete Requests
+          </a>
+          <a class="nb-admin-nav-link<?php echo $nav === 'settings' ? ' active' : ''; ?>"
+            href="<?php echo site_url('panel/settings'); ?>" data-bs-dismiss="offcanvas">
+            <i class="bi bi-gear"></i> Settings
+          </a>
+          <a class="nb-admin-nav-link<?php echo $nav === 'email_templates' ? ' active' : ''; ?>"
+            href="<?php echo site_url('panel/settings/templates'); ?>" data-bs-dismiss="offcanvas">
+            <i class="bi bi-envelope-paper"></i> Email templates
           </a>
         </nav>
         <div class="nb-admin-sidebar-foot border-top border-secondary border-opacity-25">

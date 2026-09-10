@@ -67,6 +67,24 @@ class Api extends CI_Controller
             $id = $this->Enquiry_model->create($data);
 
             if ($id) {
+                $this->load->model('Nb_property_model');
+                $this->load->model('Nb_user_model');
+                $pid = !empty($data['property_id']) ? (int) $data['property_id'] : 0;
+                $prop = $pid > 0 ? $this->Nb_property_model->get_by_id($pid) : null;
+                $enquirer = (object) array(
+                    'name' => $data['name'],
+                    'email' => $data['email'],
+                    'phone' => $data['phone'],
+                );
+                if (!empty($data['user_id'])) {
+                    $u = $this->Nb_user_model->get_by_id((int) $data['user_id']);
+                    if ($u) {
+                        $enquirer = $u;
+                    }
+                }
+                if ($prop) {
+                    nb_notify_enquiry($prop, $enquirer, (string) $data['message'], (string) $data['phone'], (string) $data['email']);
+                }
                 $this->output
                     ->set_content_type('application/json')
                     ->set_output(json_encode(array(
@@ -299,7 +317,12 @@ class Api extends CI_Controller
             'email' => $this->security->xss_clean($email),
             'status' => 'new',
         ));
-        $this->_nb_notify_admin_email($prop, $u, $message, $phone, $email);
+        $enquirer = (object) array(
+            'name' => isset($u['name']) ? $u['name'] : 'User',
+            'email' => $email,
+            'phone' => $phone,
+        );
+        nb_notify_enquiry($prop, $enquirer, $message, $phone, $email);
         return $this->_nb_json(array('success' => true, 'message' => 'Enquiry sent. We\'ve routed it to the listing owner; they may contact you on your phone or email.'));
     }
 

@@ -22,7 +22,7 @@ class Api_mobile extends CI_Controller {
     private function _cors()
     {
         header('Access-Control-Allow-Origin: *');
-        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Api-Token, X-Requested-With');
         header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
         if (strtoupper((string) $this->input->server('REQUEST_METHOD')) === 'OPTIONS') {
             $this->output->set_output('');
@@ -370,6 +370,16 @@ class Api_mobile extends CI_Controller {
         if (!$id) {
             $this->_json(array('success' => false, 'message' => 'Could not save enquiry'), 500);
             return;
+        }
+
+        $prop = $propertyId > 0 ? $this->Nb_property_model->get_by_id($propertyId) : null;
+        $enquirer = $userId > 0 ? $this->Nb_user_model->get_by_id($userId) : (object) array(
+            'name' => $name,
+            'email' => $email,
+            'phone' => $phone,
+        );
+        if ($prop) {
+            nb_notify_enquiry($prop, $enquirer, $message, $phone, $email);
         }
 
         $this->_json(array('success' => true, 'message' => 'Enquiry submitted', 'id' => $id));
@@ -1119,7 +1129,13 @@ class Api_mobile extends CI_Controller {
         } else {
             $row['owner_id'] = $owner_id;
             if ($this->db->field_exists('is_active', 'nb_properties')) {
-                $row['is_active'] = 0;
+                if ($id < 1) {
+                    $row['is_active'] = 0;
+                } elseif ($existing && empty($existing->is_active)) {
+                    $row['is_active'] = 0;
+                } else {
+                    unset($row['is_active']);
+                }
             }
         }
 
@@ -1169,6 +1185,9 @@ class Api_mobile extends CI_Controller {
                 $payload['message'] = $id > 0
                     ? 'Changes saved. Listing is pending admin approval.'
                     : 'Listing submitted for admin approval.';
+            }
+            if (!$is_admin && $id < 1) {
+                nb_notify_property_submitted($saved);
             }
         }
         return $this->_json($payload);
@@ -1746,49 +1765,76 @@ class Api_mobile extends CI_Controller {
         }
         $this->load->library('session');
         $input = $this->_input_json_or_post();
-        $phone = trim((string) ($input['phone'] ?? ''));
+        $raw_phone = trim((string) ($input['phone'] ?? ''));
+        $digits = preg_replace('/\D+/', '', $raw_phone);
+        if (strlen($digits) > 10) {
+            $digits = substr($digits, -10);
+        }
+        $phone = $digits;
         $country_code = trim((string) ($input['country_code'] ?? '+91'));
-        if ($phone === '') {
-            return $this->_json(array('success' => false, 'message' => 'Phone number is required'), 400);
+        if ($country_code === '') {
+            $country_code = '+91';
+        }
+        if (strlen($phone) !== 10) {
+            return $this->_json(array('success' => false, 'message' => 'Enter a valid 10-digit mobile number.'), 400);
         }
 
+        $nb_user = $this->Nb_user_model->get_by_phone($phone);
         $test_phone = '9876543210';
-        $test_otp = '123456';
-        $otp = ($phone === $test_phone && $country_code === '+91')
-            ? $test_otp
-            : str_pad((string) rand(0, 999999), 6, '0', STR_PAD_LEFT);
+        // 6-digit for existing app UI; also stored on nb_users so api/nb verify-otp accepts it.
+        $otp = ($phone === $test_phone)
+            ? '123456'
+            : str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         $otp_expires_at = date('Y-m-d H:i:s', time() + 300);
 
-        $this->session->set_userdata($this->_mobile_otp_session_key($phone), array(
+        $otp_session = array(
             'otp' => $otp,
             'expires_at' => $otp_expires_at,
             'phone' => $phone,
             'country_code' => $country_code,
-        ));
+        );
+        $this->session->set_userdata('mobile_otp_' . $phone, $otp_session);
+        $this->session->set_userdata('nb_otp_' . $phone, $otp_session);
+
+        if ($nb_user && $this->db->field_exists('otp', 'nb_users')) {
+            $this->Nb_user_model->update_otp((int) $nb_user->id, $otp, $otp_expires_at);
+        }
 
         if ($this->db->table_exists('users')) {
             $user = $this->User_model->get_by_phone($phone, $country_code);
             if ($user) {
                 $this->User_model->update_otp($phone, $country_code, $otp, $otp_expires_at);
-            } else {
-                @$this->User_model->create(array(
-                    'phonenumber' => $phone,
-                    'countrycode' => $country_code,
-                    'otp' => $otp,
-                    'otp_expires_at' => $otp_expires_at,
-                    'is_verified' => 0,
-                    'isactive' => 'active',
-                ));
             }
         }
 
-        $nb_user = $this->Nb_user_model->get_by_phone($phone);
-        $this->_json(array(
+        $whatsapp_ok = true;
+        $development_mode = false;
+        if ($phone !== $test_phone && $nb_user) {
+            $this->load->helper('whatsapp_config');
+            $cfg = function_exists('nb_whatsapp_config') ? nb_whatsapp_config($this) : array();
+            $development_mode = !empty($cfg['development_mode']);
+            if (!$development_mode) {
+                $this->load->library('whatsapp_library');
+                $full_phone = ltrim($country_code, '+') . $phone;
+                $send_result = $this->whatsapp_library->send_otp($full_phone, $otp);
+                $whatsapp_ok = !empty($send_result['success']);
+                if (!$whatsapp_ok && empty($send_result['development_mode'])) {
+                    log_message('error', 'Mobile OTP WhatsApp failed: ' . (isset($send_result['message']) ? $send_result['message'] : ''));
+                }
+            }
+        }
+
+        $payload = array(
             'success' => true,
             'message' => 'OTP sent',
             'otp' => $otp,
             'is_new_user' => !$nb_user,
-        ));
+            'expires_in' => 300,
+        );
+        if ($development_mode) {
+            $payload['development_mode'] = true;
+        }
+        $this->_json($payload);
     }
 
     public function verify_otp()
@@ -1917,10 +1963,7 @@ class Api_mobile extends CI_Controller {
         $this->load->library('Nb_api_token');
         $token = $this->nb_api_token->read_token_from_request();
         if ($token !== '') {
-            $user = $this->Nb_user_model->get_by_api_token($token);
-            if ($user) {
-                $this->Nb_user_model->clear_api_token((int) $user->id);
-            }
+            $this->Nb_user_model->revoke_session_token($token);
         }
         $this->session->unset_userdata(array(
             'user_logged_in', 'user_id', 'user_name', 'user_email', 'user_phone',

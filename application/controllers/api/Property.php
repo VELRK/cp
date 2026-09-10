@@ -39,6 +39,7 @@ class Property extends CI_Controller
     {
         $this->load->library('Nb_api_token');
         $this->nb_api_token->try_attach_session();
+        nb_ensure_property_rejection_column();
 
         if ($this->input->method() !== 'post') {
             return $this->_json(array(
@@ -315,9 +316,17 @@ class Property extends CI_Controller
             }
         } else {
             $row['owner_id'] = $owner_id;
-            // Owner/agent listings are active so they show immediately on the frontend
             if ($this->db->field_exists('is_active', 'nb_properties')) {
-                $row['is_active'] = 1;
+                if ($id < 1) {
+                    $row['is_active'] = 0;
+                } elseif ($existing && empty($existing->is_active)) {
+                    $row['is_active'] = 0;
+                } else {
+                    unset($row['is_active']);
+                }
+            }
+            if ($this->db->field_exists('rejection_reason', 'nb_properties') && $id < 1) {
+                $row['rejection_reason'] = null;
             }
             if ($this->db->field_exists('is_latest', 'nb_properties')) {
                 $row['is_latest'] = !empty($input['is_latest']) ? 1 : 0;
@@ -434,6 +443,9 @@ class Property extends CI_Controller
                         : 'Listing submitted for admin verification. It will be published after approval.';
                 }
             }
+            if (!$is_admin && $id < 1 && $saved) {
+                nb_notify_property_submitted($saved);
+            }
             return $this->_json($payload);
         }
         $flash_ok = 'Property saved.';
@@ -443,6 +455,12 @@ class Property extends CI_Controller
             $flash_ok = $id > 0
                 ? 'Changes saved. Admin must approve before the listing appears on the site.'
                 : 'Listing submitted for admin verification. It will appear on the site after approval.';
+        }
+        if (!$is_admin && $id < 1) {
+            $saved_mail = $this->Nb_property_model->get_by_id((int) $new_id);
+            if ($saved_mail) {
+                nb_notify_property_submitted($saved_mail);
+            }
         }
         $this->session->set_flashdata('nb_ok', $flash_ok);
         if ($admin_save_request) {

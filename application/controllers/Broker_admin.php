@@ -8,8 +8,10 @@ class Broker_admin extends MY_Controller {
         parent::__construct();
         $this->load->helper(array('url', 'form'));
         $this->load->database();
-        $this->load->model(array('Nb_user_model', 'Nb_property_model', 'Nb_enquiry_model', 'Nb_city_model', 'Nb_amenity_model', 'Nb_property_type_model', 'Wishlist_model', 'Live_update_model', 'Housing_news_model', 'Banner_model', 'Feedback_model', 'Notification_model', 'Nb_delete_request_model', 'Reelsvideo_model', 'Video_model', 'Site_visit_model'));
+        $this->load->model(array('Nb_user_model', 'Nb_property_model', 'Nb_enquiry_model', 'Nb_city_model', 'Nb_amenity_model', 'Nb_property_type_model', 'Wishlist_model', 'Live_update_model', 'Housing_news_model', 'Banner_model', 'Feedback_model', 'Notification_model', 'Nb_delete_request_model', 'Reelsvideo_model', 'Video_model', 'Site_visit_model', 'Nb_mail_model'));
         $this->load->helper('nb');
+        nb_ensure_user_tokens_table();
+        nb_ensure_property_rejection_column();
     }
 
     /**
@@ -117,8 +119,7 @@ class Broker_admin extends MY_Controller {
             $this->set_nb_session_from_user($user);
 
             if ($this->db->field_exists('api_token', 'nb_users')) {
-                $token = bin2hex(random_bytes(32));
-                $this->Nb_user_model->set_api_token((int) $user->id, $token);
+                $token = $this->Nb_user_model->issue_session_token((int) $user->id);
                 nb_set_api_token_cookie($token);
             }
 
@@ -1023,6 +1024,87 @@ class Broker_admin extends MY_Controller {
         $this->load->view('nobroker/admin/footer', $data);
     }
 
+    public function settings()
+    {
+        $this->_settings_page('mail');
+    }
+
+    public function settings_templates()
+    {
+        $this->_settings_page('templates');
+    }
+
+    private function _settings_page($tab)
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        $this->Nb_mail_model->ensure_tables();
+        $tab = $tab === 'templates' ? 'templates' : 'mail';
+
+        if ($this->input->method() === 'post') {
+            $action = (string) $this->input->post('settings_action');
+            if ($action === 'mail') {
+                $this->Nb_mail_model->save_settings(array(
+                    'admin_email' => $this->input->post('admin_email', true),
+                    'from_email' => $this->input->post('from_email', true),
+                    'from_name' => $this->input->post('from_name', true),
+                    'smtp_host' => $this->input->post('smtp_host', true),
+                    'smtp_port' => $this->input->post('smtp_port', true),
+                    'smtp_crypto' => $this->input->post('smtp_crypto', true),
+                    'smtp_user' => $this->input->post('smtp_user', true),
+                    'smtp_pass' => $this->input->post('smtp_pass'),
+                ));
+                nb_mail_settings_all(true);
+                $this->session->set_flashdata('nb_ok', 'Mail details saved.');
+                redirect('panel/settings');
+                return;
+            }
+            if ($action === 'templates') {
+                $posted = $this->input->post('tpl');
+                if (!is_array($posted)) {
+                    $posted = array();
+                }
+                $this->Nb_mail_model->save_templates($posted);
+                $this->session->set_flashdata('nb_ok', 'Email templates saved.');
+                redirect('panel/settings/templates');
+                return;
+            }
+            if ($action === 'test') {
+                $to = strtolower(trim((string) $this->input->post('test_email', true)));
+                if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                    $this->session->set_flashdata('nb_err', 'Enter a valid test email address.');
+                    redirect('panel/settings');
+                    return;
+                }
+                nb_mail_settings_all(true);
+                $ok = nb_send_mail(
+                    $to,
+                    'Test email from Coimbatore Properties',
+                    nb_mail_wrap_html(
+                        'Test email',
+                        nb_mail_p('This is a test message from the admin Settings page. If you received it, mail details are working.')
+                    )
+                );
+                $this->session->set_flashdata(
+                    $ok ? 'nb_ok' : 'nb_err',
+                    $ok ? 'Test email sent to ' . $to . '.' : 'Could not send test email. Check SMTP host, user, password, and From address.'
+                );
+                redirect('panel/settings');
+                return;
+            }
+        }
+
+        $data['page_title'] = $tab === 'templates' ? 'Email templates' : 'Settings';
+        $data['admin_nav'] = $tab === 'templates' ? 'email_templates' : 'settings';
+        $data['settings_tab'] = $tab;
+        $data['mail'] = $this->Nb_mail_model->get_settings();
+        $data['catalog'] = $this->Nb_mail_model->catalog();
+        $data['templates'] = $this->Nb_mail_model->get_templates();
+        $this->load->view('nobroker/admin/header', $data);
+        $this->load->view('nobroker/admin/settings', $data);
+        $this->load->view('nobroker/admin/footer', $data);
+    }
+
     private function _feedback_users_map($rows)
     {
         $map = array();
@@ -1779,7 +1861,11 @@ class Broker_admin extends MY_Controller {
         nb_kyc_history_log($uid, 'approved', $from_status, 'approved', '', $admin, array(
             'source' => 'panel',
         ));
-        return $this->_panel_json(array('success' => true, 'message' => 'Agent KYC approved.'));
+        $updated = $this->Nb_user_model->get_by_id($uid);
+        if ($updated) {
+            nb_notify_kyc_approved($updated);
+        }
+        return $this->_panel_json(array('success' => true, 'message' => 'Agent KYC approved. Email sent.'));
     }
 
     /**
@@ -1920,8 +2006,58 @@ class Broker_admin extends MY_Controller {
             return $this->_panel_json(array('success' => false, 'message' => 'Not supported'), 500);
         }
         $update = array_merge(array('is_active' => 1), $this->Nb_property_model->slug_publish_patch($p));
+        if ($this->db->field_exists('rejection_reason', 'nb_properties')) {
+            $update['rejection_reason'] = null;
+        }
         $this->Nb_property_model->update($pid, $update);
-        return $this->_panel_json(array('success' => true));
+        $saved = $this->Nb_property_model->get_by_id($pid);
+        if ($saved) {
+            nb_notify_property_approved($saved);
+        }
+        return $this->_panel_json(array('success' => true, 'message' => 'Listing published. Email sent.'));
+    }
+
+    /**
+     * POST panel JSON — reject listing (keeps is_active = 0, emails owner + admin).
+     */
+    public function reject_property()
+    {
+        if ($this->input->method() !== 'post') {
+            show_404();
+        }
+        if (!$this->_panel_nb_admin()) {
+            return $this->_panel_json(array('success' => false, 'message' => 'Forbidden'), 403);
+        }
+        nb_ensure_property_rejection_column();
+        $pid = (int) $this->input->post('property_id');
+        $reason = trim((string) $this->input->post('reason', true));
+        if ($pid < 1) {
+            return $this->_panel_json(array('success' => false, 'message' => 'Invalid input'), 400);
+        }
+        if (strlen($reason) < 5) {
+            return $this->_panel_json(array(
+                'success' => false,
+                'message' => 'Rejection reason is required (at least 5 characters).',
+            ), 400);
+        }
+        $p = $this->Nb_property_model->get_by_id($pid);
+        if (!$p) {
+            return $this->_panel_json(array('success' => false, 'message' => 'Not found'), 404);
+        }
+        $update = array('is_active' => 0);
+        if ($this->db->field_exists('rejection_reason', 'nb_properties')) {
+            $update['rejection_reason'] = $reason;
+        }
+        $this->Nb_property_model->update($pid, $update);
+        $saved = $this->Nb_property_model->get_by_id($pid);
+        $emailed = $saved ? nb_notify_property_rejected($saved, $reason) : false;
+        return $this->_panel_json(array(
+            'success' => true,
+            'message' => $emailed
+                ? 'Listing rejected. Email sent to the owner.'
+                : 'Listing rejected. No deliverable owner email on file.',
+            'email_sent' => $emailed,
+        ));
     }
 
     /**

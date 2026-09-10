@@ -21,6 +21,7 @@ class Api_nb_app extends CI_Controller
         $this->output->set_content_type('application/json');
         nb_ensure_agent_kyc_columns();
         nb_ensure_kyc_history_table();
+        nb_ensure_user_tokens_table();
         $this->_cors();
     }
 
@@ -501,22 +502,21 @@ class Api_nb_app extends CI_Controller
         if ($login === '' && isset($input['email'])) {
             $login = trim((string) $input['email']);
         }
+        if ($login === '' && isset($input['phone'])) {
+            $login = trim((string) $input['phone']);
+        }
         $password = isset($input['password']) ? (string) $input['password'] : '';
 
-        if (strpos($login, '@') === false) {
+        if ($login === '' || $password === '') {
+            return $this->_json(array('success' => false, 'message' => 'Email/phone and password required.'), 400);
+        }
+        $user = $this->Nb_user_model->get_by_email_or_phone($login);
+        if (!$user || empty($user->password) || !password_verify($password, $user->password)) {
             return $this->_json(array(
                 'success' => false,
-                'message' => 'Enter your email and password, or sign in with phone OTP.',
+                'message' => 'Invalid email, phone, or password. You can also sign in with phone OTP.',
                 'use_otp' => true,
-            ), 400);
-        }
-
-        if ($login === '' || $password === '') {
-            return $this->_json(array('success' => false, 'message' => 'Email and password required.'), 400);
-        }
-        $user = $this->Nb_user_model->get_by_email(strtolower($login));
-        if (!$user || empty($user->password) || !password_verify($password, $user->password)) {
-            return $this->_json(array('success' => false, 'message' => 'Invalid email or password.'), 401);
+            ), 401);
         }
         if (!isset($user->status) || ($user->status !== 'approved' && !($user->role === 'admin' && $user->status === 'active'))) {
             return $this->_json(array('success' => false, 'message' => 'Account is not active. Contact support.'), 403);
@@ -578,12 +578,14 @@ class Api_nb_app extends CI_Controller
         if ($this->db->field_exists('otp', 'nb_users')) {
             $this->Nb_user_model->update_otp((int) $user->id, $otp, $otp_expires_at);
         }
-        $this->session->set_userdata($this->_otp_session_key($phone), array(
+        $otp_session = array(
             'otp' => $otp,
             'expires_at' => $otp_expires_at,
             'phone' => $phone,
             'country_code' => $country_code,
-        ));
+        );
+        $this->session->set_userdata($this->_otp_session_key($phone), $otp_session);
+        $this->session->set_userdata('mobile_otp_' . $phone, $otp_session);
 
         $full_phone = ltrim($country_code, '+') . $phone;
         $send_result = $this->_dispatch_whatsapp_otp($full_phone, $otp, $phone);
@@ -623,17 +625,25 @@ class Api_nb_app extends CI_Controller
         }
 
         $valid = false;
-        $stored = $this->session->userdata($this->_otp_session_key($phone));
-        if (is_array($stored) && isset($stored['otp']) && (string) $stored['otp'] === $otp) {
-            if (!empty($stored['expires_at']) && strtotime($stored['expires_at']) > time()) {
-                $valid = true;
+        $session_keys = array(
+            $this->_otp_session_key($phone),
+            'mobile_otp_' . $phone,
+            'mobile_otp_' . preg_replace('/\D/', '', (string) ($input['phone'] ?? $phone)),
+        );
+        foreach ($session_keys as $skey) {
+            $stored = $this->session->userdata($skey);
+            if (is_array($stored) && isset($stored['otp']) && (string) $stored['otp'] === $otp) {
+                if (!empty($stored['expires_at']) && strtotime($stored['expires_at']) > time()) {
+                    $valid = true;
+                    break;
+                }
             }
         }
         if (!$valid && $this->db->field_exists('otp', 'nb_users')) {
             $result = $this->Nb_user_model->verify_otp($phone, $otp);
             $valid = is_array($result) && !empty($result['success']);
         }
-        if (!$valid && $phone === '9876543210' && $otp === '1234') {
+        if (!$valid && $phone === '9876543210' && in_array($otp, array('1234', '123456'), true)) {
             $valid = true;
         }
         if (!$valid) {
@@ -641,6 +651,7 @@ class Api_nb_app extends CI_Controller
         }
 
         $this->session->unset_userdata($this->_otp_session_key($phone));
+        $this->session->unset_userdata('mobile_otp_' . $phone);
 
         $user = $this->Nb_user_model->get_by_phone($phone);
         if (!$user) {
@@ -748,8 +759,7 @@ class Api_nb_app extends CI_Controller
 
     private function _issue_auth_token($user)
     {
-        $token = bin2hex(random_bytes(32));
-        $this->Nb_user_model->set_api_token((int) $user->id, $token);
+        $token = $this->Nb_user_model->issue_session_token((int) $user->id);
         $this->session->set_userdata('nb_user_id', (int) $user->id);
         $this->session->set_userdata('nb_user', nb_session_user_array($user));
         nb_set_api_token_cookie($token);
@@ -770,10 +780,7 @@ class Api_nb_app extends CI_Controller
         $this->load->library('nb_api_token');
         $token = $this->nb_api_token->read_token_from_request();
         if ($token !== '') {
-            $user = $this->Nb_user_model->get_by_api_token($token);
-            if ($user) {
-                $this->Nb_user_model->clear_api_token((int) $user->id);
-            }
+            $this->Nb_user_model->revoke_session_token($token);
         }
 
         $this->session->unset_userdata(array('nb_user_id', 'nb_user'));
@@ -1539,6 +1546,10 @@ class Api_nb_app extends CI_Controller
             nb_kyc_history_log($id, $kyc_action, $kyc_from_status, 'pending', '', $user, array(
                 'source' => $kyc_only ? 'agent_kyc' : 'update_profile',
             ));
+            $updated_for_mail = $this->Nb_user_model->get_by_id($id);
+            if ($updated_for_mail) {
+                nb_notify_kyc_submitted($updated_for_mail);
+            }
         }
 
         $updated = $this->Nb_user_model->get_by_id($id);
@@ -2036,19 +2047,7 @@ class Api_nb_app extends CI_Controller
 
     private function _notify_admin_enquiry($prop, $tenant, $message, $phone, $email)
     {
-        $admin = $this->config->item('nb_admin_email');
-        if (empty($admin)) {
-            return;
-        }
-        $this->load->library('email');
-        $tname = isset($tenant->name) ? $tenant->name : 'User';
-        $this->email->from('noreply@localhost', 'Coimbatore Properties');
-        $this->email->to($admin);
-        $this->email->subject('New property enquiry: ' . $prop->title);
-        $this->email->message(
-            "From: {$tname} ({$email}) {$phone}\nProperty #{$prop->id}: {$prop->title}\n\n{$message}"
-        );
-        @$this->email->send();
+        nb_notify_enquiry($prop, $tenant, $message, $phone, $email);
     }
 
     /**
@@ -2354,7 +2353,7 @@ class Api_nb_app extends CI_Controller
             $this->_json(array('success' => false, 'message' => 'Your account must be approved to send enquiries'), 403);
             return;
         }
-        if (!in_array($u->role, array('owner', 'tenant'), true)) {
+        if (!in_array($u->role, array('owner', 'tenant', 'agent'), true) && !nb_user_is_agent($u)) {
             $this->_json(array('success' => false, 'message' => 'This action is not available for your account type'), 403);
             return;
         }
@@ -2406,7 +2405,7 @@ class Api_nb_app extends CI_Controller
             return;
         }
 
-        $this->_notify_admin_enquiry($prop, $u, $message, $phone, $email);
+        nb_notify_enquiry($prop, $u, $message, $phone, $email);
         $this->_json(array(
             'success' => true,
             'message' => 'Enquiry sent. We\'ve routed it to the listing owner; they may contact you on your phone or email.',

@@ -26,6 +26,18 @@ class Nb_property extends CI_Controller
             redirect(site_url($segment . '/dashboard'), 'location', 302);
             return;
         }
+        $next_html = nb_next_property_html_path($segment);
+        if ($next_html !== '') {
+            $p = ctype_digit($segment)
+                ? $this->Nb_property_model->get_by_id((int) $segment)
+                : $this->Nb_property_model->get_by_slug($segment);
+            if ($p && !empty($p->is_active)) {
+                $this->Nb_property_model->increment_views((int) $p->id);
+            }
+            $this->output->set_content_type('text/html', 'utf-8');
+            $this->output->set_output(file_get_contents($next_html));
+            return;
+        }
         $p = null;
         $by_id = false;
         if (ctype_digit($segment)) {

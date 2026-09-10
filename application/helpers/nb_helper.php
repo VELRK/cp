@@ -931,6 +931,77 @@ function nb_ensure_kyc_history_table()
     );
 }
 
+/** Session tokens so web and app can stay signed in on the same account. */
+function nb_ensure_user_tokens_table()
+{
+    $CI =& get_instance();
+    if (!isset($CI->db) || !$CI->db) {
+        return;
+    }
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+    if ($CI->db->table_exists('nb_user_tokens')) {
+        return;
+    }
+    $CI->db->query(
+        "CREATE TABLE `nb_user_tokens` (
+            `id` INT(11) NOT NULL AUTO_INCREMENT,
+            `user_id` INT(11) NOT NULL,
+            `token` VARCHAR(64) NOT NULL,
+            `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            `expires_at` DATETIME NULL DEFAULT NULL,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `uq_nb_user_tokens_token` (`token`),
+            KEY `idx_nb_user_tokens_user` (`user_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
+    );
+}
+
+function nb_ensure_property_rejection_column()
+{
+    $CI =& get_instance();
+    if (!isset($CI->db) || !$CI->db) {
+        return;
+    }
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+    if (!$CI->db->table_exists('nb_properties')) {
+        return;
+    }
+    if (!$CI->db->field_exists('rejection_reason', 'nb_properties')) {
+        $CI->db->query('ALTER TABLE `nb_properties` ADD COLUMN `rejection_reason` TEXT NULL DEFAULT NULL AFTER `is_active`');
+    }
+}
+
+/**
+ * Next.js static HTML for a listing slug (pre-built page or placeholder shell).
+ *
+ * @param string $segment
+ * @return string absolute file path or empty
+ */
+function nb_next_property_html_path($segment)
+{
+    $segment = trim(str_replace('\\', '/', (string) $segment), '/');
+    if ($segment === '' || strpos($segment, '..') !== false || strpos($segment, '/') !== false) {
+        return '';
+    }
+    $specific = FCPATH . 'property' . DIRECTORY_SEPARATOR . $segment . DIRECTORY_SEPARATOR . 'index.html';
+    if (is_file($specific)) {
+        return $specific;
+    }
+    $placeholder = FCPATH . 'property' . DIRECTORY_SEPARATOR . '__build_placeholder__' . DIRECTORY_SEPARATOR . 'index.html';
+    if (is_file($placeholder)) {
+        return $placeholder;
+    }
+    return '';
+}
+
 /**
  * Append a KYC audit row (submit, approve, reject, comment).
  *
@@ -976,35 +1047,7 @@ function nb_user_deliverable_email($user)
 /** Notify agent by email when KYC is rejected. Returns true when send attempted successfully. */
 function nb_send_agent_kyc_rejection_email($user, $reason)
 {
-    $to = nb_user_deliverable_email($user);
-    if ($to === '') {
-        return false;
-    }
-    $CI =& get_instance();
-    if (!isset($CI->email)) {
-        $CI->load->library('email');
-    }
-    $name = isset($user->name) ? trim((string) $user->name) : (is_array($user) && isset($user['name']) ? trim((string) $user['name']) : 'Agent');
-    $from = $CI->config->item('nb_admin_email');
-    if (empty($from)) {
-        $from = 'noreply@localhost';
-    }
-    $site = $CI->config->item('base_url');
-    if (empty($site)) {
-        $site = site_url();
-    }
-    $reasonText = trim((string) $reason);
-    $body = "Hello {$name},\n\n"
-        . "Your agent KYC submission on Coimbatore Properties was reviewed and could not be approved.\n\n"
-        . "Reason:\n{$reasonText}\n\n"
-        . "Please sign in to the app, update your KYC details if needed, and submit again for review.\n\n"
-        . "— Coimbatore Properties\n{$site}";
-    $CI->email->clear(true);
-    $CI->email->from($from, 'Coimbatore Properties');
-    $CI->email->to($to);
-    $CI->email->subject('Agent KYC not approved — action required');
-    $CI->email->message($body);
-    return (bool) @$CI->email->send();
+    return nb_notify_kyc_rejected($user, $reason);
 }
 
 /**

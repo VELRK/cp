@@ -1958,7 +1958,8 @@ class Admin extends CI_Controller {
             $data = array(
                 'title' => $this->input->post('title'),
                 'description' => $this->input->post('description'),
-                'status' => $this->input->post('status') ?: 'active'
+                'status' => $this->input->post('status') ?: 'active',
+                'target_audience' => nb_normalize_notification_audience($this->input->post('target_audience')),
             );
 
             $err = $this->_notification_merge_uploads($data, null);
@@ -1969,9 +1970,9 @@ class Admin extends CI_Controller {
             }
 
             $notification_id = (int) $this->Notification_model->create($data);
-            nb_send_fcm_notification($notification_id, $data);
+            $push = nb_send_fcm_notification($notification_id, $data);
 
-            $this->session->set_flashdata('success', 'Notification sent and saved successfully');
+            $this->session->set_flashdata('success', 'Notification saved. ' . $push);
             redirect('admin/notifications');
         }
 
@@ -1997,7 +1998,8 @@ class Admin extends CI_Controller {
             $update_data = array(
                 'title' => $this->input->post('title'),
                 'description' => $this->input->post('description'),
-                'status' => $this->input->post('status') ?: 'active'
+                'status' => $this->input->post('status') ?: 'active',
+                'target_audience' => nb_normalize_notification_audience($this->input->post('target_audience')),
             );
 
             $err = $this->_notification_merge_uploads($update_data, $data['notification']);

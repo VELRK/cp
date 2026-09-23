@@ -20,24 +20,14 @@ class Nb_property extends CI_Controller
     {
         if ($segment === null || $segment === '') {
             show_404();
+            return;
         }
         $segment = rawurldecode((string) $segment);
         if ($segment === 'owner' || $segment === 'tenant') {
             redirect(site_url($segment . '/dashboard'), 'location', 302);
             return;
         }
-        $next_html = nb_next_property_html_path($segment);
-        if ($next_html !== '') {
-            $p = ctype_digit($segment)
-                ? $this->Nb_property_model->get_by_id((int) $segment)
-                : $this->Nb_property_model->get_by_slug($segment);
-            if ($p && !empty($p->is_active)) {
-                $this->Nb_property_model->increment_views((int) $p->id);
-            }
-            $this->output->set_content_type('text/html', 'utf-8');
-            $this->output->set_output(file_get_contents($next_html));
-            return;
-        }
+
         $p = null;
         $by_id = false;
         if (ctype_digit($segment)) {
@@ -46,92 +36,30 @@ class Nb_property extends CI_Controller
         } else {
             $p = $this->Nb_property_model->get_by_slug($segment);
         }
-        if (!$p || !$p->is_active) {
+        if (!$p || empty($p->is_active)) {
             show_404();
+            return;
         }
-        if ($by_id && !empty($p->slug)) {
+        if ($by_id && !empty($p->slug) && (string) $p->slug !== $segment) {
             redirect(nb_property_url($p), 'location', 301);
+            return;
         }
 
-        $id = (int) $p->id;
-        $this->Nb_property_model->increment_views($id);
-        $p->views = (int) $p->views + 1;
+        $this->Nb_property_model->increment_views((int) $p->id);
 
-        $data['page_title'] = $p->title . ' | ' . $p->city_name . ' | Coimbatore Properties';
-        $data['p'] = $p;
-        $data['images'] = array();
-        if (!empty($p->images)) {
-            $decoded = json_decode($p->images, true);
-            if (is_array($decoded)) {
-                $data['images'] = $decoded;
-            }
+        $next_html = nb_next_property_html_path($segment);
+        if ($next_html !== '') {
+            $this->output->set_content_type('text/html', 'utf-8');
+            $this->output->set_output(file_get_contents($next_html));
+            return;
         }
-        $data['amenities'] = array();
-        if (!empty($p->amenities)) {
-            $am = json_decode($p->amenities, true);
-            if (is_array($am)) {
-                foreach ($am as $label) {
-                    if ($label === null || $label === '') {
-                        continue;
-                    }
-                    $data['amenities'][] = is_string($label) ? $label : (string) $label;
-                }
-            }
-        }
-        $data['similar'] = $this->Nb_property_model->similar(
-            $p->city_id,
-            $p->property_type,
-            $id,
-            4
-        );
 
-        $nb = $this->session->userdata('nb_user');
-        $data['nb_user'] = $nb;
-        $data['can_enquire'] = $nb && $nb['status'] === 'approved'
-            && in_array($nb['role'], array('owner', 'tenant'), true)
-            && (int) $nb['id'] !== (int) $p->owner_id;
-        $data['load_maps'] = !empty($this->config->item('google_maps_api_key'));
-        $data['cities_footer'] = $this->Nb_city_model->all_active();
-        $data['nb_full_footer'] = true;
-        $data['nb_page_property'] = true;
-
-        $price_txt = nb_format_listing_price($p->price, $p->listing_type);
-        $desc_src = $p->description ? $p->description : ($p->title . ' in ' . $p->locality . ', ' . $p->city_name . '. ' . $price_txt . '. ' . nb_property_type_label($p->property_type));
-        $meta_desc = nb_meta_description($desc_src);
-        $canonical = nb_property_url($p);
-        $og_image = '';
-        if (!empty($data['images'][0])) {
-            $og_image = base_url($data['images'][0]);
+        $next_dev = nb_next_dev_property_url(isset($p->slug) && $p->slug !== '' ? $p->slug : $segment);
+        if ($next_dev !== '') {
+            redirect($next_dev, 'location', 302);
+            return;
         }
-        $data['nb_seo'] = array(
-            'description' => $meta_desc,
-            'canonical' => $canonical,
-            'og_title' => $p->title,
-            'og_description' => $meta_desc,
-            'og_image' => $og_image,
-        );
-        $json_ld = array(
-            '@context' => 'https://schema.org',
-            '@type' => 'Product',
-            'name' => $p->title,
-            'description' => $meta_desc,
-            'url' => $canonical,
-            'sku' => 'nb-prop-' . $id,
-            'offers' => array(
-                '@type' => 'Offer',
-                'priceCurrency' => 'INR',
-                'price' => (string) $p->price,
-                'availability' => 'https://schema.org/InStock',
-                'url' => $canonical,
-            ),
-        );
-        if ($og_image !== '') {
-            $json_ld['image'] = $og_image;
-        }
-        $data['nb_json_ld'] = json_encode($json_ld, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS);
 
-        $this->load->view('nobroker/layout/header', $data);
-        $this->load->view('nobroker/property/detail', $data);
-        $this->load->view('nobroker/layout/footer', $data);
+        show_404();
     }
 }

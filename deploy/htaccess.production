@@ -1,5 +1,5 @@
 RewriteEngine On
-RewriteBase /cp/
+RewriteBase /
 DirectoryIndex index.html index.php
 
 # --- User uploads & PHP static assets (never route to CodeIgniter) ---
@@ -28,6 +28,9 @@ RewriteRule ^owner/property/edit/([0-9]+)/?$ index.php/owner/property/edit/$1 [L
 # --- Legacy URLs ---
 RewriteRule ^property-detail/(.+?)/?$ property/$1/ [R=301,L]
 RewriteRule ^property-details-v[0-9]/(.+?)/?$ property/$1/ [R=301,L]
+RewriteRule ^cp/property/(.+?)/?$ property/$1/ [R=301,L]
+RewriteRule ^cp/?$ / [R=301,L]
+RewriteRule ^cp/(.*)$ /$1 [R=301,L]
 
 # --- Next.js static export (_next/, *.html, page folders) ---
 # Real files and directories are served as-is by Apache.
@@ -48,7 +51,7 @@ RewriteRule ^(.+?)/?$ $1/index.html [L]
 # Property detail without a pre-built static page → Next.js client shell
 RewriteCond %{REQUEST_URI} !/(panel|admin|api)(/|$) [NC]
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}/index.html !-f
 RewriteRule ^property/(?!owner/?$|tenant/?$|__build_placeholder__/?$)([^/]+)/?$ property/__build_placeholder__/index.html [L]
 
 # Root Next homepage

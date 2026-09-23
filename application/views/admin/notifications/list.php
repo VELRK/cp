@@ -32,6 +32,7 @@
                             <th>Image</th>
                             <th>Video</th>
                             <th>Title</th>
+                            <th>Send to</th>
                             <th>Description</th>
                             <th>Status</th>
                             <th>Created</th>
@@ -40,9 +41,9 @@
                     </thead>
                     <tbody>
                         <?php if(empty($notifications)): ?>
-                            <tr>
-                                <td colspan="8" class="text-center">No notifications found</td>
-                            </tr>
+                        <tr>
+                            <td colspan="9" class="text-center">No notifications found</td>
+                        </tr>
                         <?php else: ?>
                             <?php foreach($notifications as $notification): ?>
                                 <tr>
@@ -62,6 +63,13 @@
                                         <?php endif; ?>
                                     </td>
                                     <td><?php echo htmlspecialchars($notification->title); ?></td>
+                                    <td>
+                                      <?php
+                                        $aud = isset($notification->target_audience) ? (string) $notification->target_audience : 'all';
+                                        $labels = nb_notification_audience_options();
+                                        echo htmlspecialchars(isset($labels[$aud]) ? $labels[$aud] : $aud);
+                                      ?>
+                                    </td>
                                     <td>
                                         <?php 
                                             $description = htmlspecialchars($notification->description);

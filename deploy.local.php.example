@@ -16,7 +16,7 @@ return [
     'ssh_port'  => 65002,
     'ssh_key'   => 'C:/Users/YOUR_USER/.ssh/deploy_ilf',
 
-    'target_path' => '/home/u221026474/domains/superfinelabels.in/public_html/cp',
+    'target_path' => '/home/u221026474/domains/coimbatoreproperties.org/public_html',
 
     'git_repo'   => 'https://github.com/VELRK/cp.git',
     'git_branch' => 'main',

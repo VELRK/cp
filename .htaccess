@@ -46,9 +46,10 @@ RewriteCond %{REQUEST_FILENAME}/index.html -f
 RewriteRule ^(.+?)/?$ $1/index.html [L]
 
 # Property detail without a pre-built static page → Next.js client shell
+# Do not require !-d: leftover export folders without index.html used to fall through to the old PHP view.
 RewriteCond %{REQUEST_URI} !/(panel|admin|api)(/|$) [NC]
 RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}/index.html !-f
 RewriteRule ^property/(?!owner/?$|tenant/?$|__build_placeholder__/?$)([^/]+)/?$ property/__build_placeholder__/index.html [L]
 
 # Root Next homepage

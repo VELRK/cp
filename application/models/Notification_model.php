@@ -32,12 +32,18 @@ class Notification_model extends CI_Model {
 
     public function create($data)
     {
+        if (isset($data['target_audience']) && !$this->db->field_exists('target_audience', 'notifications')) {
+            unset($data['target_audience']);
+        }
         $this->db->insert('notifications', $data);
         return $this->db->insert_id();
     }
 
     public function update($id, $data)
     {
+        if (isset($data['target_audience']) && !$this->db->field_exists('target_audience', 'notifications')) {
+            unset($data['target_audience']);
+        }
         $this->db->where('id', $id);
         return $this->db->update('notifications', $data);
     }

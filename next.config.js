@@ -1,16 +1,31 @@
 /** @type {import('next').NextConfig} */
-const backendOrigin = process.env.BACKEND_URL || 'http://127.0.0.1';
-const phpBase = `${backendOrigin}/cp/index.php`;
-const cpBase = `${backendOrigin}/cp`;
+const backendUrl = (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8080/cp').replace(/\/$/, '');
+const phpBase = `${backendUrl}/index.php`;
+const assetBase = backendUrl;
 const isStaticExport = process.env.STATIC_EXPORT === '1';
+
+function urlPathPrefix(url) {
+  try {
+    const p = new URL(url).pathname.replace(/\/$/, '');
+    return p === '/' ? '' : p;
+  } catch {
+    return '';
+  }
+}
+
+const envBase = process.env.NEXT_PUBLIC_APP_BASE_PATH;
+const appBasePath = envBase !== undefined
+  ? String(envBase).replace(/\/$/, '').replace(/^\/$/, '')
+  : urlPathPrefix(backendUrl);
+const useSubfolder = isStaticExport && appBasePath !== '';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: isStaticExport ? 'export' : undefined,
   trailingSlash: isStaticExport,
-  // Hostinger serves this app from /cp — assets must use /cp/_next/ not /_next/
-  basePath: isStaticExport ? '/cp' : undefined,
-  assetPrefix: isStaticExport ? '/cp' : undefined,
+  // Subfolder installs (local XAMPP /cp) set basePath; domain-root production does not.
+  basePath: useSubfolder ? appBasePath : undefined,
+  assetPrefix: useSubfolder ? appBasePath : undefined,
   images: {
     unoptimized: isStaticExport,
   },
@@ -65,14 +80,15 @@ if (!isStaticExport) {
       { source: '/cp/admin/:path*', destination: `${phpBase}/admin/:path*` },
       { source: '/logout', destination: `${phpBase}/logout` },
       { source: '/cp/logout', destination: `${phpBase}/logout` },
+      { source: '/cp/property/:slug*', destination: '/property/:slug*' },
     ],
     fallback: [
       { source: '/api/:path*', destination: `${phpBase}/api/:path*` },
-      { source: '/uploads/:path*', destination: `${cpBase}/uploads/:path*` },
-      { source: '/assets/:path*', destination: `${cpBase}/assets/:path*` },
-      { source: '/cp/uploads/:path*', destination: `${cpBase}/uploads/:path*` },
-      { source: '/cp/assets/:path*', destination: `${cpBase}/assets/:path*` },
-      { source: '/promo_agent.png', destination: `${cpBase}/promo_agent.png` },
+      { source: '/uploads/:path*', destination: `${assetBase}/uploads/:path*` },
+      { source: '/assets/:path*', destination: `${assetBase}/assets/:path*` },
+      { source: '/cp/uploads/:path*', destination: `${assetBase}/uploads/:path*` },
+      { source: '/cp/assets/:path*', destination: `${assetBase}/assets/:path*` },
+      { source: '/promo_agent.png', destination: `${assetBase}/promo_agent.png` },
     ],
   });
 }

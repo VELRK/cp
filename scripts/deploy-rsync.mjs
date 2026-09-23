@@ -2,7 +2,7 @@
 /**
  * Build + rsync deploy/release/ to Hostinger (same as GitHub Actions deploy job).
  *
- *   BACKEND_URL=https://superfinelabels.in/cp npm run deploy:rsync
+ *   BACKEND_URL=https://coimbatoreproperties.org npm run deploy:rsync
  *
  * Requires: Node.js, rsync, SSH key in deploy.local.php
  */
@@ -62,7 +62,7 @@ function main() {
     process.exit(1);
   }
 
-  const backendUrl = (process.env.BACKEND_URL || 'https://superfinelabels.in/cp').replace(/\/$/, '');
+  const backendUrl = (process.env.BACKEND_URL || 'https://coimbatoreproperties.org').replace(/\/$/, '');
   log(`Building release (BACKEND_URL=${backendUrl})…`);
   execSync('node scripts/build-deploy.mjs', {
     cwd: projectRoot,

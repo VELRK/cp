@@ -8,7 +8,7 @@ class Broker_admin extends MY_Controller {
         parent::__construct();
         $this->load->helper(array('url', 'form'));
         $this->load->database();
-        $this->load->model(array('Nb_user_model', 'Nb_property_model', 'Nb_enquiry_model', 'Nb_city_model', 'Nb_amenity_model', 'Nb_property_type_model', 'Wishlist_model', 'Live_update_model', 'Housing_news_model', 'Banner_model', 'Feedback_model', 'Notification_model', 'Nb_delete_request_model', 'Reelsvideo_model', 'Video_model', 'Site_visit_model', 'Nb_mail_model'));
+        $this->load->model(array('Nb_user_model', 'Nb_property_model', 'Nb_enquiry_model', 'Nb_city_model', 'Nb_amenity_model', 'Nb_property_type_model', 'Wishlist_model', 'Live_update_model', 'Housing_news_model', 'Banner_model', 'Feedback_model', 'Notification_model', 'Nb_delete_request_model', 'Reelsvideo_model', 'Video_model', 'Site_visit_model', 'Nb_mail_model', 'Nb_firebase_model'));
         $this->load->helper('nb');
         nb_ensure_user_tokens_table();
         nb_ensure_property_rejection_column();
@@ -1029,9 +1029,107 @@ class Broker_admin extends MY_Controller {
         $this->_settings_page('mail');
     }
 
+    public function settings_firebase()
+    {
+        $this->_settings_page('firebase');
+    }
+
     public function settings_templates()
     {
         $this->_settings_page('templates');
+    }
+
+    public function settings_template_create()
+    {
+        $this->_settings_template_form(null);
+    }
+
+    public function settings_template_edit($key = null)
+    {
+        $this->_settings_template_form($key);
+    }
+
+    public function settings_template_delete($key = null)
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        $key = rawurldecode((string) $key);
+        if ($this->Nb_mail_model->delete_template($key)) {
+            $this->session->set_flashdata('nb_ok', 'Email template deleted.');
+        } else {
+            $this->session->set_flashdata('nb_err', 'System templates cannot be deleted.');
+        }
+        redirect('panel/settings/templates');
+    }
+
+    private function _settings_template_form($key)
+    {
+        $this->require_login();
+        $this->require_role('admin');
+        $this->Nb_mail_model->ensure_tables();
+        $is_edit = $key !== null && trim((string) $key) !== '';
+        $row = null;
+        if ($is_edit) {
+            $row = $this->Nb_mail_model->get_row(rawurldecode((string) $key));
+            if (!$row) {
+                show_404();
+                return;
+            }
+        }
+
+        if ($this->input->method() === 'post') {
+            $payload = array(
+                'label' => $this->input->post('label', true),
+                'event_key' => $this->input->post('event_key', true),
+                'audience' => $this->input->post('audience', true),
+                'to_email' => $this->input->post('to_email', true),
+                'subject' => $this->input->post('subject', true),
+                'heading' => $this->input->post('heading', true),
+                'body' => $this->input->post('body'),
+                'is_enabled' => $this->input->post('is_enabled') ? 1 : 0,
+            );
+            if (trim((string) $payload['label']) === '' || trim((string) $payload['subject']) === '') {
+                $this->session->set_flashdata('nb_err', 'Name and subject are required.');
+                redirect($is_edit ? 'panel/settings/templates/edit/' . rawurlencode($row['template_key']) : 'panel/settings/templates/create');
+                return;
+            }
+            if ($is_edit) {
+                $this->Nb_mail_model->update_template($row['template_key'], $payload);
+                $this->session->set_flashdata('nb_ok', 'Email template saved.');
+            } else {
+                $created = $this->Nb_mail_model->create_template($payload);
+                if (!$created) {
+                    $this->session->set_flashdata('nb_err', 'Choose a valid operation and recipient.');
+                    redirect('panel/settings/templates/create');
+                    return;
+                }
+                $this->session->set_flashdata('nb_ok', 'Email template created.');
+            }
+            redirect('panel/settings/templates');
+            return;
+        }
+
+        $data['page_title'] = $is_edit ? 'Edit email template' : 'Create email template';
+        $data['admin_nav'] = 'email_templates';
+        $data['settings_tab'] = 'templates';
+        $data['is_edit'] = $is_edit;
+        $data['row'] = $row ? $row : array(
+            'label' => '',
+            'event_key' => 'enquiry',
+            'audience' => 'admin',
+            'to_email' => '',
+            'subject' => '',
+            'heading' => '',
+            'body' => '',
+            'is_enabled' => 1,
+            'is_system' => 0,
+        );
+        $data['event_options'] = $this->Nb_mail_model->event_options();
+        $data['audience_options'] = $this->Nb_mail_model->audience_options();
+        $data['catalog'] = $this->Nb_mail_model->catalog();
+        $this->load->view('nobroker/admin/header', $data);
+        $this->load->view('nobroker/admin/email_template_form', $data);
+        $this->load->view('nobroker/admin/footer', $data);
     }
 
     private function _settings_page($tab)
@@ -1039,10 +1137,33 @@ class Broker_admin extends MY_Controller {
         $this->require_login();
         $this->require_role('admin');
         $this->Nb_mail_model->ensure_tables();
-        $tab = $tab === 'templates' ? 'templates' : 'mail';
+        $this->Nb_firebase_model->ensure_tables();
+        $allowed_tabs = array('mail' => true, 'templates' => true, 'firebase' => true);
+        $tab = isset($allowed_tabs[$tab]) ? $tab : 'mail';
 
         if ($this->input->method() === 'post') {
             $action = (string) $this->input->post('settings_action');
+            if ($action === 'firebase') {
+                $saved = $this->Nb_firebase_model->save_settings(array(
+                    'api_key' => $this->input->post('api_key', true),
+                    'auth_domain' => $this->input->post('auth_domain', true),
+                    'project_id' => $this->input->post('project_id', true),
+                    'storage_bucket' => $this->input->post('storage_bucket', true),
+                    'messaging_sender_id' => $this->input->post('messaging_sender_id', true),
+                    'app_id' => $this->input->post('app_id', true),
+                    'measurement_id' => $this->input->post('measurement_id', true),
+                    'vapid_key' => $this->input->post('vapid_key', true),
+                    'service_account_json' => $this->input->post('service_account_json', false),
+                ));
+                if (empty($saved['ok'])) {
+                    $this->session->set_flashdata('nb_err', isset($saved['error']) ? $saved['error'] : 'Could not save Firebase settings.');
+                    redirect('panel/settings/firebase');
+                    return;
+                }
+                $this->session->set_flashdata('nb_ok', 'Firebase settings saved.');
+                redirect('panel/settings/firebase');
+                return;
+            }
             if ($action === 'mail') {
                 $this->Nb_mail_model->save_settings(array(
                     'admin_email' => $this->input->post('admin_email', true),
@@ -1057,16 +1178,6 @@ class Broker_admin extends MY_Controller {
                 nb_mail_settings_all(true);
                 $this->session->set_flashdata('nb_ok', 'Mail details saved.');
                 redirect('panel/settings');
-                return;
-            }
-            if ($action === 'templates') {
-                $posted = $this->input->post('tpl');
-                if (!is_array($posted)) {
-                    $posted = array();
-                }
-                $this->Nb_mail_model->save_templates($posted);
-                $this->session->set_flashdata('nb_ok', 'Email templates saved.');
-                redirect('panel/settings/templates');
                 return;
             }
             if ($action === 'test') {
@@ -1098,8 +1209,13 @@ class Broker_admin extends MY_Controller {
         $data['admin_nav'] = $tab === 'templates' ? 'email_templates' : 'settings';
         $data['settings_tab'] = $tab;
         $data['mail'] = $this->Nb_mail_model->get_settings();
+        $data['firebase'] = $this->Nb_firebase_model->get_settings();
+        $data['firebase_has_vapid'] = $this->Nb_firebase_model->has_vapid_key();
+        $data['firebase_has_service_account'] = $this->Nb_firebase_model->has_service_account();
+        $sa = $this->Nb_firebase_model->get_service_account();
+        $data['firebase_sa_project'] = isset($sa['project_id']) ? (string) $sa['project_id'] : '';
         $data['catalog'] = $this->Nb_mail_model->catalog();
-        $data['templates'] = $this->Nb_mail_model->get_templates();
+        $data['templates'] = $this->Nb_mail_model->list_templates();
         $this->load->view('nobroker/admin/header', $data);
         $this->load->view('nobroker/admin/settings', $data);
         $this->load->view('nobroker/admin/footer', $data);
@@ -1155,7 +1271,8 @@ class Broker_admin extends MY_Controller {
             $data = array(
                 'title' => $this->input->post('title'),
                 'description' => $this->input->post('description'),
-                'status' => $this->input->post('status') ?: 'active'
+                'status' => $this->input->post('status') ?: 'active',
+                'target_audience' => nb_normalize_notification_audience($this->input->post('target_audience')),
             );
             $err = $this->_notification_merge_uploads($data, null);
             if ($err !== null) {
@@ -1164,8 +1281,8 @@ class Broker_admin extends MY_Controller {
                 return;
             }
             $notification_id = (int) $this->Notification_model->create($data);
-            nb_send_fcm_notification($notification_id, $data);
-            $this->session->set_flashdata('nb_ok', 'Notification sent.');
+            $push = nb_send_fcm_notification($notification_id, $data);
+            $this->session->set_flashdata('nb_ok', 'Notification saved. ' . $push);
             redirect('panel/notifications');
             return;
         }
@@ -1193,7 +1310,8 @@ class Broker_admin extends MY_Controller {
             $update_data = array(
                 'title' => $this->input->post('title'),
                 'description' => $this->input->post('description'),
-                'status' => $this->input->post('status') ?: 'active'
+                'status' => $this->input->post('status') ?: 'active',
+                'target_audience' => nb_normalize_notification_audience($this->input->post('target_audience')),
             );
             $err = $this->_notification_merge_uploads($update_data, $data['notification']);
             if ($err !== null) {

@@ -17,6 +17,40 @@ import {
   Car, Wifi, Wind, Tv, Coffee, Dumbbell, Trees, Shield, Droplets, Zap
 } from 'lucide-react';
 
+function extractSavedMapUrl(property: { map_url?: unknown; location?: unknown }): string | null {
+  const fromMap = typeof property.map_url === 'string' ? property.map_url.trim() : '';
+  const fromLoc = typeof property.location === 'string' ? property.location.trim() : '';
+  const iframe = (fromMap || fromLoc).match(/src=["']([^"']+)["']/i);
+  const raw = iframe ? iframe[1].trim() : (fromMap || (/^https?:\/\//i.test(fromLoc) ? fromLoc : ''));
+  return raw || null;
+}
+
+function toGoogleMapsEmbedUrl(savedUrl: string | null, fallbackQuery: string): string {
+  const fallback = `https://maps.google.com/maps?q=${encodeURIComponent(fallbackQuery)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+  if (!savedUrl) {
+    return fallback;
+  }
+  if (/\/maps\/embed/i.test(savedUrl) || /[?&]output=embed\b/i.test(savedUrl)) {
+    return savedUrl;
+  }
+  const at = savedUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (at) {
+    return `https://maps.google.com/maps?q=${at[1]},${at[2]}&z=16&output=embed`;
+  }
+  const bang = savedUrl.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+  if (bang) {
+    return `https://maps.google.com/maps?q=${bang[1]},${bang[2]}&z=16&output=embed`;
+  }
+  const qCoords = savedUrl.match(/[?&](?:q|query|ll)=(-?\d+\.\d+),(-?\d+\.\d+)/i);
+  if (qCoords) {
+    return `https://maps.google.com/maps?q=${qCoords[1]},${qCoords[2]}&z=16&output=embed`;
+  }
+  if (/^https?:\/\//i.test(savedUrl)) {
+    return `https://maps.google.com/maps?q=${encodeURIComponent(savedUrl)}&output=embed`;
+  }
+  return fallback;
+}
+
 const getAmenityInfo = (name: unknown) => {
   const n = String(name || '').toLowerCase();
   if (n.includes('park') || n.includes('garage') || n.includes('car')) return { icon: <Car size={18} />, color: '#0d6efd', bg: '#e8f4fd' };
@@ -271,20 +305,12 @@ export default function PropertyDetailClient({ slug: slugProp }: PropertyDetailC
 
   const videoEmbed = property.video_url ? getYoutubeEmbed(property.video_url) : null;
 
-  const savedMapUrl =
-    (typeof property.map_url === 'string' && property.map_url.trim() !== '')
-      ? property.map_url.trim()
-      : (typeof property.location === 'string' && property.location.startsWith('http')
-        ? property.location.trim()
-        : null);
-
+  const savedMapUrl = extractSavedMapUrl(property);
   const hasCoords = property.latitude && property.longitude;
   const mapQuery = hasCoords
     ? `${property.latitude},${property.longitude}`
     : `${property.address || property.locality || ''}, ${property.city_name || ''}`;
-  const mapUrl = (savedMapUrl && savedMapUrl.includes('output=embed'))
-    ? savedMapUrl
-    : `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+  const mapUrl = toGoogleMapsEmbedUrl(savedMapUrl, mapQuery);
 
   const locationImageUrl = property.location_image_url
     ? toFrontendAssetUrl(String(property.location_image_url))

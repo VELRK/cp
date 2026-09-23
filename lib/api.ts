@@ -1,22 +1,12 @@
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios';
+import { getAppBasePath } from './appBasePath';
 
 /** Low-level HTTP client. Import API functions from `./frontendApi` in app/components. */
 
+export { getAppBasePath };
+
 const backendBase =
   process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8080/cp';
-
-const APP_BASE_PATH = '/cp';
-
-/** App subfolder prefix (empty on Next dev — rewrites proxy /api/* to PHP). */
-function getAppBasePath(): string {
-  if (typeof window === 'undefined') {
-    return APP_BASE_PATH;
-  }
-  if (window.location.port === '3000' || window.location.port === '3001') {
-    return '';
-  }
-  return APP_BASE_PATH;
-}
 
 const getBaseUrl = () => {
   if (typeof window !== 'undefined') {
@@ -168,7 +158,7 @@ export function formatApiErrorMessage(
   return msg;
 }
 
-/** App home URL after logout (respects /cp subfolder on production). */
+/** App home URL after logout (domain root in production, /cp on local XAMPP). */
 export function getAppHomeUrl(): string {
   const base = getAppBasePath();
   return base ? `${base}/` : '/';

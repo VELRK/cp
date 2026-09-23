@@ -6,11 +6,14 @@
  * Next.js app/api/*       — dev only; production uses Api_web.php
  */
 import type { AxiosRequestConfig } from 'axios';
-import api, { getAdminPanelUrl, cachedGet, invalidateApiCache } from './api';
+import api, { getAdminPanelUrl, cachedGet, invalidateApiCache, getAppBasePath } from './api';
 
 export { getAdminPanelUrl, invalidateApiCache };
 
-export const getHomeUrl = () => process.env.NODE_ENV === 'production' ? '/cp/' : '/';
+export const getHomeUrl = () => {
+  const base = getAppBasePath();
+  return base ? `${base}/` : '/';
+};
 
 /** Route paths used by the web frontend only. */
 export const API_PATHS = {
@@ -23,6 +26,7 @@ export const API_PATHS = {
   logout: '/api/nb/logout',
   me: '/api/nb/me',
   updateProfile: '/api/nb/update-profile',
+  fcmToken: '/api/nb/fcm-token',
   agentKyc: '/api/nb/agent-kyc',
   kycHistory: '/api/nb/kyc-history',
   // Cities & search (PHP)
@@ -41,6 +45,7 @@ export const API_PATHS = {
   wishlistToggle: '/api/nb/wishlist/toggle',
   enquiry: '/api/nb/enquiry',
   notifications: '/api/nb/notifications',
+  firebaseConfig: '/api/nb/firebase-config',
   // Blogs & property save (PHP)
   blogs: '/api/blogs',
   propertySave: '/api/property/save',

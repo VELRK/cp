@@ -37,7 +37,7 @@ export function loadDeployConfig() {
     target:
       process.env.DEPLOY_TARGET ||
       fromFile.target_path ||
-      '/home/u221026474/domains/superfinelabels.in/public_html/cp',
+      '/home/u221026474/domains/coimbatoreproperties.org/public_html',
     repo:
       process.env.DEPLOY_GIT_REPO ||
       fromFile.git_repo ||

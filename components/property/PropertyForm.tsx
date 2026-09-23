@@ -611,9 +611,13 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
       formData.append('locality', locality);
       formData.append('city_id', cityId.toString());
       formData.append('description', description);
-      formData.append('location', location);
-      if (location.trim()) {
-        formData.append('map_url', location.trim());
+      const mapLink = location.trim();
+      if (mapLink) {
+        formData.append('map_url', mapLink);
+        formData.append('location', mapLink);
+      } else {
+        formData.append('map_url', '');
+        formData.append('location', '');
       }
       formData.append('video_url', videoUrl);
       if (brochureFile) {
@@ -1116,13 +1120,14 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
 
                     <div className="col-12 mt-3">
                       <label className="form-label small text-secondary fw-semibold">Google Maps Location Link (optional)</label>
-                      <input
-                        type="text"
+                      <textarea
                         className="form-control"
-                        placeholder="https://maps.google.com/?q=..."
+                        rows={2}
+                        placeholder="Paste Google Maps share link, embed iframe, or lat,lng"
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
                       />
+                      <div className="form-text">Open Google Maps → Share → copy the link (or Embed HTML). Short links like maps.app.goo.gl also work.</div>
                     </div>
                   </div>
                 </div>
@@ -1655,13 +1660,14 @@ const PropertyForm: React.FC<PropertyFormProps> = ({ initialData, isEdit = false
 
                   <div className="col-12 mt-3">
                     <label className="form-label small text-secondary fw-semibold">Google Map / Coordinates Link (optional)</label>
-                    <input
-                      type="text"
+                    <textarea
                       className="form-control"
-                      placeholder="https://maps.google.com/?q=..."
+                      rows={2}
+                      placeholder="Paste Google Maps share link, embed iframe, or lat,lng"
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
                     />
+                    <div className="form-text">Open Google Maps → Share → copy the link (or Embed HTML).</div>
                   </div>
                 </div>
               </div>

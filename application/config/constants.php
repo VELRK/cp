@@ -23,7 +23,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 */
 defined('SHOW_DEBUG_BACKTRACE') OR define('SHOW_DEBUG_BACKTRACE', TRUE);
 
-// Firebase – credentials are loaded from application/config/firebase_service_account.json
+// Firebase – credentials are stored in nb_firebase_settings (Settings → Firebase)
 // FCM_SERVER_KEY is no longer used (migrated to FCM v1 API with service account OAuth2)
 
 /*

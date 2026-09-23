@@ -9,56 +9,77 @@ class Firebase {
 
     public function __construct()
     {
+        $this->_load_credentials();
+    }
+
+    private function _load_credentials()
+    {
+        $CI =& get_instance();
+        if (isset($CI->db) && $CI->db) {
+            $CI->load->model('Nb_firebase_model');
+            $decoded = $CI->Nb_firebase_model->get_service_account();
+            if (is_array($decoded) && !empty($decoded['private_key'])) {
+                $this->_credentials = $decoded;
+                return;
+            }
+        }
         $cred_file = APPPATH . 'config/firebase_service_account.json';
         if (file_exists($cred_file)) {
             $this->_credentials = json_decode(file_get_contents($cred_file), true);
         }
     }
 
-    // -------------------------------------------------------------------------
-    // OAuth2 helpers
-    // -------------------------------------------------------------------------
+    public function project_id()
+    {
+        return !empty($this->_credentials['project_id']) ? (string) $this->_credentials['project_id'] : '';
+    }
+
+    public function is_ready()
+    {
+        return is_array($this->_credentials) && !empty($this->_credentials['private_key']) && $this->project_id() !== '';
+    }
 
     private function _base64url_encode($data)
     {
         return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
 
-    /**
-     * Obtain (or return cached) OAuth2 access token using the service account.
-     */
     private function _get_access_token()
     {
         if ($this->_access_token && time() < $this->_token_expires - 60) {
             return $this->_access_token;
         }
 
-        if (empty($this->_credentials)) {
+        if (empty($this->_credentials) || empty($this->_credentials['private_key'])) {
             return null;
         }
 
         $now     = time();
-        $header  = $this->_base64url_encode(json_encode(['alg' => 'RS256', 'typ' => 'JWT']));
-        $payload = $this->_base64url_encode(json_encode([
+        $header  = $this->_base64url_encode(json_encode(array('alg' => 'RS256', 'typ' => 'JWT')));
+        $payload = $this->_base64url_encode(json_encode(array(
             'iss'   => $this->_credentials['client_email'],
-            'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
+            'scope' => 'https://www.googleapis.com/auth/firebase.messaging https://www.googleapis.com/auth/cloud-platform',
             'aud'   => $this->_credentials['token_uri'],
             'iat'   => $now,
             'exp'   => $now + 3600,
-        ]));
+        )));
 
         $base        = $header . '.' . $payload;
         $private_key = openssl_pkey_get_private($this->_credentials['private_key']);
+        if (!$private_key) {
+            log_message('error', 'Firebase: invalid service account private key');
+            return null;
+        }
         openssl_sign($base, $signature, $private_key, OPENSSL_ALGO_SHA256);
         $jwt = $base . '.' . $this->_base64url_encode($signature);
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $this->_credentials['token_uri']);
         curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(array(
             'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
             'assertion'  => $jwt,
-        ]));
+        )));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         $response = curl_exec($ch);
@@ -68,7 +89,7 @@ class Firebase {
 
         if (!empty($token_data['access_token'])) {
             $this->_access_token  = $token_data['access_token'];
-            $this->_token_expires = $now + (isset($token_data['expires_in']) ? (int)$token_data['expires_in'] : 3600);
+            $this->_token_expires = $now + (isset($token_data['expires_in']) ? (int) $token_data['expires_in'] : 3600);
             return $this->_access_token;
         }
 
@@ -76,140 +97,182 @@ class Firebase {
         return null;
     }
 
-    // -------------------------------------------------------------------------
-    // Public API
-    // -------------------------------------------------------------------------
-
-    /**
-     * Send FCM push notification to a topic (FCM v1 API).
-     *
-     * @param string $title  Notification title
-     * @param string $body   Notification body
-     * @param string $image  Optional image URL
-     * @param array  $data   Optional extra data payload (values must be strings)
-     * @param string $topic  FCM topic (default: all_users)
-     * @param string $video_url Optional full URL to video (passed in `data` for the app; not shown as rich media by FCM)
-     * @return string Raw FCM response JSON
-     */
     public function send_notification($title, $body, $image = null, $data = array(), $topic = 'all_users', $video_url = null)
     {
-        $access_token = $this->_get_access_token();
-
-        if (empty($access_token)) {
-            return json_encode(['error' => 'Firebase: could not obtain access token']);
+        $topic = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) $topic);
+        if ($topic === '') {
+            $topic = 'all_users';
         }
+        $message = $this->_message_body($title, $body, $image, $data, $video_url);
+        $message['topic'] = $topic;
+        return $this->_post_message($message);
+    }
 
-        $notification = ['title' => $title, 'body' => $body];
-        if (!empty($image)) {
-            $notification['image'] = $image;
+    public function send_to_token($device_token, $title, $body, $image = null, $data = array(), $video_url = null)
+    {
+        $device_token = trim((string) $device_token);
+        if ($device_token === '') {
+            return json_encode(array('error' => 'Empty device token'));
         }
-
-        // FCM v1 requires all data values to be strings
-        $merged = array_merge(['click_action' => 'FLUTTER_NOTIFICATION_CLICK'], $data);
-        if (!empty($image)) {
-            $merged['image_url'] = (string) $image;
-        }
-        if (!empty($video_url)) {
-            $merged['video_url'] = (string) $video_url;
-        }
-        $string_data = array_map('strval', $merged);
-
-        $payload = [
-            'message' => [
-                'topic'        => $topic,
-                'notification' => $notification,
-                'data'         => $string_data,
-                'android'      => [
-                    'notification' => ['click_action' => 'FLUTTER_NOTIFICATION_CLICK'],
-                ],
-                'apns' => [
-                    'payload' => ['aps' => ['category' => 'FLUTTER_NOTIFICATION_CLICK']],
-                ],
-            ],
-        ];
-
-        $url = 'https://fcm.googleapis.com/v1/projects/' . $this->_credentials['project_id'] . '/messages:send';
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Authorization: Bearer ' . $access_token,
-            'Content-Type: application/json',
-        ]);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-
-        $result = curl_exec($ch);
-        curl_close($ch);
-
-        return $result;
+        $message = $this->_message_body($title, $body, $image, $data, $video_url);
+        $message['token'] = $device_token;
+        return $this->_post_message($message);
     }
 
     /**
-     * Send FCM push notification to a specific device token (FCM v1 API).
-     *
-     * @param string $device_token  FCM registration token
-     * @param string $title
-     * @param string $body
-     * @param string $image         Optional image URL
-     * @param array  $data          Optional extra data payload
-     * @param string $video_url     Optional full URL to video (data payload)
-     * @return string Raw FCM response JSON
+     * @param string[] $tokens
+     * @return array{sent:int,failed:int,errors:string[]}
      */
-    public function send_to_token($device_token, $title, $body, $image = null, $data = array(), $video_url = null)
+    public function send_to_tokens($tokens, $title, $body, $image = null, $data = array(), $video_url = null)
     {
+        $sent = 0;
+        $failed = 0;
+        $errors = array();
+        $seen = array();
+        foreach ((array) $tokens as $token) {
+            $token = trim((string) $token);
+            if ($token === '' || isset($seen[$token])) {
+                continue;
+            }
+            $seen[$token] = true;
+            $raw = $this->send_to_token($token, $title, $body, $image, $data, $video_url);
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded) && !empty($decoded['name'])) {
+                $sent++;
+            } else {
+                $failed++;
+                if (count($errors) < 8) {
+                    $msg = 'send failed';
+                    if (is_array($decoded) && isset($decoded['error']['message'])) {
+                        $msg = (string) $decoded['error']['message'];
+                    } elseif (is_array($decoded) && isset($decoded['error']) && is_string($decoded['error'])) {
+                        $msg = $decoded['error'];
+                    }
+                    $errors[] = $msg;
+                }
+            }
+        }
+        return array('sent' => $sent, 'failed' => $failed, 'errors' => $errors);
+    }
+
+    /**
+     * @param string[] $tokens
+     */
+    public function subscribe_tokens_to_topic($tokens, $topic)
+    {
+        $topic = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) $topic);
+        $clean = array();
+        foreach ((array) $tokens as $t) {
+            $t = trim((string) $t);
+            if ($t !== '') {
+                $clean[] = $t;
+            }
+        }
+        $clean = array_values(array_unique($clean));
+        if ($topic === '' || empty($clean)) {
+            return false;
+        }
         $access_token = $this->_get_access_token();
-
         if (empty($access_token)) {
-            return json_encode(['error' => 'Firebase: could not obtain access token']);
+            return false;
         }
+        $ok = true;
+        foreach (array_chunk($clean, 500) as $chunk) {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, 'https://iid.googleapis.com/iid/v1:batchAdd');
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                'Authorization: Bearer ' . $access_token,
+                'access_token_auth: true',
+                'Content-Type: application/json',
+            ));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(array(
+                'to' => '/topics/' . $topic,
+                'registration_tokens' => $chunk,
+            )));
+            $result = curl_exec($ch);
+            $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            if ($code >= 400) {
+                log_message('error', 'Firebase topic subscribe failed (' . $topic . '): ' . $result);
+                $ok = false;
+            }
+        }
+        return $ok;
+    }
 
-        $notification = ['title' => $title, 'body' => $body];
+    private function _message_body($title, $body, $image, $data, $video_url)
+    {
+        $notification = array('title' => (string) $title, 'body' => (string) $body);
         if (!empty($image)) {
-            $notification['image'] = $image;
+            $notification['image'] = (string) $image;
         }
-
-        $merged = array_merge(['click_action' => 'FLUTTER_NOTIFICATION_CLICK'], $data);
+        $merged = array_merge(array('click_action' => 'FLUTTER_NOTIFICATION_CLICK'), is_array($data) ? $data : array());
         if (!empty($image)) {
             $merged['image_url'] = (string) $image;
         }
         if (!empty($video_url)) {
             $merged['video_url'] = (string) $video_url;
         }
-        $string_data = array_map('strval', $merged);
+        $string_data = array();
+        foreach ($merged as $k => $v) {
+            $string_data[(string) $k] = (string) $v;
+        }
+        $link = function_exists('base_url') ? rtrim(base_url(), '/') . '/' : '/';
+        $icon = function_exists('base_url') ? base_url('assets/img/nb-placeholder-property.svg') : '';
+        $web_notification = $notification;
+        if ($icon !== '') {
+            $web_notification['icon'] = $icon;
+        }
+        return array(
+            'notification' => $notification,
+            'data' => $string_data,
+            'android' => array(
+                'priority' => 'HIGH',
+                'notification' => array('click_action' => 'FLUTTER_NOTIFICATION_CLICK'),
+            ),
+            'apns' => array(
+                'payload' => array('aps' => array(
+                    'sound' => 'default',
+                    'badge' => 1,
+                    'category' => 'FLUTTER_NOTIFICATION_CLICK',
+                )),
+            ),
+            'webpush' => array(
+                'headers' => array('TTL' => '86400', 'Urgency' => 'high'),
+                'notification' => $web_notification,
+                'fcm_options' => array('link' => $link),
+            ),
+        );
+    }
 
-        $payload = [
-            'message' => [
-                'token'        => $device_token,
-                'notification' => $notification,
-                'data'         => $string_data,
-                'android'      => [
-                    'notification' => ['click_action' => 'FLUTTER_NOTIFICATION_CLICK'],
-                ],
-                'apns' => [
-                    'payload' => ['aps' => ['category' => 'FLUTTER_NOTIFICATION_CLICK']],
-                ],
-            ],
-        ];
-
+    private function _post_message(array $message)
+    {
+        $access_token = $this->_get_access_token();
+        if (empty($access_token) || empty($this->_credentials['project_id'])) {
+            return json_encode(array(
+                'error' => 'Firebase: could not obtain access token. Paste the coimbatore-property service account JSON in Settings → Firebase.',
+            ));
+        }
         $url = 'https://fcm.googleapis.com/v1/projects/' . $this->_credentials['project_id'] . '/messages:send';
-
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
             'Authorization: Bearer ' . $access_token,
             'Content-Type: application/json',
-        ]);
+        ));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(array('message' => $message)));
         $result = curl_exec($ch);
+        $errno = curl_errno($ch);
         curl_close($ch);
-
+        if ($result === false || $errno) {
+            return json_encode(array('error' => 'Firebase HTTP error'));
+        }
         return $result;
     }
 }

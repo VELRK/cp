@@ -204,18 +204,26 @@ function nb_mail_send_template($key, $to, array $vars, $opts = array())
 {
     $CI =& get_instance();
     $CI->load->model('Nb_mail_model');
-    $tpl = $CI->Nb_mail_model->get_template($key);
-    if (!$tpl || empty($tpl['is_enabled'])) {
+    $rows = $CI->Nb_mail_model->templates_to_send($key);
+    if (empty($rows)) {
         return false;
     }
     if (!isset($vars['site_url'])) {
         $vars['site_url'] = nb_mail_site_url();
     }
-    $subject = nb_mail_apply_vars($tpl['subject'], $vars);
-    $heading = nb_mail_apply_vars($tpl['heading'], $vars);
-    $body = nb_mail_apply_vars($tpl['body'], $vars);
-    $html = nb_mail_wrap_html($heading, nb_mail_p($body));
-    return nb_send_mail($to, $subject, $html, $opts);
+    $any = false;
+    foreach ($rows as $tpl) {
+        $dest = $to;
+        if (!empty($tpl['to_email']) && filter_var($tpl['to_email'], FILTER_VALIDATE_EMAIL)) {
+            $dest = $tpl['to_email'];
+        }
+        $subject = nb_mail_apply_vars($tpl['subject'], $vars);
+        $heading = nb_mail_apply_vars($tpl['heading'], $vars);
+        $body = nb_mail_apply_vars($tpl['body'], $vars);
+        $html = nb_mail_wrap_html($heading, nb_mail_p($body));
+        $any = nb_send_mail($dest, $subject, $html, $opts) || $any;
+    }
+    return $any;
 }
 
 function nb_notify_enquiry($prop, $enquirer, $message, $phone, $email)

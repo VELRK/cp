@@ -6,7 +6,11 @@ assets/uploads/
 deploy.local.php
 application/config/database.php
 application/config/whatsapp.local.php
+application/config/firebase_service_account.json
 application/config/config.php
 application/cache/
 application/logs/
 node_modules/
+.well-known/
+cgi-bin/
+error_docs/

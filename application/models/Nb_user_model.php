@@ -238,6 +238,117 @@ class Nb_user_model extends CI_Model {
         return array_values(array_unique($out));
     }
 
+    /**
+     * FCM tokens for a notification audience (all / owner / agent / tenant / admin).
+     *
+     * @param string $audience
+     * @return string[]
+     */
+    public function get_fcm_tokens_for_audience($audience = 'all')
+    {
+        nb_ensure_fcm_tokens_table();
+        $audience = function_exists('nb_normalize_notification_audience')
+            ? nb_normalize_notification_audience($audience)
+            : 'all';
+        $tokens = array();
+
+        $apply_audience = function ($audience) {
+            if ($audience === 'all') {
+                return;
+            }
+            if ($audience === 'agent') {
+                $this->db->group_start();
+                if ($this->db->field_exists('user_type', $this->table)) {
+                    $this->db->where('user_type', 'agent');
+                }
+                $this->db->or_where('role', 'agent');
+                $this->db->group_end();
+                return;
+            }
+            if ($audience === 'owner') {
+                $this->db->where('role', 'owner');
+                if ($this->db->field_exists('user_type', $this->table)) {
+                    $this->db->group_start();
+                    $this->db->where('user_type !=', 'agent');
+                    $this->db->or_where('user_type IS NULL', null, false);
+                    $this->db->or_where('user_type', '');
+                    $this->db->or_where('user_type', 'customer');
+                    $this->db->group_end();
+                }
+                return;
+            }
+            if ($audience === 'tenant') {
+                $this->db->group_start();
+                $this->db->where('role', 'tenant');
+                if ($this->db->field_exists('user_type', $this->table)) {
+                    $this->db->or_where('user_type', 'customer');
+                }
+                $this->db->group_end();
+                return;
+            }
+            if ($audience === 'admin') {
+                $this->db->where('role', 'admin');
+            }
+        };
+
+        if ($this->db->field_exists('fcm_token', $this->table)) {
+            $this->db->distinct();
+            $this->db->select('fcm_token');
+            $this->db->where('fcm_token IS NOT NULL', null, false);
+            $this->db->where('fcm_token !=', '');
+            $apply_audience($audience);
+            foreach ($this->db->get($this->table)->result() as $row) {
+                $t = isset($row->fcm_token) ? trim((string) $row->fcm_token) : '';
+                if ($t !== '') {
+                    $tokens[] = $t;
+                }
+            }
+        }
+
+        if ($this->db->table_exists('nb_fcm_tokens')) {
+            $this->db->select('t.token');
+            $this->db->from('nb_fcm_tokens t');
+            $this->db->join($this->table . ' u', 'u.id = t.user_id', 'inner');
+            $this->db->where('t.token IS NOT NULL', null, false);
+            $this->db->where('t.token !=', '');
+            if ($audience === 'agent') {
+                $this->db->group_start();
+                if ($this->db->field_exists('user_type', $this->table)) {
+                    $this->db->where('u.user_type', 'agent');
+                }
+                $this->db->or_where('u.role', 'agent');
+                $this->db->group_end();
+            } elseif ($audience === 'owner') {
+                $this->db->where('u.role', 'owner');
+                if ($this->db->field_exists('user_type', $this->table)) {
+                    $this->db->group_start();
+                    $this->db->where('u.user_type !=', 'agent');
+                    $this->db->or_where('u.user_type IS NULL', null, false);
+                    $this->db->or_where('u.user_type', '');
+                    $this->db->or_where('u.user_type', 'customer');
+                    $this->db->group_end();
+                }
+            } elseif ($audience === 'tenant') {
+                $this->db->group_start();
+                $this->db->where('u.role', 'tenant');
+                if ($this->db->field_exists('user_type', $this->table)) {
+                    $this->db->or_where('u.user_type', 'customer');
+                }
+                $this->db->group_end();
+            } elseif ($audience === 'admin') {
+                $this->db->where('u.role', 'admin');
+            }
+            foreach ($this->db->get()->result() as $row) {
+                $t = isset($row->token) ? trim((string) $row->token) : '';
+                if ($t !== '') {
+                    $tokens[] = $t;
+                }
+            }
+        }
+
+        return array_values(array_unique($tokens));
+    }
+
     public function count_pending()
     {
         if ($this->db->field_exists('is_verified', $this->table)) {

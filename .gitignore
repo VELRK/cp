@@ -40,6 +40,7 @@ public/assets/
 
 # Static Next export — built in GitHub Actions, deployed via rsync (not committed)
 _next/
+/property/
 
 # --- Build & deploy artifacts ---
 deploy/release/

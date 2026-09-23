@@ -1108,6 +1108,7 @@ class Api_mobile extends CI_Controller {
         }
         if ($this->db->field_exists('map_url', 'nb_properties')) {
             $row['map_url'] = nb_parse_map_url_from_input($input);
+            nb_apply_map_url_coords($row);
         }
 
         $media_errors = $this->_apply_listing_media_uploads($row, $existing);

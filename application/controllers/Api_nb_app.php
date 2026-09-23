@@ -17,7 +17,7 @@ class Api_nb_app extends CI_Controller
         $this->load->database();
         $this->load->library('session');
         $this->load->library('form_validation');
-        $this->load->model(array('Nb_user_model', 'Nb_property_model', 'Nb_city_model', 'Nb_delete_request_model', 'User_model', 'Banner_model', 'Nb_property_type_model', 'Site_visit_model'));
+        $this->load->model(array('Nb_user_model', 'Nb_property_model', 'Nb_city_model', 'Nb_delete_request_model', 'User_model', 'Banner_model', 'Nb_property_type_model', 'Site_visit_model', 'Nb_firebase_model'));
         $this->output->set_content_type('application/json');
         nb_ensure_agent_kyc_columns();
         nb_ensure_kyc_history_table();
@@ -1542,6 +1542,14 @@ class Api_nb_app extends CI_Controller
         $update['updated_at'] = date('Y-m-d H:i:s');
         $this->Nb_user_model->update($id, $update);
 
+        if (isset($input['fcm_token'])) {
+            $fcm = trim((string) $input['fcm_token']);
+            if ($fcm !== '') {
+                $plat = isset($input['fcm_platform']) ? (string) $input['fcm_platform'] : (isset($input['platform']) ? (string) $input['platform'] : 'android');
+                nb_register_user_fcm_token($id, $fcm, $plat, $this->Nb_user_model->get_by_id($id));
+            }
+        }
+
         if ($kyc_action !== '') {
             nb_kyc_history_log($id, $kyc_action, $kyc_from_status, 'pending', '', $user, array(
                 'source' => $kyc_only ? 'agent_kyc' : 'update_profile',
@@ -1568,6 +1576,46 @@ class Api_nb_app extends CI_Controller
         $this->_json($payload);
     }
 
+    /**
+     * POST — register FCM device token (web / android / ios) and subscribe to role topics.
+     */
+    public function firebase_config()
+    {
+        if ($this->input->method() !== 'get') {
+            return $this->_json(array('success' => false, 'message' => 'GET only'), 405);
+        }
+        $this->Nb_firebase_model->ensure_tables();
+        $public = $this->Nb_firebase_model->get_public_config();
+        return $this->_json(array(
+            'success' => true,
+            'enabled' => !empty($public['enabled']),
+            'config' => $public['config'],
+            'vapidKey' => isset($public['vapidKey']) ? $public['vapidKey'] : '',
+        ));
+    }
+
+    public function fcm_token()
+    {
+        if ($this->input->method() !== 'post') {
+            return $this->_json(array('success' => false, 'message' => 'POST only'), 405);
+        }
+        $input = $this->_input_json_or_post();
+        $user = $this->_auth_user_from_request($input);
+        if (!$user) {
+            return $this->_json(array('success' => false, 'message' => 'Login required'), 401);
+        }
+        $token = trim((string) ($input['fcm_token'] ?? $input['token'] ?? ''));
+        if ($token === '') {
+            return $this->_json(array('success' => false, 'message' => 'fcm_token is required'), 400);
+        }
+        $platform = isset($input['platform']) ? (string) $input['platform'] : (isset($input['fcm_platform']) ? (string) $input['fcm_platform'] : 'web');
+        nb_register_user_fcm_token((int) $user->id, $token, $platform, $user);
+        return $this->_json(array(
+            'success' => true,
+            'message' => 'Notification token saved.',
+            'topics' => nb_user_fcm_topics($user),
+        ));
+    }
 
     private function _search_filters_from_request()
     {
@@ -2068,6 +2116,7 @@ class Api_nb_app extends CI_Controller
             'title' => isset($n->title) ? (string) $n->title : '',
             'description' => isset($n->description) && $n->description !== null ? (string) $n->description : '',
             'status' => isset($n->status) ? (string) $n->status : 'active',
+            'target_audience' => isset($n->target_audience) ? (string) $n->target_audience : 'all',
             'image' => $image_url,
             'image_url' => $image_url,
             'video' => $video_url,

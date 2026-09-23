@@ -209,7 +209,7 @@ function nb_housing_news_to_blog($row)
     );
 }
 
-/** Ensure asset URLs include /cp/ when the app is deployed under that folder. */
+/** Ensure asset URLs include /cp/ only when the app is actually served from that folder. */
 function nb_fix_cp_asset_url($url)
 {
     $url = trim((string) $url);
@@ -217,6 +217,10 @@ function nb_fix_cp_asset_url($url)
         return $url;
     }
     $url = nb_upgrade_http_image_url($url);
+    $prefix = nb_app_base_path();
+    if ($prefix !== '/cp') {
+        return $url;
+    }
     if (preg_match('#^https?://[^/]+/(uploads|assets)/#i', $url)
         && stripos($url, '/cp/uploads/') === false
         && stripos($url, '/cp/assets/') === false) {
@@ -242,6 +246,10 @@ function nb_property_url($p)
         $seg = $slug;
     } else {
         $seg = (string) (int) $p->id;
+    }
+    $next_dev = nb_next_dev_property_url($seg);
+    if ($next_dev !== '') {
+        return $next_dev;
     }
     return rtrim($CI->config->site_url('property/' . rawurlencode($seg)), '/') . '/';
 }
@@ -666,6 +674,7 @@ function nb_ensure_notifications_table()
             `image` VARCHAR(500) NULL,
             `video` VARCHAR(512) NULL,
             `status` ENUM('active','inactive') NOT NULL DEFAULT 'active',
+            `target_audience` VARCHAR(32) NOT NULL DEFAULT 'all',
             `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             `updated_at` DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (`id`),
@@ -676,6 +685,9 @@ function nb_ensure_notifications_table()
 
     if (!$CI->db->field_exists('video', 'notifications')) {
         $CI->db->query('ALTER TABLE `notifications` ADD COLUMN `video` VARCHAR(512) NULL AFTER `image`');
+    }
+    if (!$CI->db->field_exists('target_audience', 'notifications')) {
+        $CI->db->query("ALTER TABLE `notifications` ADD COLUMN `target_audience` VARCHAR(32) NOT NULL DEFAULT 'all' AFTER `status`");
     }
     if (!$CI->db->field_exists('updated_at', 'notifications')) {
         $CI->db->query('ALTER TABLE `notifications` ADD COLUMN `updated_at` DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP AFTER `created_at`');
@@ -991,15 +1003,55 @@ function nb_next_property_html_path($segment)
     if ($segment === '' || strpos($segment, '..') !== false || strpos($segment, '/') !== false) {
         return '';
     }
-    $specific = FCPATH . 'property' . DIRECTORY_SEPARATOR . $segment . DIRECTORY_SEPARATOR . 'index.html';
-    if (is_file($specific)) {
-        return $specific;
+    $bases = array(
+        rtrim(FCPATH, '/\\'),
+        rtrim(FCPATH, '/\\') . DIRECTORY_SEPARATOR . 'out',
+        rtrim(FCPATH, '/\\') . DIRECTORY_SEPARATOR . 'out' . DIRECTORY_SEPARATOR . 'cp',
+        rtrim(FCPATH, '/\\') . DIRECTORY_SEPARATOR . 'deploy' . DIRECTORY_SEPARATOR . 'release',
+    );
+    foreach ($bases as $base) {
+        $specific = $base . DIRECTORY_SEPARATOR . 'property' . DIRECTORY_SEPARATOR . $segment . DIRECTORY_SEPARATOR . 'index.html';
+        if (is_file($specific)) {
+            return $specific;
+        }
     }
-    $placeholder = FCPATH . 'property' . DIRECTORY_SEPARATOR . '__build_placeholder__' . DIRECTORY_SEPARATOR . 'index.html';
-    if (is_file($placeholder)) {
-        return $placeholder;
+    foreach ($bases as $base) {
+        $placeholder = $base . DIRECTORY_SEPARATOR . 'property' . DIRECTORY_SEPARATOR . '__build_placeholder__' . DIRECTORY_SEPARATOR . 'index.html';
+        if (is_file($placeholder)) {
+            return $placeholder;
+        }
     }
     return '';
+}
+
+/**
+ * Local Next.js property URL (npm run dev on :3000). Empty on production.
+ *
+ * @param string $segment
+ * @return string
+ */
+function nb_next_dev_property_url($segment)
+{
+    $segment = trim((string) $segment, '/');
+    if ($segment === '') {
+        return '';
+    }
+    $host = '';
+    if (!empty($_SERVER['HTTP_X_FORWARDED_HOST'])) {
+        $host = strtolower((string) $_SERVER['HTTP_X_FORWARDED_HOST']);
+    } elseif (!empty($_SERVER['HTTP_HOST'])) {
+        $host = strtolower((string) $_SERVER['HTTP_HOST']);
+    }
+    if ($host === '') {
+        return '';
+    }
+    if (strpos($host, 'localhost') === false && strpos($host, '127.0.0.1') === false) {
+        return '';
+    }
+    if (preg_match('/:(3000|3001)\b/', $host)) {
+        return '';
+    }
+    return 'http://localhost:3000/property/' . rawurlencode($segment);
 }
 
 /**
@@ -1174,13 +1226,21 @@ function nb_ensure_property_map_columns()
         return;
     }
     if (!$CI->db->field_exists('location', 'nb_properties')) {
-        $CI->db->query('ALTER TABLE `nb_properties` ADD COLUMN `location` VARCHAR(500) NULL AFTER `locality`');
+        $CI->db->query('ALTER TABLE `nb_properties` ADD COLUMN `location` TEXT NULL AFTER `locality`');
     }
     if (!$CI->db->field_exists('location_image', 'nb_properties')) {
         $CI->db->query('ALTER TABLE `nb_properties` ADD COLUMN `location_image` VARCHAR(512) NULL AFTER `location`');
     }
     if (!$CI->db->field_exists('map_url', 'nb_properties')) {
-        $CI->db->query('ALTER TABLE `nb_properties` ADD COLUMN `map_url` VARCHAR(500) NULL AFTER `location_image`');
+        $CI->db->query('ALTER TABLE `nb_properties` ADD COLUMN `map_url` TEXT NULL AFTER `location_image`');
+    }
+    foreach ($CI->db->field_data('nb_properties') as $f) {
+        if ($f->name === 'map_url' && stripos((string) $f->type, 'text') === false && stripos((string) $f->type, 'blob') === false) {
+            $CI->db->query('ALTER TABLE `nb_properties` MODIFY COLUMN `map_url` TEXT NULL');
+        }
+        if ($f->name === 'location' && stripos((string) $f->type, 'text') === false && stripos((string) $f->type, 'blob') === false) {
+            $CI->db->query('ALTER TABLE `nb_properties` MODIFY COLUMN `location` TEXT NULL');
+        }
     }
 }
 
@@ -1192,7 +1252,86 @@ function nb_is_http_url($value)
 }
 
 /**
- * Parse Google Maps / map link from save payload (map_url, mapUrl, or location when URL).
+ * Pull a usable maps URL from a pasted share link, embed iframe, or lat,lng pair.
+ *
+ * @param mixed $value
+ * @return string
+ */
+function nb_normalize_map_input($value)
+{
+    $value = trim(html_entity_decode((string) $value, ENT_QUOTES, 'UTF-8'));
+    $value = trim($value, " \t\n\r\0\x0B\"'");
+    if ($value === '') {
+        return '';
+    }
+    if (preg_match('/<iframe\b[^>]*\bsrc\s*=\s*["\']([^"\']+)["\']/i', $value, $m)) {
+        $value = trim(html_entity_decode($m[1], ENT_QUOTES, 'UTF-8'));
+    }
+    $value = trim($value);
+    if (strpos($value, '//') === 0 && preg_match('#^//(www\.)?(google\.|maps\.)#i', $value)) {
+        $value = 'https:' . $value;
+    }
+    if (preg_match('/^(-?\d{1,3}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)$/', $value, $m)) {
+        $lat = (float) $m[1];
+        $lng = (float) $m[2];
+        if ($lat >= -90 && $lat <= 90 && $lng >= -180 && $lng <= 180) {
+            return 'https://www.google.com/maps?q=' . $lat . ',' . $lng;
+        }
+    }
+    if (!preg_match('#^https?://#i', $value) && preg_match('#^(www\.)?(google\.[^/\s]+/maps|maps\.google\.|maps\.app\.goo\.gl|goo\.gl/maps)#i', $value)) {
+        $value = 'https://' . ltrim($value);
+    }
+    return $value;
+}
+
+/**
+ * @param string $url
+ * @return array{0:float,1:float}|null
+ */
+function nb_latlng_from_map_url($url)
+{
+    $url = (string) $url;
+    $patterns = array(
+        '/@(-?\d+\.\d+),(-?\d+\.\d+)/',
+        '/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/',
+        '/[?&](?:q|query|ll|center)=(-?\d+\.\d+),(-?\d+\.\d+)/i',
+    );
+    foreach ($patterns as $p) {
+        if (preg_match($p, $url, $m)) {
+            $lat = (float) $m[1];
+            $lng = (float) $m[2];
+            if ($lat >= -90 && $lat <= 90 && $lng >= -180 && $lng <= 180) {
+                return array($lat, $lng);
+            }
+        }
+    }
+    return null;
+}
+
+/**
+ * Fill latitude/longitude from a stored map URL when the client did not send coords.
+ *
+ * @param array $row
+ */
+function nb_apply_map_url_coords(array &$row)
+{
+    if (empty($row['map_url'])) {
+        return;
+    }
+    $coords = nb_latlng_from_map_url($row['map_url']);
+    if (!$coords) {
+        return;
+    }
+    if (!isset($row['latitude']) || $row['latitude'] === null || $row['latitude'] === '') {
+        $row['latitude'] = $coords[0];
+    }
+    if (!isset($row['longitude']) || $row['longitude'] === null || $row['longitude'] === '') {
+        $row['longitude'] = $coords[1];
+    }
+}
+
+/**
+ * Parse Google Maps / map link from save payload (map_url, mapUrl, location_url, or location when URL/iframe).
  *
  * @param array $input
  * @return string|null
@@ -1205,18 +1344,20 @@ function nb_parse_map_url_from_input($input)
     $candidates = array(
         $input['map_url'] ?? null,
         $input['mapUrl'] ?? null,
+        $input['location_url'] ?? null,
+        $input['locationUrl'] ?? null,
     );
-    $location = trim((string) ($input['location'] ?? ''));
+    $location = nb_normalize_map_input($input['location'] ?? '');
     if ($location !== '' && nb_is_http_url($location)) {
         $candidates[] = $location;
     }
     foreach ($candidates as $candidate) {
-        $url = trim((string) $candidate);
+        $url = nb_normalize_map_input($candidate);
         if ($url === '') {
             continue;
         }
         if (filter_var($url, FILTER_VALIDATE_URL) || nb_is_http_url($url)) {
-            return substr($url, 0, 500);
+            return $url;
         }
     }
     return null;
@@ -1230,18 +1371,19 @@ function nb_parse_map_url_from_input($input)
  */
 function nb_sanitize_location_field($value)
 {
-    $value = trim((string) $value);
-    if ($value === '') {
+    $normalized = nb_normalize_map_input($value);
+    if ($normalized === '') {
         return '';
     }
-    if (nb_is_http_url($value)) {
-        return substr($value, 0, 500);
+    if (nb_is_http_url($normalized)) {
+        return $normalized;
     }
+    $plain = trim((string) $value);
     $CI =& get_instance();
     if (isset($CI->security)) {
-        return $CI->security->xss_clean($value);
+        return $CI->security->xss_clean($plain);
     }
-    return $value;
+    return $plain;
 }
 
 /** Normalize a 10-digit Indian mobile number from user input. */
@@ -1373,6 +1515,8 @@ function nb_send_fcm_notification($notification_id, array $data)
 {
     $CI =& get_instance();
     $CI->load->library('firebase');
+    $CI->load->model('Nb_user_model');
+    nb_ensure_fcm_tokens_table();
 
     $image_url = !empty($data['image']) ? base_url($data['image']) : null;
     $video_url = null;
@@ -1384,17 +1528,190 @@ function nb_send_fcm_notification($notification_id, array $data)
     }
 
     $body = isset($data['description']) ? (string) $data['description'] : '';
+    $title = (string) ($data['title'] ?? '');
+    $audience = nb_normalize_notification_audience(isset($data['target_audience']) ? $data['target_audience'] : 'all');
     $fcm_data = array(
         'type' => 'notification',
         'notification_id' => (string) (int) $notification_id,
+        'audience' => $audience,
     );
 
-    return $CI->firebase->send_notification(
-        (string) ($data['title'] ?? ''),
-        $body,
-        $image_url,
-        $fcm_data,
-        'all_users',
-        $video_url
+    $topics = nb_fcm_topics_for_audience($audience);
+    $topic_ok = 0;
+    $topic_errors = array();
+    foreach ($topics as $topic) {
+        $raw = $CI->firebase->send_notification($title, $body, $image_url, $fcm_data, $topic, $video_url);
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded) && !empty($decoded['name'])) {
+            $topic_ok++;
+        } else {
+            $msg = 'topic send failed';
+            if (is_array($decoded) && isset($decoded['error']['message'])) {
+                $msg = (string) $decoded['error']['message'];
+            } elseif (is_array($decoded) && isset($decoded['error']) && is_string($decoded['error'])) {
+                $msg = $decoded['error'];
+            }
+            $topic_errors[] = $topic . ': ' . $msg;
+        }
+    }
+
+    $tokens = $CI->Nb_user_model->get_fcm_tokens_for_audience($audience);
+    $token_result = $CI->firebase->send_to_tokens($tokens, $title, $body, $image_url, $fcm_data, $video_url);
+
+    $parts = array();
+    if ($topic_ok > 0) {
+        $parts[] = 'topic ' . implode(', ', $topics);
+    }
+    if (!empty($token_result['sent'])) {
+        $parts[] = (int) $token_result['sent'] . ' device' . ((int) $token_result['sent'] === 1 ? '' : 's');
+    }
+    $ok = $topic_ok > 0 || !empty($token_result['sent']);
+    $summary = $ok
+        ? 'Push sent to ' . implode(' and ', $parts) . '.'
+        : 'Push was not delivered. Save the Firebase service account JSON in Settings → Firebase, and make sure users have allowed notifications.';
+    $errors = array_merge($topic_errors, isset($token_result['errors']) ? $token_result['errors'] : array());
+    if (!$ok && !empty($errors)) {
+        $summary .= ' ' . $errors[0];
+    }
+    $project = $CI->firebase->project_id();
+    if ($project !== '' && $project !== 'coimbatore-property') {
+        $summary .= ' Warning: server credentials are for project "' . $project . '", not coimbatore-property.';
+    }
+    return $summary;
+}
+
+function nb_notification_audience_options()
+{
+    return array(
+        'all' => 'All users (owners, agents, tenants, admins)',
+        'owner' => 'Owners',
+        'agent' => 'Agents',
+        'tenant' => 'Tenants / customers',
+        'admin' => 'Admins',
     );
+}
+
+function nb_normalize_notification_audience($audience)
+{
+    $audience = strtolower(trim((string) $audience));
+    if ($audience === 'customer' || $audience === 'renter') {
+        $audience = 'tenant';
+    }
+    $opts = nb_notification_audience_options();
+    return isset($opts[$audience]) ? $audience : 'all';
+}
+
+function nb_fcm_topics_for_audience($audience)
+{
+    $audience = nb_normalize_notification_audience($audience);
+    if ($audience === 'all') {
+        return array('all_users');
+    }
+    return array('role_' . $audience);
+}
+
+function nb_user_fcm_topics($user)
+{
+    $topics = array('all_users');
+    if (!$user) {
+        return $topics;
+    }
+    $row = is_array($user) ? $user : (array) $user;
+    $role = strtolower(trim(isset($row['role']) ? (string) $row['role'] : ''));
+    $user_type = strtolower(trim(isset($row['user_type']) ? (string) $row['user_type'] : ''));
+    if ($role === 'admin') {
+        $topics[] = 'role_admin';
+    } elseif ($user_type === 'agent' || $role === 'agent') {
+        $topics[] = 'role_agent';
+        $topics[] = 'role_owner';
+    } elseif ($role === 'tenant' || $user_type === 'customer') {
+        $topics[] = 'role_tenant';
+    } else {
+        $topics[] = 'role_owner';
+    }
+    return array_values(array_unique($topics));
+}
+
+function nb_ensure_fcm_tokens_table()
+{
+    $CI =& get_instance();
+    if (!isset($CI->db) || !$CI->db) {
+        return;
+    }
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+    if (!$CI->db->table_exists('nb_users')) {
+        return;
+    }
+    if (!$CI->db->field_exists('fcm_token', 'nb_users')) {
+        $CI->db->query('ALTER TABLE `nb_users` ADD COLUMN `fcm_token` VARCHAR(512) NULL');
+    }
+    if (!$CI->db->table_exists('nb_fcm_tokens')) {
+        $CI->db->query(
+            "CREATE TABLE `nb_fcm_tokens` (
+                `id` INT(11) NOT NULL AUTO_INCREMENT,
+                `user_id` INT(11) NOT NULL,
+                `token` VARCHAR(512) NOT NULL,
+                `platform` VARCHAR(16) NOT NULL DEFAULT 'web',
+                `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `uniq_nb_fcm_token` (`token`(191)),
+                KEY `idx_nb_fcm_user` (`user_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci"
+        );
+    }
+}
+
+/**
+ * Save a device token and subscribe it to all_users + the user's role topic.
+ *
+ * @param int    $user_id
+ * @param string $token
+ * @param string $platform web|android|ios
+ * @param object|array|null $user
+ * @return bool
+ */
+function nb_register_user_fcm_token($user_id, $token, $platform = 'web', $user = null)
+{
+    $user_id = (int) $user_id;
+    $token = trim((string) $token);
+    $platform = strtolower(trim((string) $platform));
+    if (!in_array($platform, array('web', 'android', 'ios'), true)) {
+        $platform = 'web';
+    }
+    if ($user_id < 1 || $token === '') {
+        return false;
+    }
+    $CI =& get_instance();
+    $CI->load->database();
+    $CI->load->model('Nb_user_model');
+    nb_ensure_fcm_tokens_table();
+    if (!$user) {
+        $user = $CI->Nb_user_model->get_by_id($user_id);
+    }
+    if ($CI->db->field_exists('fcm_token', 'nb_users')) {
+        $CI->db->where('id', $user_id)->update('nb_users', array('fcm_token' => $token));
+    }
+    if ($CI->db->table_exists('nb_fcm_tokens')) {
+        $exists = $CI->db->get_where('nb_fcm_tokens', array('token' => $token))->row();
+        $row = array(
+            'user_id' => $user_id,
+            'token' => $token,
+            'platform' => $platform,
+            'updated_at' => date('Y-m-d H:i:s'),
+        );
+        if ($exists) {
+            $CI->db->where('id', (int) $exists->id)->update('nb_fcm_tokens', $row);
+        } else {
+            $CI->db->insert('nb_fcm_tokens', $row);
+        }
+    }
+    $CI->load->library('firebase');
+    foreach (nb_user_fcm_topics($user) as $topic) {
+        $CI->firebase->subscribe_tokens_to_topic(array($token), $topic);
+    }
+    return true;
 }

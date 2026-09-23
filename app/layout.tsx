@@ -4,6 +4,7 @@ import { AuthProvider } from '@/components/AuthContext';
 import Navbar from '@/components/common/Navbar';
 import Footer from '@/components/common/Footer';
 import AuthModals from '@/components/common/AuthModals';
+import FirebasePushRegister from '@/components/common/FirebasePushRegister';
 
 export const metadata: Metadata = {
   title: 'Coimbatore Properties | Buy & Sale without Brokerage',
@@ -29,6 +30,7 @@ export default function RootLayout({
       </head>
       <body className="nb-body pt-5" suppressHydrationWarning>
         <AuthProvider>
+          <FirebasePushRegister />
           <Navbar />
           <main className="nb-main flex-grow-1" id="nbMain">
             {children}

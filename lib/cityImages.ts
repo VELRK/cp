@@ -1,4 +1,6 @@
 /** Fallback skyline/landmark images for Explore Cities cards. */
+import { getAppBasePath } from './appBasePath';
+
 export const CITY_FALLBACK_IMAGES: Record<string, string> = {
   chennai: 'https://images.unsplash.com/photo-1587474265874-48c15c4c86af?auto=format&fit=crop&w=400&q=80',
   coimbatore: 'https://images.unsplash.com/photo-1597852074813-d004b0f79d47?auto=format&fit=crop&w=400&q=80',
@@ -29,9 +31,7 @@ export function isValidCityImage(image?: string | null): boolean {
   return value.includes('assets/') || value.includes('uploads/') || value.includes('/');
 }
 
-const APP_BASE_PATH = '/cp';
-
-/** Next dev (:3000) rewrites /uploads and /assets to PHP; production static site needs /cp prefix. */
+/** Next dev (:3000) rewrites /uploads and /assets to PHP; production at domain root uses bare paths. */
 function usesDevAssetProxy(): boolean {
   return process.env.NODE_ENV === 'development';
 }
@@ -40,7 +40,6 @@ function usesDevAssetProxy(): boolean {
 function normalizeAssetPath(pathname: string): string {
   let path = pathname.startsWith('/') ? pathname : `/${pathname}`;
 
-  // Accept /cp/uploads/... or /uploads/... from API — use bare /assets|/uploads segment
   const underCp = path.match(/^\/cp(\/(?:assets|uploads)\/.+)$/i);
   if (underCp) {
     path = underCp[1];
@@ -50,7 +49,8 @@ function normalizeAssetPath(pathname: string): string {
     if (usesDevAssetProxy()) {
       return path;
     }
-    return `${APP_BASE_PATH}${path}`;
+    const prefix = getAppBasePath();
+    return prefix ? `${prefix}${path}` : path;
   }
 
   return path;

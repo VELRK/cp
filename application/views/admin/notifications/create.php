@@ -56,6 +56,17 @@
                 </script>
 
                 <div class="mb-3">
+                    <label class="form-label">Send to *</label>
+                    <?php $audiences = nb_notification_audience_options(); ?>
+                    <select class="form-control" name="target_audience">
+                        <?php foreach ($audiences as $akey => $alabel) : ?>
+                            <option value="<?php echo html_escape($akey); ?>" <?php echo $akey === 'all' ? 'selected' : ''; ?>><?php echo html_escape($alabel); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <small class="text-muted">Firebase push goes to that audience: FCM topic plus every saved web/app device token.</small>
+                </div>
+
+                <div class="mb-3">
                     <label class="form-label">Status</label>
                     <select class="form-control" name="status">
                         <option value="active" selected>Active</option>
@@ -64,12 +75,16 @@
                 </div>
 
                 <p class="small text-muted mb-3">
-                    Saving sends a Firebase push to topic <code>all_users</code>. Ensure the mobile app calls <code>subscribeToTopic(&quot;all_users&quot;)</code> so every user receives it.
+                    Saving sends a Firebase Cloud Messaging push to the selected user type
+                    (topic <code>all_users</code> or <code>role_*</code>, and registered device tokens).
+                    Configure keys in <a href="<?php echo site_url('panel/settings/firebase'); ?>">Settings → Firebase</a>.
+                    Web users must allow notifications once after login. The app should POST
+                    <code>fcm_token</code> to <code>/api/nb/fcm-token</code> (or update-profile).
                 </p>
 
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-paper-plane me-2"></i>Send to all users
+                        <i class="fas fa-paper-plane me-2"></i>Send notification
                     </button>
                     <a href="<?php echo $is_panel_notifications ? site_url('panel/notifications') : site_url('admin/notifications'); ?>" class="btn btn-secondary">
                         <i class="fas fa-times me-2"></i>Cancel

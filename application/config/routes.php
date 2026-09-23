@@ -473,7 +473,11 @@ $route['panel/api-collection'] = 'broker_admin/api_collection';
 $route['panel/api-tester'] = 'broker_admin/api_collection';
 $route['panel/settings'] = 'broker_admin/settings';
 $route['panel/settings/mail'] = 'broker_admin/settings';
+$route['panel/settings/firebase'] = 'broker_admin/settings_firebase';
 $route['panel/settings/templates'] = 'broker_admin/settings_templates';
+$route['panel/settings/templates/create'] = 'broker_admin/settings_template_create';
+$route['panel/settings/templates/edit/(:any)'] = 'broker_admin/settings_template_edit/$1';
+$route['panel/settings/templates/delete/(:any)'] = 'broker_admin/settings_template_delete/$1';
 $route['panel/delete-requests'] = 'broker_admin/delete_requests';
 $route['panel/delete-request/status/(:num)'] = 'broker_admin/delete_request_update_status/$1';
 $route['panel/notifications'] = 'broker_admin/notifications';
@@ -505,6 +509,10 @@ $route['api/property/save'] = 'nb_property_form/save';
 
 // NoBroker JSON API (Bearer token; base path api/nb/) — used by Next.js frontend
 $route['api/nb/update-profile'] = 'api_nb_app/update_profile';
+$route['api/nb/firebase-config'] = 'api_nb_app/firebase_config';
+$route['api/mobile/firebase-config'] = 'api_nb_app/firebase_config';
+$route['api/nb/fcm-token'] = 'api_nb_app/fcm_token';
+$route['api/mobile/fcm-token'] = 'api_nb_app/fcm_token';
 $route['api/nb/agent-kyc'] = 'api_nb_app/agent_kyc';
 $route['api/nb/agent_kyc'] = 'api_nb_app/agent_kyc';
 $route['api/nb/kyc-history'] = 'api_nb_app/kyc_history';

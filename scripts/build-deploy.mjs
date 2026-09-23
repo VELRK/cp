@@ -4,7 +4,7 @@
  *
  * Usage:
  *   node scripts/build-deploy.mjs
- *   BACKEND_URL=https://your-site.com/cp node scripts/build-deploy.mjs --git
+ *   BACKEND_URL=https://coimbatoreproperties.org node scripts/build-deploy.mjs --git
  *
  * Output: deploy/release/ (local preview)
  * With --git: copies out/ + production .htaccess to repo root (legacy — CI build preferred)
@@ -21,7 +21,16 @@ const releaseDir = path.join(root, 'deploy', 'release');
 const stashDir = path.join(root, '.deploy-stash');
 const apiDir = path.join(root, 'app', 'api');
 
-const backendUrl = (process.env.BACKEND_URL || 'http://127.0.0.1:8080/cp').replace(/\/$/, '');
+const backendUrl = (process.env.BACKEND_URL || 'https://coimbatoreproperties.org').replace(/\/$/, '');
+
+function urlPathPrefix(url) {
+  try {
+    const p = new URL(url).pathname.replace(/\/$/, '');
+    return p === '/' ? '' : p;
+  } catch {
+    return '';
+  }
+}
 
 function log(msg) {
   console.log(`[build-deploy] ${msg}`);
@@ -46,7 +55,10 @@ async function fetchJson(url) {
 }
 
 async function loadBuildParams() {
-  const search = await fetchJson(`${backendUrl}/index.php/api/nb/search?limit=500`);
+  let search = await fetchJson(`${backendUrl}/index.php/api/nb/search?limit=500`);
+  if (!search) {
+    search = await fetchJson('https://superfinelabels.in/cp/index.php/api/nb/search?limit=500');
+  }
   const slugs = Array.isArray(search?.items)
     ? search.items.map((i) => i.slug).filter(Boolean)
     : [];
@@ -69,6 +81,7 @@ async function loadBuildParams() {
     BUILD_BLOG_IDS: blogIds.join(','),
     STATIC_EXPORT: '1',
     NEXT_PUBLIC_BACKEND_URL: backendUrl,
+    NEXT_PUBLIC_APP_BASE_PATH: urlPathPrefix(backendUrl),
   };
 }
 

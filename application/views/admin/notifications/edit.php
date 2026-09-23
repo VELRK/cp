@@ -69,6 +69,19 @@
                 </script>
 
                 <div class="mb-3">
+                    <label class="form-label">Send to</label>
+                    <?php
+                      $audiences = nb_notification_audience_options();
+                      $cur_aud = isset($notification->target_audience) ? (string) $notification->target_audience : 'all';
+                    ?>
+                    <select class="form-control" name="target_audience">
+                        <?php foreach ($audiences as $akey => $alabel) : ?>
+                            <option value="<?php echo html_escape($akey); ?>" <?php echo $cur_aud === $akey ? 'selected' : ''; ?>><?php echo html_escape($alabel); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div class="mb-3">
                     <label class="form-label">Status</label>
                     <select class="form-control" name="status">
                         <option value="active" <?php echo $notification->status == 'active' ? 'selected' : ''; ?>>Active</option>

@@ -84,7 +84,7 @@ if ($_proxy_host !== '') {
     $config['base_url'] = $protocol . $_proxy_host . '/';
 }
 
-// Production subfolder (public_html/cp): keep site_url() / panel links under /cp even when .env BASE_URL omits it.
+// Local XAMPP subfolder (htdocs/cp): keep site_url() / panel links under /cp even when .env BASE_URL omits it.
 if ($_proxy_host === '' && isset($_SERVER['SCRIPT_NAME'])) {
     $_sn_dir = str_replace('\\', '/', dirname((string) $_SERVER['SCRIPT_NAME']));
     if (preg_match('#(/cp)/?$#', $_sn_dir, $_cp_m)) {

@@ -1,7 +1,7 @@
 <?php
 /**
  * GitHub Actions deploy webhook
- * Called by CI: GET /cp/hook.php?token=SECRET
+ * Called by CI: GET /hook.php?token=SECRET (domain root) or /cp/hook.php locally.
  *
  * Requires this folder to be a git repo (Hostinger hPanel → GIT → connect GitHub).
  * Config: deploy.local.php (gitignored, upload manually to server).
@@ -92,12 +92,12 @@ if (!is_dir($target . '/.git')) {
         'success' => false,
         'error'   => 'not_git_repo',
         'target'  => $target,
-        'hint'    => 'Hostinger hPanel → GIT → connect your GitHub repo to this folder (public_html/cp)',
+        'hint'    => 'Hostinger hPanel → GIT → connect your GitHub repo to this folder (public_html)',
         'steps'   => [
             'Open Hostinger → GIT',
             'Add repository with your GitHub repo URL',
             'Branch: main',
-            'Install/deploy path: public_html/cp',
+            'Install/deploy path: public_html',
             'If folder has old FTP files, back them up first then let GIT clone fresh',
         ],
     ]);

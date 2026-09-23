@@ -269,6 +269,19 @@ $nearbyCategoryOptions = array(
       <textarea name="location" class="form-control<?php echo $is_admin ? ' nb-admin-input' : ''; ?>" rows="2"><?php echo $r ? html_escape($r->location) : ''; ?></textarea>
     </div>
     <div class="mb-3">
+      <label class="form-label">Google Maps location link</label>
+      <textarea name="map_url" class="form-control<?php echo $is_admin ? ' nb-admin-input' : ''; ?>" rows="2" placeholder="Paste Google Maps share link, embed iframe, or lat,lng"><?php
+        $saved_map = '';
+        if ($r && !empty($r->map_url)) {
+            $saved_map = (string) $r->map_url;
+        } elseif ($r && !empty($r->location) && preg_match('#^https?://#i', trim((string) $r->location))) {
+            $saved_map = (string) $r->location;
+        }
+        echo html_escape($saved_map);
+      ?></textarea>
+      <small class="text-muted">Open Google Maps → Share → copy the link. Short links and embed HTML are saved in full.</small>
+    </div>
+    <div class="mb-3">
       <label class="form-label">Location Image</label>
       <?php if ($r && !empty($r->location_image)) : ?>
         <div class="mb-2">

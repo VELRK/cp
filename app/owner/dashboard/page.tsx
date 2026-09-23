@@ -277,14 +277,6 @@ export default function OwnerDashboard() {
                 </Link>
 
                 <Link
-                  href="/owner/site-visits"
-                  className="btn btn-sm classic-action-pill d-inline-flex align-items-center gap-1.5"
-                >
-                  <CalendarCheck size={15} />
-                  <span>Site Visits</span>
-                </Link>
-
-                <Link
                   href="/search"
                   className="btn btn-sm classic-action-pill d-inline-flex align-items-center gap-1.5"
                 >
@@ -446,22 +438,6 @@ export default function OwnerDashboard() {
                         <div>
                           <div className="fw-semibold text-dark small">Manage Listings</div>
                           <div className="text-muted" style={{ fontSize: '0.75rem' }}>Edit photos, prices, & amenities</div>
-                        </div>
-                      </div>
-                      <ChevronRight size={16} className="text-muted" />
-                    </Link>
-
-                    <Link
-                      href="/owner/site-visits"
-                      className="classic-shortcut-item p-3 rounded-3 d-flex align-items-center justify-content-between text-decoration-none"
-                    >
-                      <div className="d-flex align-items-center gap-3">
-                        <div className="classic-icon-box-sm bg-info-subtle text-info">
-                          <CalendarCheck size={16} />
-                        </div>
-                        <div>
-                          <div className="fw-semibold text-dark small">Site Visits</div>
-                          <div className="text-muted" style={{ fontSize: '0.75rem' }}>Track scheduled buyer walk-ins</div>
                         </div>
                       </div>
                       <ChevronRight size={16} className="text-muted" />

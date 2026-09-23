@@ -90,10 +90,6 @@ export default function OwnerListingsPage() {
                 <ArrowLeft size={14} />
                 <span>Back to Dashboard</span>
               </Link>
-              <Link href="/owner/site-visits" className="btn btn-sm btn-outline-secondary rounded-pill d-inline-flex align-items-center gap-1">
-                <CalendarCheck size={14} />
-                <span>Site Visits</span>
-              </Link>
             </div>
 
             {/* Header Section */}

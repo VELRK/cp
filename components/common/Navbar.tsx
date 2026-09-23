@@ -215,7 +215,7 @@ const Navbar: React.FC = () => {
                       <li>
                         <Link href="/owner/dashboard" className="dropdown-item py-2">
                           <LayoutGrid size={16} className="text-muted" />
-                          <span>Owner Dashboard</span>
+                          <span>Dashboard</span>
                         </Link>
                       </li>
                     )}

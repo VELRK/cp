@@ -163,7 +163,7 @@ const BestRatedProperties: React.FC<BestRatedPropertiesProps> = ({
                       </button>
                     </div>
 
-                    <div className="nb-classic-card-body p-3 bg-white">
+                    <div className="nb-classic-card-body p-3 bg-white d-flex flex-column h-100">
                       <div>
                         <h3 className="nb-classic-card-title text-truncate mb-1" title={p.title}>
                           <Link href={detailUrl} className="text-decoration-none text-dark fw-bold">
@@ -175,17 +175,17 @@ const BestRatedProperties: React.FC<BestRatedPropertiesProps> = ({
                           {p.locality ? `${p.locality}, ` : ''}{p.city_name || 'Coimbatore'}
                         </p>
 
-                        <div className="d-flex align-items-center gap-2 mb-2 pb-2 border-bottom">
+                        <div className="d-flex align-items-center gap-2 mb-3">
                           <span
                             className="badge rounded-pill d-inline-flex align-items-center gap-1"
                             style={{
-                              backgroundColor: '#ecfdf5',
-                              color: '#065f46',
+                              backgroundColor: '#fffbeb',
+                              color: '#b45309',
                               fontSize: '0.7rem',
                               padding: '3px 8px',
                             }}
                           >
-                            <Award size={11} /> Competitive Rate
+                            <Star size={11} fill="#f59e0b" color="#f59e0b" /> Best Rated
                           </span>
                           <span
                             className="badge rounded-pill"
@@ -201,25 +201,53 @@ const BestRatedProperties: React.FC<BestRatedPropertiesProps> = ({
                         </div>
                       </div>
 
-                      <div className="nb-classic-card-specs pt-1">
-                        {p.bedrooms ? (
-                          <div className="nb-classic-card-spec-item" title={`${p.bedrooms} Bedrooms`}>
-                            <Bed size={14} />
-                            <span>{p.bedrooms} BHK</span>
-                          </div>
-                        ) : null}
-                        {p.bathrooms ? (
-                          <div className="nb-classic-card-spec-item" title={`${p.bathrooms} Bathrooms`}>
-                            <Bath size={14} />
-                            <span>{p.bathrooms} Baths</span>
-                          </div>
-                        ) : null}
-                        {p.area_sqft ? (
-                          <div className="nb-classic-card-spec-item" title={`${p.area_sqft} sq ft`}>
-                            <Grid size={14} />
-                            <span>{Number(p.area_sqft).toLocaleString('en-IN')} sqft</span>
-                          </div>
-                        ) : null}
+                      <div className="pt-2 border-top mt-1">
+                        <div className="nb-classic-card-specs d-flex align-items-center justify-content-between py-1.5 px-2 rounded-2 mb-2" style={{ backgroundColor: '#f8fafc', border: '1px solid #f1f5f9' }}>
+                          {p.bedrooms ? (
+                            <div className="nb-classic-card-spec-item d-flex align-items-center gap-1" title={`${p.bedrooms} Bedrooms`}>
+                              <Bed size={13} className="text-primary opacity-75 flex-shrink-0" />
+                              <span className="fw-bold text-dark" style={{ fontSize: '0.75rem' }}>{p.bedrooms}</span>
+                              <span className="text-muted" style={{ fontSize: '0.7rem' }}>BHK</span>
+                            </div>
+                          ) : null}
+                          {p.bedrooms && (p.bathrooms || p.area_sqft) ? (
+                            <span className="text-muted opacity-25" style={{ fontSize: '0.7rem' }}>|</span>
+                          ) : null}
+                          {p.bathrooms ? (
+                            <div className="nb-classic-card-spec-item d-flex align-items-center gap-1" title={`${p.bathrooms} Bathrooms`}>
+                              <Bath size={13} className="text-primary opacity-75 flex-shrink-0" />
+                              <span className="fw-bold text-dark" style={{ fontSize: '0.75rem' }}>{p.bathrooms}</span>
+                              <span className="text-muted" style={{ fontSize: '0.7rem' }}>Baths</span>
+                            </div>
+                          ) : null}
+                          {p.bathrooms && p.area_sqft ? (
+                            <span className="text-muted opacity-25" style={{ fontSize: '0.7rem' }}>|</span>
+                          ) : null}
+                          {p.area_sqft ? (
+                            <div className="nb-classic-card-spec-item d-flex align-items-center gap-1" title={`${p.area_sqft} sq ft`}>
+                              <Grid size={13} className="text-primary opacity-75 flex-shrink-0" />
+                              <span className="fw-bold text-dark" style={{ fontSize: '0.75rem' }}>{Number(p.area_sqft).toLocaleString('en-IN')}</span>
+                              <span className="text-muted" style={{ fontSize: '0.7rem' }}>sqft</span>
+                            </div>
+                          ) : null}
+                          {!p.bedrooms && !p.bathrooms && !p.area_sqft && (
+                            <span className="text-muted small" style={{ fontSize: '0.72rem' }}>Prime Location</span>
+                          )}
+                        </div>
+
+                        <div className="d-flex align-items-center justify-content-between">
+                          <span className="text-muted" style={{ fontSize: '0.72rem' }}>
+                            Posted by <strong className="text-dark fw-semibold">Owner</strong>
+                          </span>
+                          <Link
+                            href={detailUrl}
+                            className="text-decoration-none fw-bold d-inline-flex align-items-center gap-1 text-primary"
+                            style={{ fontSize: '0.75rem' }}
+                          >
+                            <span>View Details</span>
+                            <ChevronRight size={13} />
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   </div>

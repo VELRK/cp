@@ -2275,6 +2275,31 @@ a.btn,
   opacity: 0.8;
 }
 
+.nb-classic-card-specs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1px solid var(--nb-card-border, #e2e8f0);
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+}
+
+.nb-classic-card-spec-item {
+  font-size: var(--nb-text-small, 12px);
+  color: var(--nb-secondary, #1e293b);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.nb-classic-card-spec-item svg {
+  color: var(--nb-primary, #0b2c56);
+  opacity: 0.85;
+}
+
 .nb-classic-card-footer {
   border-top: 1px dashed var(--nb-card-border);
   margin-top: 0.65rem;

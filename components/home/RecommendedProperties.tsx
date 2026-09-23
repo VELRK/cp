@@ -145,7 +145,14 @@ const RecommendedProperties: React.FC<RecommendedPropertiesProps> = ({
                           <span className="nb-classic-card-author">
                             Posted by <strong>Owner</strong>
                           </span>
-                          <span>Recently</span>
+                          <Link
+                            href={detailUrl}
+                            className="text-decoration-none fw-bold d-inline-flex align-items-center gap-1 text-primary"
+                            style={{ fontSize: '0.75rem' }}
+                          >
+                            <span>View Details</span>
+                            <ChevronRight size={13} />
+                          </Link>
                         </div>
                       </div>
                     </div>

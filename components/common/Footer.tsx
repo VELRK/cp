@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Home, Facebook, Twitter, Instagram, Linkedin, Mail } from 'lucide-react';
 import { getCities, getHomeUrl } from '@/lib/frontendApi';
+import { toFrontendAssetUrl } from '@/lib/cityImages';
 
 interface City {
   id: number;
@@ -32,8 +33,20 @@ const Footer: React.FC = () => {
         <div className="row g-4">
           <div className="col-lg-5">
             <div className="nb-footer-brand mb-3 d-flex align-items-center">
-              <Home className="me-2 text-warning" size={24} fill="var(--nb-accent)" />
-              <span className="fw-bold text-white fs-4">Coimbatore Properties</span>
+              <img
+                src={toFrontendAssetUrl("/assets/images/logo/cplogo.png")}
+                alt="Coimbatore Properties"
+                className="nb-logo-img me-2"
+                style={{ height: '42px', width: 'auto', objectFit: 'contain' }}
+              />
+              <div className="d-flex flex-column leading-tight">
+                <span className="fw-extrabold text-white" style={{ letterSpacing: '-0.02em', fontSize: '1.25rem', lineHeight: '1.15' }}>
+                  Coimbatore<span style={{ color: 'var(--nb-accent)' }}>Properties</span>
+                </span>
+                <span className="text-white-50 fw-semibold text-uppercase" style={{ fontSize: '0.62rem', letterSpacing: '0.1em' }}>
+                  REAL ESTATE PORTAL
+                </span>
+              </div>
             </div>
             <p className="small text-white-50 mb-4" style={{ lineHeight: '1.7' }}>
               Find rental homes, plots, and properties for sale in Coimbatore and neighboring regions. Owner-verified listings, zero brokerage.

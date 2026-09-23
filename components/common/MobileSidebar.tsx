@@ -37,9 +37,7 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
   const { user, loading, logout, setAuthModalOpen } = useAuth();
   
   // Collapsible sections state
-  const [buyersOpen, setBuyersOpen] = useState(false);
-  const [tenantsOpen, setTenantsOpen] = useState(false);
-  const [ownersOpen, setOwnersOpen] = useState(false);
+  const [propertiesOpen, setPropertiesOpen] = useState(true);
   const [insightsOpen, setInsightsOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
 
@@ -138,19 +136,23 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
           
           <div className="sidebar-menu-list">
             
-            {/* For Buyers */}
+            {/* Properties (Unified) */}
             <div className="menu-group">
               <button 
                 className="menu-group-header" 
-                onClick={() => setBuyersOpen(!buyersOpen)}
+                onClick={() => setPropertiesOpen(!propertiesOpen)}
               >
-                <span>For Buyers</span>
-                {buyersOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                <span>Explore Properties</span>
+                {propertiesOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
               </button>
-              <div className={`menu-group-items ${buyersOpen ? 'expanded' : ''}`}>
+              <div className={`menu-group-items ${propertiesOpen ? 'expanded' : ''}`}>
                 <Link href="/search" className="menu-item" onClick={handleLinkClick}>
                   <Search size={16} />
                   <span>Search Properties</span>
+                </Link>
+                <Link href="/owner/property/add" className="menu-item" onClick={handlePostPropertyClick}>
+                  <PlusCircle size={16} />
+                  <span>Post Property</span>
                 </Link>
                 {user && (
                   <>
@@ -158,79 +160,34 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({ isOpen, onClose }) => {
                       <Bookmark size={16} />
                       <span>My Wishlist</span>
                     </Link>
+                    
+                    {user.role === 'tenant' && user.status === 'approved' && (
+                      <Link href="/tenant/dashboard" className="menu-item" onClick={handleLinkClick}>
+                        <LayoutGrid size={16} />
+                        <span>Tenant Dashboard</span>
+                      </Link>
+                    )}
+                    
                     <Link href="/tenant/enquiries" className="menu-item" onClick={handleLinkClick}>
                       <MessageSquare size={16} />
                       <span>Sent Enquiries</span>
                     </Link>
-                    <Link href="/owner/listings" className="menu-item" onClick={handleLinkClick}>
-                      <Bookmark size={16} />
-                      <span>My Properties</span>
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
 
-            {/* For Tenants */}
-            <div className="menu-group">
-              <button 
-                className="menu-group-header" 
-                onClick={() => setTenantsOpen(!tenantsOpen)}
-              >
-                <span>For Tenants</span>
-                {tenantsOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-              </button>
-              <div className={`menu-group-items ${tenantsOpen ? 'expanded' : ''}`}>
-                {user && user.role === 'tenant' && user.status === 'approved' && (
-                  <Link href="/tenant/dashboard" className="menu-item" onClick={handleLinkClick}>
-                    <LayoutGrid size={16} />
-                    <span>Tenant Dashboard</span>
-                  </Link>
-                )}
-                <Link href="/search" className="menu-item" onClick={handleLinkClick}>
-                  <Search size={16} />
-                  <span>Search Properties</span>
-                </Link>
-                {user && (
-                  <Link href="/user/wishlist" className="menu-item" onClick={handleLinkClick}>
-                    <Bookmark size={16} />
-                    <span>Shortlisted Properties</span>
-                  </Link>
-                )}
-              </div>
-            </div>
-
-            {/* For Owners */}
-            <div className="menu-group">
-              <button 
-                className="menu-group-header" 
-                onClick={() => setOwnersOpen(!ownersOpen)}
-              >
-                <span>For Owners</span>
-                {ownersOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-              </button>
-              <div className={`menu-group-items ${ownersOpen ? 'expanded' : ''}`}>
-                <Link href="/owner/property/add" className="menu-item" onClick={handlePostPropertyClick}>
-                  <PlusCircle size={16} />
-                  <span>Post Property</span>
-                </Link>
-                {user && isOwnerLike(user.role) && user.status === 'approved' && (
-                  <>
-                    {(user.role === 'owner' || user.role === 'agent') && user.status === 'approved' && (
-                      <Link href="/owner/dashboard" className="menu-item" onClick={handleLinkClick}>
-                        <LayoutGrid size={16} />
-                        <span>Owner Dashboard</span>
-                      </Link>
-                    )}
-                    <Link href="/owner/listings" className="menu-item" onClick={handleLinkClick}>
-                      <Bookmark size={16} />
-                      <span>My Properties</span>
-                    </Link>
-                    {(user.role === 'owner' || user.role === 'agent') && user.status === 'approved' && (
-                      <Link href="/owner/enquiries" className="menu-item" onClick={handleLinkClick}>
-                        <MessageSquare size={16} />
-                        <span>Received Enquiries</span>
-                      </Link>
+                    {isOwnerLike(user.role) && user.status === 'approved' && (
+                      <>
+                        <Link href="/owner/dashboard" className="menu-item" onClick={handleLinkClick}>
+                          <LayoutGrid size={16} />
+                          <span>Dashboard</span>
+                        </Link>
+                        <Link href="/owner/listings" className="menu-item" onClick={handleLinkClick}>
+                          <Bookmark size={16} />
+                          <span>My Properties</span>
+                        </Link>
+                        <Link href="/owner/enquiries" className="menu-item" onClick={handleLinkClick}>
+                          <MessageSquare size={16} />
+                          <span>Received Enquiries</span>
+                        </Link>
+                      </>
                     )}
                   </>
                 )}

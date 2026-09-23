@@ -9,7 +9,8 @@ export function generateStaticParams() {
   return getBuildPropertySlugs();
 }
 
-export const dynamicParams = true;
+// Static export forbids dynamicParams: true. Unknown slugs use property/__build_placeholder__.
+export const dynamicParams = false;
 
 export default async function PropertyPage({ params }: PageProps) {
   const { slug } = await params;

@@ -8,9 +8,11 @@ export function getBuildPropertySlugs(): { slug: string }[] {
   const slugs = raw
     .split(',')
     .map((s) => s.trim())
-    .filter(Boolean)
-    .map((slug) => ({ slug }));
-  return slugs.length > 0 ? slugs : [{ slug: PROPERTY_PLACEHOLDER_SLUG }];
+    .filter(Boolean);
+  if (!slugs.includes(PROPERTY_PLACEHOLDER_SLUG)) {
+    slugs.push(PROPERTY_PLACEHOLDER_SLUG);
+  }
+  return slugs.map((slug) => ({ slug }));
 }
 
 export function getBuildBlogIds(): { id: string }[] {

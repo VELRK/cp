@@ -63,9 +63,9 @@ const AuthModals: React.FC = () => {
 
   useEffect(() => {
     if (isAuthModalOpen) {
-      setErrorMsg(null);
-      setSuccessMsg(null);
       if (isAuthModalOpen === 'login') {
+        setErrorMsg(null);
+        setSuccessMsg(null);
         resetLoginFlow();
       }
       getCities()
@@ -150,7 +150,14 @@ const AuthModals: React.FC = () => {
           : 'OTP sent to your WhatsApp number.'
       );
     } catch (err: any) {
-      setErrorMsg(err.response?.data?.message || 'Failed to send OTP. Please try again.');
+      const data = err.response?.data;
+      if (data?.needs_register) {
+        setRegPhone(phone);
+        setAuthModalOpen('register');
+        setErrorMsg(data.message || 'No account found for this number. Please register first.');
+        return;
+      }
+      setErrorMsg(data?.message || 'Failed to send OTP. Please try again.');
     } finally {
       setLoading(false);
     }

@@ -556,7 +556,7 @@ class Api_nb_app extends CI_Controller
                 'success' => false,
                 'message' => 'No account found for this number. Please register first.',
                 'needs_register' => true,
-            ), 404);
+            ), 422);
         }
         if (isset($user->role) && $user->role === 'admin') {
             return $this->_json(array(

@@ -4,7 +4,6 @@
 uploads/
 assets/uploads/
 deploy.local.php
-application/config/database.php
 application/config/whatsapp.local.php
 application/config/firebase_service_account.json
 application/cache/

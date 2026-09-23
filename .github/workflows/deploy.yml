@@ -111,7 +111,6 @@ jobs:
               mkdir -p application/config uploads assets/uploads
               OLD=/home/u221026474/domains/superfinelabels.in/public_html/cp
 
-              if [ -f "$BACKUP_DIR/database.php" ]; then cp "$BACKUP_DIR/database.php" application/config/database.php; fi
               if [ -f "$BACKUP_DIR/whatsapp.local.php" ]; then cp "$BACKUP_DIR/whatsapp.local.php" application/config/whatsapp.local.php; fi
               if [ -f "$BACKUP_DIR/firebase_service_account.json" ]; then cp "$BACKUP_DIR/firebase_service_account.json" application/config/firebase_service_account.json; fi
               if [ -f "$BACKUP_DIR/.env" ]; then cp "$BACKUP_DIR/.env" .env; fi
@@ -122,6 +121,10 @@ jobs:
                 db_is_stub=1
               elif grep -q "username.*root" application/config/database.php && grep -q "database.*property" application/config/database.php; then
                 db_is_stub=1
+              fi
+              if [ "$db_is_stub" = 1 ] && [ -f "$BACKUP_DIR/database.php" ]; then
+                cp "$BACKUP_DIR/database.php" application/config/database.php
+                db_is_stub=0
               fi
               if [ "$db_is_stub" = 1 ] && [ -f "$OLD/application/config/database.php" ]; then
                 cp "$OLD/application/config/database.php" application/config/database.php
